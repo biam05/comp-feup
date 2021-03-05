@@ -40,6 +40,7 @@ PARSER_END(Grammar)
     |<IF:             "if">
     |<IMPORT:         "import">
     |<INT:            "int">
+    |<LENGTH:         "length">
     |<MAIN:           "main">
     |<NEW:            "new">
     |<PUBLIC:         "public">
@@ -74,7 +75,7 @@ void ClassDeclaration() : {}
 
 void VarDeclaration() : {}
 {
-    Type() Identifier() <SEMICOLON>;
+    Type() Identifier() <SEMICOLON>
 }
 
 void MethodDeclaration() : {}
@@ -83,4 +84,24 @@ void MethodDeclaration() : {}
     <LBRACE> (VarDeclaration())* (Statement())* <RETURN> Expression() <SEMICOLON> <RBRACE>
     | <PUBLIC> <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> Identifier() <RPARENTHESIS> <LBRACE>
     (VarDeclaration())* (Statement())* <RBRACE>
+}
+
+void Expression() : {}
+{
+    // TODO: ELIMINATE LEFT RECURSION
+    /*
+    (Expression() (<AND> | <LESS> | <ADD_AND_SUB> | <MULT_AND_DIV> ) Expression()
+    | Expression() <LBRACKET> Expression() <RBRACKET>
+    | Expression() <PERIOD> <LENGTH>
+    | Expression() <PERIOD> Identifier() <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>
+    | */ (<INTEGER>
+    | <TRUE>
+    | <FALSE>
+    | Identifier()
+    | <THIS>
+    | <NEW> <INT> <LBRACKET> Expression() <RBRACKET>
+    | <NEW> Identifier() <LPARENTHESIS> <RPARENTHESIS>
+    | <NOT> Expression()
+    | <LPARENTHESIS> Expression() <RPARENTHESIS>)
+    <SEMICOLON>
 }
