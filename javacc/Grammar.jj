@@ -59,31 +59,48 @@ PARSER_END(Grammar)
 // Production definition
 void Program() : {}
 {
-    ImportDeclaration() ClassDeclaration() Eof()
+    ImportDeclaration() ClassDeclaration() <EOF>
 }
 
 void ImportDeclaration() : {}
 {
-    (<IMPORT> Identifier() (<PERIOD> Identifier())* <SEMICOLON>)*
+    (<IMPORT> <IDENTIFIER> (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
 }
 
 void ClassDeclaration() : {}
 {
-    <CLASS> Identifier() (<EXTENDS> Identifier())? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
-    <SEMICOLON>
+    <CLASS> <IDENTIFIER> (<EXTENDS> <IDENTIFIER>)? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
 }
 
 void VarDeclaration() : {}
 {
-    Type() Identifier() <SEMICOLON>
+    Type() <IDENTIFIER> <SEMICOLON>
 }
 
 void MethodDeclaration() : {}
 {
-    <PUBLIC> Type() Identifier() <LPARENTHESIS> (Type() Identifier() (<COMMA> Type() Identifier())*)? <RPARENTHESIS>
+    <PUBLIC> Type() <IDENTIFIER> <LPARENTHESIS> (Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*)? <RPARENTHESIS>
     <LBRACE> (VarDeclaration())* (Statement())* <RETURN> Expression() <SEMICOLON> <RBRACE>
-    | <PUBLIC> <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> Identifier() <RPARENTHESIS> <LBRACE>
+    | <PUBLIC> <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> <IDENTIFIER> <RPARENTHESIS> <LBRACE>
     (VarDeclaration())* (Statement())* <RBRACE>
+}
+
+void Type() : {}
+{
+    <INT> <LBRACKET> <RBRACKET>
+    | <BOOLEAN>
+    | <INT>
+    | <IDENTIFIER>
+}
+
+void Statement() : {}
+{
+    <LBRACE> (Statement())* <RBRACE>
+    | <IF> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement() <ELSE> Statement()
+    | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+    | Expression() <SEMICOLON>
+    | <IDENTIFIER> <ASSIGN> Expression() <SEMICOLON>
+    | <IDENTIFIER> <LBRACKET> Expression() <RBRACKET> <ASSIGN> Expression() <SEMICOLON>
 }
 
 void Expression() : {}
@@ -97,10 +114,10 @@ void Expression() : {}
     | */ (<INTEGER>
     | <TRUE>
     | <FALSE>
-    | Identifier()
+    | <IDENTIFIER>
     | <THIS>
     | <NEW> <INT> <LBRACKET> Expression() <RBRACKET>
-    | <NEW> Identifier() <LPARENTHESIS> <RPARENTHESIS>
+    | <NEW> <IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>
     | <NOT> Expression()
     | <LPARENTHESIS> Expression() <RPARENTHESIS>)
     <SEMICOLON>
