@@ -9,6 +9,13 @@ PARSER_BEGIN(Grammar)
     }
 PARSER_END(Grammar)
 
+<DEFAULT> SKIP : {
+    " "
+    | "\t"
+    | "\n"
+    | "\r"
+}
+
 <DEFAULT> TOKEN : {
     <DIGIT:           ["0"-"9"] >
     |<LETTER:         ["a"-"z","A"-"Z"] >
