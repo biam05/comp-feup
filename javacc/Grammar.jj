@@ -1,0 +1,86 @@
+PARSER_BEGIN(Grammar)
+    public class Grammar {
+        public static void main(String args[]) throws ParseException {
+            // Object instantiation using the constructor with an argument
+            // that reads from the standard input (keyboard)
+            Grammar parser = new Grammar(System.in);
+            parser.Program();
+        }
+    }
+PARSER_END(Grammar)
+
+<DEFAULT> TOKEN : {
+    <DIGIT:           ["0"-"9"] >
+    |<LETTER:         ["a"-"z","A"-"Z"] >
+    |<UNDERSCORE:     "_" >
+
+    |<ASSIGN:         "=" >
+    |<LBRACE:         "{" >
+    |<RBRACE:         "}" >
+    |<LBRACKET:       "[" >
+    |<RBRACKET:       "]" >
+    |<COMMA:          "," >
+    |<LPARENTHESIS:   "(" >
+    |<RPARENTHESIS:   ")" >
+    |<PERIOD:         "." >
+    |<QUOTE:          "\"" >
+    |<SEMICOLON:      ";" >
+
+    |<ADD_AND_SUB:    "+" | "-">
+    |<AND:            "&&">
+    |<LESS:           "<" >
+    |<MULT_AND_DIV:   "*" | "/">
+    |<NOT:            "!">
+
+    |<BOOLEAN:        "boolean">
+    |<CLASS:          "class">
+    |<ELSE:           "else">
+    |<EXTENDS:        "extends">
+    |<FALSE:          "false">
+    |<IF:             "if">
+    |<IMPORT:         "import">
+    |<INT:            "int">
+    |<MAIN:           "main">
+    |<NEW:            "new">
+    |<PUBLIC:         "public">
+    |<RETURN:         "return">
+    |<STATIC:         "static">
+    |<STRING:         "String">
+    |<THIS:           "this">
+    |<TRUE:           "true">
+    |<VOID:           "void">
+    |<WHILE:          "while">
+
+    |<INTEGER:        (<DIGIT>)+>
+    |<IDENTIFIER:     <LETTER> (<LETTER>|<DIGIT>|<UNDERSCORE>)*>
+}
+
+// Production definition
+void Program() : {}
+{
+    ImportDeclaration() ClassDeclaration() Eof()
+}
+
+void ImportDeclaration() : {}
+{
+    (<IMPORT> Identifier() (<PERIOD> Identifier())* <SEMICOLON>)*
+}
+
+void ClassDeclaration() : {}
+{
+    <CLASS> Identifier() (<EXTENDS> Identifier())? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
+    <SEMICOLON>
+}
+
+void VarDeclaration() : {}
+{
+    Type() Identifier() <SEMICOLON>;
+}
+
+void MethodDeclaration() : {}
+{
+    <PUBLIC> Type() Identifier() <LPARENTHESIS> (Type() Identifier() (<COMMA> Type() Identifier())*)? <RPARENTHESIS>
+    <LBRACE> (VarDeclaration())* (Statement())* <RETURN> Expression() <SEMICOLON> <RBRACE>
+    | <PUBLIC> <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> Identifier() <RPARENTHESIS> <LBRACE>
+    (VarDeclaration())* (Statement())* <RBRACE>
+}
