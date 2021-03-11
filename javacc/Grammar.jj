@@ -114,11 +114,11 @@ void Expression() : {}
 {
     // TODO: ELIMINATE LEFT RECURSION
     /*
-    (Expression() (<AND> | <LESS> | <ADD_AND_SUB> | <MULT_AND_DIV> ) Expression()
+    Expression() (<AND> | <LESS> | <ADD_AND_SUB> | <MULT_AND_DIV> ) Expression()
     | Expression() <LBRACKET> Expression() <RBRACKET>
     | Expression() <PERIOD> <LENGTH>
     | Expression() <PERIOD> Identifier() <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>
-    | */ (<INTEGER>
+    | */ <INTEGER>
     | <TRUE>
     | <FALSE>
     | <IDENTIFIER>
@@ -126,6 +126,5 @@ void Expression() : {}
     | <NEW> <INT> <LBRACKET> Expression() <RBRACKET>
     | <NEW> <IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>
     | <NOT> Expression()
-    | <LPARENTHESIS> Expression() <RPARENTHESIS>)
-    <SEMICOLON>
+    | <LPARENTHESIS> Expression() <RPARENTHESIS>
 }
