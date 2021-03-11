@@ -33,10 +33,10 @@ PARSER_END(Grammar)
     |<QUOTE:          "\"" >
     |<SEMICOLON:      ";" >
 
-    |<ADD_AND_SUB:    "+" | "-">
+    |<ADD_OR_SUB:    "+" | "-">
     |<AND:            "&&">
     |<LESS:           "<" >
-    |<MULT_AND_DIV:   "*" | "/">
+    |<MULT_OR_DIV:   "*" | "/">
     |<NOT:            "!">
 
     |<BOOLEAN:        "boolean">
@@ -114,7 +114,7 @@ void Expression() : {}
 {
     // TODO: ELIMINATE LEFT RECURSION
     /*
-    Expression() (<AND> | <LESS> | <ADD_AND_SUB> | <MULT_AND_DIV> ) Expression()
+    Expression() (<AND> | <LESS> | <ADD_OR_SUB> | <MULT_OR_DIV> ) Expression()
     | Expression() <LBRACKET> Expression() <RBRACKET>
     | Expression() <PERIOD> <LENGTH>
     | Expression() <PERIOD> Identifier() <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>
