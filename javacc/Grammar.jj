@@ -112,13 +112,7 @@ void Statement() : {}
 
 void Expression() : {}
 {
-    // TODO: ELIMINATE LEFT RECURSION
-    /*
-    Expression() (<AND> | <LESS> | <ADD_OR_SUB> | <MULT_OR_DIV> ) Expression()
-    | Expression() <LBRACKET> Expression() <RBRACKET>
-    | Expression() <PERIOD> <LENGTH>
-    | Expression() <PERIOD> Identifier() <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>
-    | */ <INTEGER>
+    (<INTEGER>
     | <TRUE>
     | <FALSE>
     | <IDENTIFIER>
@@ -126,5 +120,13 @@ void Expression() : {}
     | <NEW> <INT> <LBRACKET> Expression() <RBRACKET>
     | <NEW> <IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>
     | <NOT> Expression()
-    | <LPARENTHESIS> Expression() <RPARENTHESIS>
+    | <LPARENTHESIS> Expression() <RPARENTHESIS>) Expression1()
+}
+
+void Expression1() : {}
+{
+    ((<AND> | <LESS> | <ADD_OR_SUB> | <MULT_OR_DIV>) Expression() Expression1())?
+    | (<LBRACKET> Expression() <RBRACKET> Expression1())?
+    | (<PERIOD> <LENGTH> Expression1())?
+    | (<PERIOD> <IDENTIFIER> <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS> Expression1())?
 }
