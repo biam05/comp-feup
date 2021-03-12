@@ -112,7 +112,22 @@ void Statement() : {}
 
 void Expression() : {}
 {
-    (<INTEGER>
+    Expression1() ((<AND>
+    | <LESS>
+    | <ADD_OR_SUB>
+    | <LBRACKET> Expression() <RBRACKET>
+    | <PERIOD> <LENGTH>
+    | <PERIOD> <IDENTIFIER> <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>) Expression())?
+}
+
+void Expression1() : {}
+{
+    Expression2() (<MULT_OR_DIV> Expression2())?
+}
+
+void Expression2() : {}
+{
+    <INTEGER>
     | <TRUE>
     | <FALSE>
     | <IDENTIFIER>
@@ -120,13 +135,5 @@ void Expression() : {}
     | <NEW> <INT> <LBRACKET> Expression() <RBRACKET>
     | <NEW> <IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>
     | <NOT> Expression()
-    | <LPARENTHESIS> Expression() <RPARENTHESIS>) Expression1()
-}
-
-void Expression1() : {}
-{
-    ((<AND> | <LESS> | <ADD_OR_SUB> | <MULT_OR_DIV>) Expression() Expression1())?
-    | (<LBRACKET> Expression() <RBRACKET> Expression1())?
-    | (<PERIOD> <LENGTH> Expression1())?
-    | (<PERIOD> <IDENTIFIER> <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS> Expression1())?
+    | <LPARENTHESIS> Expression() <RPARENTHESIS>
 }
