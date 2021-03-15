@@ -1,0 +1,139 @@
+PARSER_BEGIN(Grammar)
+    public class Grammar {
+        public static void main(String args[]) throws ParseException {
+            // Object instantiation using the constructor with an argument
+            // that reads from the standard input (keyboard)
+            Grammar parser = new Grammar(System.in);
+            parser.Program();
+        }
+    }
+PARSER_END(Grammar)
+
+<DEFAULT> SKIP : {
+    " "
+    | "\t"
+    | "\n"
+    | "\r"
+}
+
+<DEFAULT> TOKEN : {
+    <DIGIT:           ["0"-"9"] >
+    |<LETTER:         ["a"-"z","A"-"Z"] >
+    |<UNDERSCORE:     "_" >
+
+    |<ASSIGN:         "=" >
+    |<LBRACE:         "{" >
+    |<RBRACE:         "}" >
+    |<LBRACKET:       "[" >
+    |<RBRACKET:       "]" >
+    |<COMMA:          "," >
+    |<LPARENTHESIS:   "(" >
+    |<RPARENTHESIS:   ")" >
+    |<PERIOD:         "." >
+    |<QUOTE:          "\"" >
+    |<SEMICOLON:      ";" >
+
+    |<ADD_OR_SUB:    "+" | "-">
+    |<AND:            "&&">
+    |<LESS:           "<" >
+    |<MULT_OR_DIV:   "*" | "/">
+    |<NOT:            "!">
+
+    |<BOOLEAN:        "boolean">
+    |<CLASS:          "class">
+    |<ELSE:           "else">
+    |<EXTENDS:        "extends">
+    |<FALSE:          "false">
+    |<IF:             "if">
+    |<IMPORT:         "import">
+    |<INT:            "int">
+    |<LENGTH:         "length">
+    |<MAIN:           "main">
+    |<NEW:            "new">
+    |<PUBLIC:         "public">
+    |<RETURN:         "return">
+    |<STATIC:         "static">
+    |<STRING:         "String">
+    |<THIS:           "this">
+    |<TRUE:           "true">
+    |<VOID:           "void">
+    |<WHILE:          "while">
+
+    |<INTEGER:        (<DIGIT>)+>
+    |<IDENTIFIER:     <LETTER> (<LETTER>|<DIGIT>|<UNDERSCORE>)*>
+}
+
+// Production definition
+void Program() : {}
+{
+    ImportDeclaration() ClassDeclaration() <EOF>
+}
+
+void ImportDeclaration() : {}
+{
+    (<IMPORT> <IDENTIFIER> (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
+}
+
+void ClassDeclaration() : {}
+{
+    <CLASS> <IDENTIFIER> (<EXTENDS> <IDENTIFIER>)? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
+}
+
+void VarDeclaration() : {}
+{
+    Type() <IDENTIFIER> <SEMICOLON>
+}
+
+void MethodDeclaration() : {}
+{
+    <PUBLIC> Type() <IDENTIFIER> <LPARENTHESIS> (Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*)? <RPARENTHESIS>
+    <LBRACE> (VarDeclaration())* (Statement())* <RETURN> Expression() <SEMICOLON> <RBRACE>
+    | <PUBLIC> <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> <IDENTIFIER> <RPARENTHESIS> <LBRACE>
+    (VarDeclaration())* (Statement())* <RBRACE>
+}
+
+void Type() : {}
+{
+    <INT> <LBRACKET> <RBRACKET>
+    | <BOOLEAN>
+    | <INT>
+    | <IDENTIFIER>
+}
+
+void Statement() : {}
+{
+    <LBRACE> (Statement())* <RBRACE>
+    | <IF> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement() <ELSE> Statement()
+    | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+    | Expression() <SEMICOLON>
+    | <IDENTIFIER> <ASSIGN> Expression() <SEMICOLON>
+    | <IDENTIFIER> <LBRACKET> Expression() <RBRACKET> <ASSIGN> Expression() <SEMICOLON>
+}
+
+void Expression() : {}
+{
+    Expression1() ((<AND>
+    | <LESS>
+    | <ADD_OR_SUB>
+    | <LBRACKET> Expression() <RBRACKET>
+    | <PERIOD> <LENGTH>
+    | <PERIOD> <IDENTIFIER> <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>) Expression())?
+}
+
+void Expression1() : {}
+{
+    Expression2() (<MULT_OR_DIV> Expression2())?
+}
+
+void Expression2() : {}
+{
+    <INTEGER>
+    | <TRUE>
+    | <FALSE>
+    | <IDENTIFIER>
+    | <THIS>
+    | <NEW> <INT> <LBRACKET> Expression() <RBRACKET>
+    | <NEW> <IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>
+    | <NOT> Expression()
+    | <LPARENTHESIS> Expression() <RPARENTHESIS>
+}
