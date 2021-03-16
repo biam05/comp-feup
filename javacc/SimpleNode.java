@@ -15,7 +15,7 @@ class SimpleNode implements Node, JmmNode {
   protected Node[] children;
   protected int id;
   protected Object value;
-  protected Calculator parser;
+  protected Grammar parser;
 
     // added
     public int val;
@@ -25,7 +25,7 @@ class SimpleNode implements Node, JmmNode {
     id = i;
   }
 
-  public SimpleNode(Calculator p, int i) {
+  public SimpleNode(Grammar p, int i) {
     this(i);
     parser = p;
   }
