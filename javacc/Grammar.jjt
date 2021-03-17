@@ -9,7 +9,9 @@ PARSER_BEGIN(Grammar)
             // Object instantiation using the constructor with an argument
             // that reads from the standard input (keyboard)
             Grammar parser = new Grammar(System.in);
-            parser.Program();
+            SimpleNode root = parser.Program();
+            root.dump("");
+
         }
     }
 PARSER_END(Grammar)
@@ -71,7 +73,8 @@ PARSER_END(Grammar)
 // Production definition
 SimpleNode Program() : {}
 {
-    ImportDeclaration() ClassDeclaration() <EOF>
+    {System.out.println("in program");}
+    ImportDeclaration() ClassDeclaration() <EOF> {return jjtThis;}
 }
 
 void ImportDeclaration() : {}
@@ -92,9 +95,13 @@ void VarDeclaration() : {}
 void MethodDeclaration() : {}
 {
     <PUBLIC> (Type() <IDENTIFIER> <LPARENTHESIS> (Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*)? <RPARENTHESIS>
-    <LBRACE> (VarDeclaration())* (Statement())* <RETURN> Expression() <SEMICOLON> <RBRACE>
+    <LBRACE>  MethodBody() <RETURN> Expression() <SEMICOLON> <RBRACE>
     | <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> <IDENTIFIER> <RPARENTHESIS> <LBRACE>
-    (VarDeclaration())* (Statement())* <RBRACE>)
+    MethodBody() <RBRACE>)
+}
+
+void MethodBody():{}{
+    (LOOKAHEAD(2)VarDeclaration())* (Statement())*
 }
 
 void Type() : {}
@@ -109,25 +116,51 @@ void Statement() : {}
     <LBRACE> (Statement())* <RBRACE>
     | <IF> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement() <ELSE> Statement()
     | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
-    | Expression() <SEMICOLON>
-    | <IDENTIFIER> (<LBRACKET> Expression() <RBRACKET>)? <ASSIGN> Expression() <SEMICOLON>
+    | Expression()[<ASSIGN> Expression() ]<SEMICOLON>
 }
 
 void Expression() : {}
 {
-    Expression1() ((<AND>
-    | <LESS>
-    | <ADD_OR_SUB>
-    | <LBRACKET> Expression() <RBRACKET>
-    | <PERIOD> (<LENGTH> | (<IDENTIFIER> <LPARENTHESIS> (Expression() (<COMMA> Expression())*)? <RPARENTHESIS>))) Expression())?
+    Less() (<AND> Less())*
 }
 
-void Expression1() : {}
+void Less():{}
 {
-    Expression2() (<MULT_OR_DIV> Expression1())?
+    AddOrSub() (<LESS> AddOrSub())*
 }
 
-void Expression2() : {}
+void AddOrSub():{}{
+
+    MultOrDiv() (<ADD_OR_SUB> MultOrDiv() )*
+}
+void MultOrDiv() : {}
+{
+    Not() (<MULT_OR_DIV> Not())?
+}
+
+
+void Not():{} //
+{
+    <NOT> Not() | Period()
+}
+
+void Period():{}
+{
+    Arrays()(<PERIOD> (<LENGTH> | (<IDENTIFIER> <LPARENTHESIS> (Parameter())? <RPARENTHESIS>)))*
+}
+
+void Parameter():{}
+{
+    Expression() (<COMMA> Expression())*
+}
+
+void Arrays():{}
+{
+    FinalTerms()(<LBRACKET> Expression() <RBRACKET> FinalTerms())*
+}
+
+
+void FinalTerms() : {}
 {
     <INTEGER>
     | <TRUE>
@@ -135,6 +168,5 @@ void Expression2() : {}
     | <IDENTIFIER>
     | <THIS>
     | <NEW> ((<INT> <LBRACKET> Expression() <RBRACKET>) | (<IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>))
-    | <NOT> Expression()
     | <LPARENTHESIS> Expression() <RPARENTHESIS>
 }
