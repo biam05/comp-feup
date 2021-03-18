@@ -3,15 +3,35 @@ options
     LOOKAHEAD=1;
 }
 
+
 PARSER_BEGIN(Grammar)
     public class Grammar {
-        public static void main(String  args[]) throws ParseException {
+        int numError = 0;
+        boolean error = false;
+
+        public static void main(String[] args) throws ParseException {
             // Object instantiation using the constructor with an argument
             // that reads from the standard input (keyboard)
             Grammar parser = new Grammar(System.in);
             SimpleNode root = parser.Program();
             root.dump("");
 
+        }
+
+        void errorFindNextOf(int token, ParseException e) throws ParseException {
+            Token token1;
+            numError++;
+            System.out.println("Syntax error:\n\n" + e.toString());
+            if (numError == 1) {
+                System.out.println("Terminating...\n\n");
+                throw e;
+            }
+            do {
+                token1 = getNextToken();
+                if (token1.kind == GrammarConstants.EOF) {
+                    throw e;
+                }
+            } while (token1.kind != token);
         }
     }
 PARSER_END(Grammar)
@@ -27,7 +47,6 @@ PARSER_END(Grammar)
 
 <DEFAULT> TOKEN : {
         < #DIGIT :           ["0"-"9"] >
-        | < #LETTER :         ["a"-"z","A"-"Z"] >
         | < UNDERSCORE :     "_" >
 
         | < ASSIGN :         "=" >
@@ -117,8 +136,26 @@ void Statement() : {}
 {
     <LBRACE> (Statement())* <RBRACE>
     | <IF> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement() <ELSE> Statement()
-    | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+    // | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+    | <WHILE> WhileStatement()
     | Expression()[<ASSIGN> Expression() ]<SEMICOLON>
+}
+
+// <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+void WhileStatement() : {}
+{
+    try {
+        <LPARENTHESIS> Expression() <RPARENTHESIS>
+    }
+    catch (ParseException e){
+        errorFindNextOf(GrammarConstants.LBRACE, e);
+        error = true;
+    }
+    finally {
+        if(!error){
+            Statement();
+        }
+    }
 }
 
 void Expression() : {}
