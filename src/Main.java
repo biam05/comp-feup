@@ -13,8 +13,8 @@ public class Main implements JmmParser {
 	public JmmParserResult parse(String jmmCode) {
 		
 		try {
-		    Calculator myCalc = new Calculator(new StringReader(jmmCode));
-    		SimpleNode root = myCalc.Expression(); // returns reference to root node
+		    Grammar myGrammar = new Grammar(new StringReader(jmmCode));
+    		SimpleNode root = myGrammar.Program(); // returns reference to root node
             	
     		root.dump(""); // prints the tree on the screen
     	
