@@ -22,7 +22,7 @@ PARSER_BEGIN(Grammar)
             Token token1;
             numError++;
             System.out.println("Syntax error:\n\n" + e.toString());
-            if (numError == 1) {
+            if (numError == 10) {
                 System.out.println("Terminating...\n\n");
                 throw e;
             }
@@ -148,7 +148,7 @@ void WhileStatement() : {}
         <LPARENTHESIS> Expression() <RPARENTHESIS>
     }
     catch (ParseException e){
-        errorFindNextOf(GrammarConstants.LBRACE, e);
+        errorFindNextOf(GrammarConstants.RBRACE, e);
         error = true;
     }
     finally {
