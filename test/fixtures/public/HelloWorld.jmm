@@ -9,17 +9,7 @@ class HelloWorld {
         L = new int[10];
 
         i = 0;
-        while (i ==) {
-            L[i] = L.length - i;
-            i = i + 1;
-        }
-
-        while (i ==) {
-            L[i] = L.length - i;
-            i = i + 1;
-        }
-
-        while (i ==) {
+        while (i < 1) {
             L[i] = L.length - i;
             i = i + 1;
         }

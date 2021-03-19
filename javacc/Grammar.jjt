@@ -17,21 +17,19 @@ PARSER_BEGIN(Grammar)
             root.dump("");
 
         }
-
-        void errorFindNextOf(int token, ParseException e) throws ParseException {
-            Token token1;
-            numError++;
-            System.out.println("Syntax error:\n\n" + e.toString());
-            if (numError == 10) {
-                System.out.println("Terminating...\n\n");
-                throw e;
-            }
+        // https://github.com/javacc/javacc/blob/master/docs/tutorials/error-handling.md
+        void error_skipto(int kind) {
+            ParseException e = generateParseException();  // generate the exception object
+            System.out.println("Syntax error:\n\n" + e.toString());  // print the error message
+            Token t;
+            // consume tokens all the way up to a token of "kind" - use a do-while loop
+            // rather than a while because the current token is the one immediately before
+            // the erroneous token (in our case the token immediately before what should
+            // have been "if"/"while".
             do {
-                token1 = getNextToken();
-                if (token1.kind == GrammarConstants.EOF) {
-                    throw e;
-                }
-            } while (token1.kind != token);
+                t = getNextToken();
+            }
+            while (t.kind != kind);
         }
     }
 PARSER_END(Grammar)
@@ -94,13 +92,12 @@ PARSER_END(Grammar)
 // Production definition
 SimpleNode Program() : {}
 {
-    {System.out.println("in program");}
     ImportDeclaration() ClassDeclaration() <EOF> {return jjtThis;}
 }
 
-void ImportDeclaration() : {}
+void ImportDeclaration() : {Token t;}
 {
-    (<IMPORT> <IDENTIFIER> (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
+    (<IMPORT> #IMPORT t=<IDENTIFIER>{jjtThis.var=t.image;} (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
 }
 
 void ClassDeclaration() : {}
@@ -108,9 +105,9 @@ void ClassDeclaration() : {}
     <CLASS> <IDENTIFIER> (<EXTENDS> <IDENTIFIER>)? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
 }
 
-void VarDeclaration() : {}
+void VarDeclaration() : {Token t;}
 {
-    Type() <IDENTIFIER> <SEMICOLON>
+    Type() t=<IDENTIFIER>{jjtThis.var=t.image;} <SEMICOLON>
 }
 
 void MethodDeclaration() : {}
@@ -122,7 +119,7 @@ void MethodDeclaration() : {}
 }
 
 void MethodBody():{}{
-    (LOOKAHEAD(2)VarDeclaration())* (Statement())*
+    (LOOKAHEAD(2) VarDeclaration())* (Statement())*
 }
 
 void Type() : {}
@@ -148,17 +145,16 @@ void WhileStatement() : {}
         <LPARENTHESIS> Expression() <RPARENTHESIS>
     }
     catch (ParseException e){
-        errorFindNextOf(GrammarConstants.RBRACE, e);
+        error_skipto(GrammarConstants.RBRACE);
         error = true;
     }
-    finally {
-        if(!error){
-            Statement();
-        }
+    finally{
+        if(!error) Statement();
     }
+
 }
 
-void Expression() : {}
+void Expression() : {Token t;}
 {
     Less() (<AND> Less())*
 }
@@ -176,7 +172,6 @@ void MultOrDiv() : {}
 {
     Not() (<MULT_OR_DIV> Not())*
 }
-
 
 void Not():{} //
 {
@@ -197,7 +192,6 @@ void Arrays():{}
 {
     FinalTerms()(<LBRACKET> Expression() <RBRACKET> (FinalTerms())?)*
 }
-
 
 void FinalTerms() : {}
 {
