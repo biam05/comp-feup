@@ -68,4 +68,9 @@ public class ExampleTest {
     }*/
 
 
+    @Test
+    public void CompleteWhile() {
+        String jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/CompleteWhileTest.jmm");
+        TestUtils.parse(jmmCode);
+    }
 }

@@ -1,22 +1,6 @@
 import ioPlus;
 class HelloWorld {
-	public static void main(String[] a) {
-        int[] L;
-        int i;
-        boolean d;
-        Lazysort q;
-
-        L = new int[10];
-
-        i = 0;
-        while (i < 1) {
-            L[i] = L.length - i;
-            i = i + 1;
-        }
-
-        q = new Lazysort();
-
-        q.quicksort(L);
-        d = q.printL(L);
-    }
+	public static void main(String[] args) {
+		ioPlus.printHelloWorld();
+	}
 }
