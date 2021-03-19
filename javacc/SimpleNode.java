@@ -18,7 +18,7 @@ class SimpleNode implements Node, JmmNode {
   protected Grammar parser;
 
     // added
-    public int val;
+    public int val = -1;
     public String var;
     public Operator op = null;
 
@@ -103,7 +103,9 @@ class SimpleNode implements Node, JmmNode {
      you need to do. */
 
   public String toString() {
-    return GrammarTreeConstants.jjtNodeName[id];
+    if(val != -1) return GrammarTreeConstants.jjtNodeName[id] + " " + val;
+    else if(var == null) return GrammarTreeConstants.jjtNodeName[id];
+    else return GrammarTreeConstants.jjtNodeName[id] + " " + var;
   }
   public String toString(String prefix) { return prefix + toString(); }
 
