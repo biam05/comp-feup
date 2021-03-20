@@ -18,29 +18,35 @@ PARSER_BEGIN(Grammar)
 
         }
         // https://github.com/javacc/javacc/blob/master/docs/tutorials/error-handling.md
-        void error_skipto(int kind, int increment, String error) {
+        void error_skipto(String error) {
             ParseException e = generateParseException();  // generate the exception object
             Report report = new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, error);
             System.out.println(report);
             Token t;
-            // consume tokens all the way up to a token of "kind" - use a do-while loop
-            // rather than a while because the current token is the one immediately before
-            // the erroneous token (in our case the token immediately before what should
-            // have been "if"/"while".
 
             do {
                 t = getNextToken();
+                if (t.kind == EOF || t.kind == GrammarConstants.LBRACE)
+                    return;
             }
-            while (t.kind != increment && t.kind != EOF);
+            while (t.kind != GrammarConstants.RPARENTHESIS);
+            do {
+                t = getNextToken();
+                if (t.kind == EOF)
+                    return;
+            }
+            while (t.kind != GrammarConstants.LBRACE);
             int counter = 1;
             do {
                 t = getNextToken();
-                if (t.kind == increment)
+                if (t.kind == GrammarConstants.LBRACE)
                     counter++;
-                else if (t.kind == kind)
+                else if (t.kind == GrammarConstants.RBRACE)
                     counter--;
+                else if (t.kind == EOF)
+                    return;
             }
-            while (counter > 0 && t.kind != EOF);
+            while (counter > 0);
         }
     }
 PARSER_END(Grammar)
@@ -156,7 +162,7 @@ void WhileStatement() : {}
         <LPARENTHESIS> Expression() <RPARENTHESIS>
     }
     catch (ParseException e){
-        error_skipto(GrammarConstants.RBRACE, GrammarConstants.LBRACE, "Error on While Condition");
+        error_skipto("Error on While Condition");
         error = true;
     }
     finally{
