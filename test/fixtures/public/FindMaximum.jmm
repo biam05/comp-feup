@@ -46,3 +46,4 @@ class FindMaximum {
 		ioPlus.printResult(max);
 	}
 }
+
