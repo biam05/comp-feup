@@ -26,13 +26,17 @@ PARSER_BEGIN(Grammar)
 
             do {
                 t = getNextToken();
-                if (t.kind == EOF || t.kind == GrammarConstants.LBRACE)
+                if (t.kind == EOF)
                     return;
+                if (t.kind == GrammarConstants.LBRACE)
+                    break;
             }
             while (t.kind != GrammarConstants.RPARENTHESIS);
             do {
+                if (t.kind == GrammarConstants.LBRACE)
+                    break;
                 t = getNextToken();
-                if (t.kind == EOF)
+                if (t.kind == EOF || t.kind == GrammarConstants.SEMICOLON)
                     return;
             }
             while (t.kind != GrammarConstants.LBRACE);
