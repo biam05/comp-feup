@@ -19,6 +19,7 @@ class SimpleNode implements Node, JmmNode {
 
     // added
     public int val;
+    public String var;
     public Operator op = null;
 
   public SimpleNode(int i) {

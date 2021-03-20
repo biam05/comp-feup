@@ -4,14 +4,43 @@ options
 }
 
 PARSER_BEGIN(Grammar)
+    import pt.up.fe.comp.jmm.report.*;
     public class Grammar {
-        public static void main(String args[]) throws ParseException {
+        int numError = 0;
+        boolean error = false;
+
+        public static void main(String[] args) throws ParseException {
             // Object instantiation using the constructor with an argument
             // that reads from the standard input (keyboard)
             Grammar parser = new Grammar(System.in);
             SimpleNode root = parser.Program();
             root.dump("");
 
+        }
+        // https://github.com/javacc/javacc/blob/master/docs/tutorials/error-handling.md
+        void error_skipto(int kind, int increment, String error) {
+            ParseException e = generateParseException();  // generate the exception object
+            Report report = new Report(ReportType.ERROR, Stage.SYNTATIC, e.currentToken.beginLine, error);
+            System.out.println(report);
+            Token t;
+            // consume tokens all the way up to a token of "kind" - use a do-while loop
+            // rather than a while because the current token is the one immediately before
+            // the erroneous token (in our case the token immediately before what should
+            // have been "if"/"while".
+
+            do {
+                t = getNextToken();
+            }
+            while (t.kind != increment && t.kind != EOF);
+            int counter = 1;
+            do {
+                t = getNextToken();
+                if (t.kind == increment)
+                    counter++;
+                else if (t.kind == kind)
+                    counter--;
+            }
+            while (counter > 0 && t.kind != EOF);
         }
     }
 PARSER_END(Grammar)
@@ -21,65 +50,65 @@ PARSER_END(Grammar)
     | "\t"
     | "\n"
     | "\r"
+    |  < "//" (~["\n","\r"])* ("\n" | "\r" | "\r\n") >              // 1 line comment
+    |  < "/*" (~["*"])* "*" ("*" | ~["*","/"] (~["*"])* "*")* "/" > // multiple lines comment
 }
 
 <DEFAULT> TOKEN : {
-    <DIGIT:           ["0"-"9"] >
-    |<LETTER:         ["a"-"z","A"-"Z"] >
-    |<UNDERSCORE:     "_" >
+        < #DIGIT :           ["0"-"9"] >
+        | < UNDERSCORE :     "_" >
 
-    |<ASSIGN:         "=" >
-    |<LBRACE:         "{" >
-    |<RBRACE:         "}" >
-    |<LBRACKET:       "[" >
-    |<RBRACKET:       "]" >
-    |<COMMA:          "," >
-    |<LPARENTHESIS:   "(" >
-    |<RPARENTHESIS:   ")" >
-    |<PERIOD:         "." >
-    |<QUOTE:          "\"" >
-    |<SEMICOLON:      ";" >
+        | < ASSIGN :         "=" >
+        | < LBRACE :         "{" >
+        | < RBRACE :         "}" >
+        | < LBRACKET :       "[" >
+        | < RBRACKET:       "]" >
+        | < COMMA:          "," >
+        | < LPARENTHESIS:   "(" >
+        | < RPARENTHESIS:   ")" >
+        | < PERIOD:         "." >
+        | < QUOTE:          "\"" >
+        | < SEMICOLON:      ";" >
 
-    |<ADD_OR_SUB:    "+" | "-">
-    |<AND:            "&&">
-    |<LESS:           "<" >
-    |<MULT_OR_DIV:   "*" | "/">
-    |<NOT:            "!">
+        | < ADD_OR_SUB:    "+" | "-" >
+        | < AND:            "&&" >
+        | < LESS:           "<" >
+        | < MULT_OR_DIV:   "*" | "/" >
+        | < NOT:            "!" >
 
-    |<BOOLEAN:        "boolean">
-    |<CLASS:          "class">
-    |<ELSE:           "else">
-    |<EXTENDS:        "extends">
-    |<FALSE:          "false">
-    |<IF:             "if">
-    |<IMPORT:         "import">
-    |<INT:            "int">
-    |<LENGTH:         "length">
-    |<MAIN:           "main">
-    |<NEW:            "new">
-    |<PUBLIC:         "public">
-    |<RETURN:         "return">
-    |<STATIC:         "static">
-    |<STRING:         "String">
-    |<THIS:           "this">
-    |<TRUE:           "true">
-    |<VOID:           "void">
-    |<WHILE:          "while">
+        | < BOOLEAN:        "boolean" >
+        | < CLASS:          "class" >
+        | < ELSE:           "else" >
+        | < EXTENDS:        "extends" >
+        | < FALSE:          "false" >
+        | < IF:             "if" >
+        | < IMPORT:         "import" >
+        | < INT:            "int" >
+        | < LENGTH:         "length" >
+        | < MAIN:           "main" >
+        | < NEW:            "new" >
+        | < PUBLIC:         "public" >
+        | < RETURN:         "return" >
+        | < STATIC:         "static" >
+        | < STRING:         "String" >
+        | < THIS:           "this" >
+        | < TRUE:           "true" >
+        | < VOID:           "void" >
+        | < WHILE:          "while" >
 
-    |<INTEGER:        (<DIGIT>)+>
-    |<IDENTIFIER:     <LETTER> (<LETTER>|<DIGIT>|<UNDERSCORE>)*>
+        | < INTEGER:        ( < DIGIT > )+ >
+        | < IDENTIFIER:     ("_"|"$"|["a"-"z"]|["A"-"Z"])("_"|"$"|["a"-"z"]|["A"-"Z"]|["0"-"9"])* >
 }
 
 // Production definition
 SimpleNode Program() : {}
 {
-    {System.out.println("in program");}
     ImportDeclaration() ClassDeclaration() <EOF> {return jjtThis;}
 }
 
-void ImportDeclaration() : {}
+void ImportDeclaration() : {Token t;}
 {
-    (<IMPORT> <IDENTIFIER> (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
+    (<IMPORT> #IMPORT t=<IDENTIFIER>{jjtThis.var=t.image;} (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
 }
 
 void ClassDeclaration() : {}
@@ -87,9 +116,9 @@ void ClassDeclaration() : {}
     <CLASS> <IDENTIFIER> (<EXTENDS> <IDENTIFIER>)? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
 }
 
-void VarDeclaration() : {}
+void VarDeclaration() : {Token t;}
 {
-    Type() <IDENTIFIER> <SEMICOLON>
+    Type() t=<IDENTIFIER>{jjtThis.var=t.image;} <SEMICOLON>
 }
 
 void MethodDeclaration() : {}
@@ -101,7 +130,7 @@ void MethodDeclaration() : {}
 }
 
 void MethodBody():{}{
-    (LOOKAHEAD(2)VarDeclaration())* (Statement())*
+    (LOOKAHEAD(2) VarDeclaration())* (Statement())*
 }
 
 void Type() : {}
@@ -115,11 +144,28 @@ void Statement() : {}
 {
     <LBRACE> (Statement())* <RBRACE>
     | <IF> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement() <ELSE> Statement()
-    | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+    // | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+    | <WHILE> WhileStatement()
     | Expression()[<ASSIGN> Expression() ]<SEMICOLON>
 }
 
-void Expression() : {}
+// <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+void WhileStatement() : {}
+{
+    try {
+        <LPARENTHESIS> Expression() <RPARENTHESIS>
+    }
+    catch (ParseException e){
+        error_skipto(GrammarConstants.RBRACE, GrammarConstants.LBRACE, "Error on While Condition");
+        error = true;
+    }
+    finally{
+        if(!error) Statement();
+    }
+
+}
+
+void Expression() : {Token t;}
 {
     Less() (<AND> Less())*
 }
@@ -135,9 +181,8 @@ void AddOrSub():{}{
 }
 void MultOrDiv() : {}
 {
-    Not() (<MULT_OR_DIV> Not())?
+    Not() (<MULT_OR_DIV> Not())*
 }
-
 
 void Not():{} //
 {
@@ -156,9 +201,8 @@ void Parameter():{}
 
 void Arrays():{}
 {
-    FinalTerms()(<LBRACKET> Expression() <RBRACKET> FinalTerms())*
+    FinalTerms()(<LBRACKET> Expression() <RBRACKET> (FinalTerms())?)*
 }
-
 
 void FinalTerms() : {}
 {
