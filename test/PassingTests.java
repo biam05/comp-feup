@@ -2,7 +2,7 @@ import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
-public class ExampleTest {
+public class PassingTests {
     @Test
     public void HelloWorld() {
         String jmmCode = SpecsIo.getResource("fixtures/public/HelloWorld.jmm");
@@ -51,26 +51,9 @@ public class ExampleTest {
         TestUtils.parse(jmmCode);
     }
 
-    /*@Test
-    public void TicTacToe2() {
-        String jmmCode = SpecsIo.getResource("fixtures/public/TicTacToe.input");
-        TestUtils.parse(jmmCode);
-    }*/
     @Test
     public void While() {
         String jmmCode = SpecsIo.getResource("fixtures/public/WhileAndIF.jmm");
-        TestUtils.parse(jmmCode);
-    }
-    /*@Test
-    public void While2() {
-        String jmmCode = SpecsIo.getResource("fixtures/public/TicTacToe.input");
-        TestUtils.parse(jmmCode);
-    }*/
-
-
-    @Test
-    public void CompleteWhile() {
-        String jmmCode = SpecsIo.getResource("fixtures/public/fail/syntactical/CompleteWhileTest.jmm");
         TestUtils.parse(jmmCode);
     }
 }
