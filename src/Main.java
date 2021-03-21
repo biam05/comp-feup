@@ -9,7 +9,6 @@ import java.io.StringReader;
 
 public class Main implements JmmParser {
 
-
 	public JmmParserResult parse(String jmmCode) {
 		
 		try {
