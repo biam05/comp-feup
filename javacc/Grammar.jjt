@@ -80,10 +80,12 @@ PARSER_END(Grammar)
         | < QUOTE:          "\"" >
         | < SEMICOLON:      ";" >
 
-        | < ADD_OR_SUB:    "+" | "-" >
+        | < ADD:            "+" >
+        | < SUB:            "-" >
         | < AND:            "&&" >
         | < LESS:           "<" >
-        | < MULT_OR_DIV:   "*" | "/" >
+        | < MULT:           "*" >
+        | < DIV:            "/" >
         | < NOT:            "!" >
 
         | < BOOLEAN:        "boolean" >
@@ -111,59 +113,59 @@ PARSER_END(Grammar)
 }
 
 // Production definition
-SimpleNode Program() : {}
+SimpleNode Program(): {}
 {
     ImportDeclaration() ClassDeclaration() <EOF> {return jjtThis;}
 }
 
-void ImportDeclaration() : {Token t;}
+void ImportDeclaration() #ImportDeclaration: {Token t1,t2;}
 {
-    (<IMPORT> #IMPORT t=<IDENTIFIER>{jjtThis.var=t.image;} (<PERIOD> <IDENTIFIER>)* <SEMICOLON>)*
+    (<IMPORT> #Import() t1=<IDENTIFIER> { jjtThis.var=t1.image; } #Identifier() (<PERIOD> #Period t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier() )* <SEMICOLON> #Semicolon)*
 }
 
-void ClassDeclaration() : {}
+void ClassDeclaration() #ClassDeclaration : {Token t1,t2;}
 {
-    <CLASS> <IDENTIFIER> (<EXTENDS> <IDENTIFIER>)? <LBRACE> (VarDeclaration())* (MethodDeclaration())* <RBRACE>
+    <CLASS> #Class t1=<IDENTIFIER> {jjtThis.var=t1.image;} #Identifier() (<EXTENDS> #Extends t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier() )? <LBRACE> #LBrace() (VarDeclaration())* (MethodDeclaration())* <RBRACE> #RBrace
 }
 
-void VarDeclaration() : {Token t;}
+void VarDeclaration() #VarDeclaration : {Token t;}
 {
-    Type() t=<IDENTIFIER>{jjtThis.var=t.image;} <SEMICOLON>
+    Type() t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <SEMICOLON> #Semicolon
 }
 
-void MethodDeclaration() : {}
+void MethodDeclaration() #MethodDeclaration : {Token t1, t2, t3;}
 {
-    <PUBLIC> (Type() <IDENTIFIER> <LPARENTHESIS> (Type() <IDENTIFIER> (<COMMA> Type() <IDENTIFIER>)*)? <RPARENTHESIS>
-    <LBRACE>  MethodBody() <RETURN> Expression() <SEMICOLON> <RBRACE>
-    | <STATIC> <VOID> <MAIN> <LPARENTHESIS> <STRING> <LBRACKET> <RBRACKET> <IDENTIFIER> <RPARENTHESIS> <LBRACE>
-    MethodBody() <RBRACE>)
+    <PUBLIC> #Public()
+    (Type() t1=<IDENTIFIER> {jjtThis.var = t1.image;} #Identifier <LPARENTHESIS> #LParenthesis() (Type() t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier() (<COMMA> Type() t3=<IDENTIFIER> {jjtThis.var=t3.image;} #Identifier())*)? <RPARENTHESIS> #RParenthesis
+    <LBRACE> #LBrace MethodBody() <RETURN> #Return Expression() <SEMICOLON> #Semicolon <RBRACE> #RBrace
+    | <STATIC> #Static <VOID> #Void <MAIN> #Main <LPARENTHESIS> #LParenthesis <STRING> #String <LBRACKET> #LBracket <RBRACKET> #RBracket t1=<IDENTIFIER> {jjtThis.var=t1.image;} #Identifier() <RPARENTHESIS> #RParenthesis <LBRACE> #LBrace
+    MethodBody() <RBRACE> #RBrace)
 }
 
-void MethodBody():{}{
+void MethodBody() #MethodBody :{}{
     (LOOKAHEAD(2) VarDeclaration())* (Statement())*
 }
 
-void Type() : {}
+void Type() #Type : {Token t, t1;}
 {
-    (<INT> (<LBRACKET> <RBRACKET>)?)
-    | <BOOLEAN>
-    | <IDENTIFIER>
+    <INT> #Int() (t1 = <LBRACKET> <RBRACKET> #Array())?
+    | t=<BOOLEAN> #Boolean
+    | t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier
 }
 
-void Statement() : {}
+void Statement() #Statement : {}
 {
-    <LBRACE> (Statement())* <RBRACE>
-    | <IF> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement() <ELSE> Statement()
-    // | <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
-    | <WHILE> WhileStatement()
-    | Expression()[<ASSIGN> Expression() ]<SEMICOLON>
+    <LBRACE> #LBrace() (Statement())* <RBRACE> #RBrace()
+    | <IF> #If <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis Statement() <ELSE> #Else Statement()
+    | <WHILE> #While WhileStatement()
+    | Expression()[<ASSIGN> #Assign Expression() ] <SEMICOLON> #Semicolon
 }
 
 // <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
-void WhileStatement() : {}
+void WhileStatement() #WhileStatement : {}
 {
     try {
-        <LPARENTHESIS> Expression() <RPARENTHESIS>
+        <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis
     }
     catch (ParseException e){
         error_skipto("Error on While Condition");
@@ -172,55 +174,60 @@ void WhileStatement() : {}
     finally{
         if(!error) Statement();
     }
-
 }
 
-void Expression() : {Token t;}
+void Expression() #Expression : {Token t;}
 {
-    Less() (<AND> Less())*
+    Less() (<AND> #And() Less())*
 }
 
-void Less():{}
+void Less() #LessFunction :{}
 {
-    AddOrSub() (<LESS> AddOrSub())*
+    AddOrSub() (<LESS> #Less() AddOrSub())*
 }
 
-void AddOrSub():{}{
+void AddOrSub() #Term :{}{
 
-    MultOrDiv() (<ADD_OR_SUB> MultOrDiv() )*
+    MultOrDiv() (
+    ( <ADD> #Add() | <SUB> #Sub())
+     MultOrDiv()
+    )*
 }
-void MultOrDiv() : {}
+void MultOrDiv() #Term : {}
 {
-    Not() (<MULT_OR_DIV> Not())*
+    Not() (
+       ( <MULT> #Mult() | <DIV> #Div())
+       Not()
+    )*
 }
 
-void Not():{} //
+void Not() #NotFunction :{}
 {
-    <NOT> Not() | Period()
+    <NOT> #Not Not() | Period()
 }
 
-void Period():{}
+void Period() #PeriodFunction :{Token t;}
 {
-    Arrays()(<PERIOD> (<LENGTH> | (<IDENTIFIER> <LPARENTHESIS> (Parameter())? <RPARENTHESIS>)))*
+    Arrays()(<PERIOD> #Period() (<LENGTH> #Length | (t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> #LParenthesis() (Parameter())? <RPARENTHESIS> #RParenthesis)))*
 }
 
-void Parameter():{}
+void Parameter() #Parameter :{}
 {
-    Expression() (<COMMA> Expression())*
+    Expression() (<COMMA> #Comma Expression())*
 }
 
-void Arrays():{}
+void Arrays() #ArraysFunction :{}
 {
-    FinalTerms()(<LBRACKET> Expression() <RBRACKET> (FinalTerms())?)*
+    FinalTerms()(<LBRACKET> #LBracket Expression() <RBRACKET> #RBracket() (FinalTerms())?)*
 }
 
-void FinalTerms() : {}
+void FinalTerms() #FinalTerms : {Token t;}
 {
-    <INTEGER>
-    | <TRUE>
-    | <FALSE>
-    | <IDENTIFIER>
-    | <THIS>
-    | <NEW> ((<INT> <LBRACKET> Expression() <RBRACKET>) | (<IDENTIFIER> <LPARENTHESIS> <RPARENTHESIS>))
-    | <LPARENTHESIS> Expression() <RPARENTHESIS>
+     t=<INTEGER> {jjtThis.val = Integer.parseInt(t.image);} #Number()
+    | <TRUE> #True
+    | <FALSE> #False
+    | t=<IDENTIFIER> {jjtThis.var = t.image;} #Identifier()
+    | <THIS> #This
+    | <NEW> #New() ((<INT> #Int <LBRACKET> #LBracket Expression() <RBRACKET> #RBracket) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
+    | <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis
 }
