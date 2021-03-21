@@ -6,6 +6,7 @@ import pt.up.fe.comp.jmm.JmmNode;
 import java.lang.RuntimeException;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public
@@ -17,6 +18,8 @@ class SimpleNode implements Node, JmmNode {
     public Operator op = null;
     public int line;
     public int column;
+
+    private HashMap<String,String> attributes = new HashMap<>();
 
     protected Node parent;
     protected Node[] children;
@@ -38,19 +41,23 @@ class SimpleNode implements Node, JmmNode {
     }
 
     public List<String> getAttributes() {
-        throw new RuntimeException("Not implemented yet");
+        List<String> names = new ArrayList<>();
+        for ( String name : attributes.keySet() ) {
+            names.add(name);
+        }
+        return names;
     }
 
     public void put(String attribute, String value) {
-        throw new RuntimeException("Not implemented yet");
+        attributes.put(attribute, value);
     }
 
     public String get(String attribute) {
-        throw new RuntimeException("Not implemented yet");
+        return attributes.get(attribute);
     }
 
     public List<JmmNode> getChildren() {
-        return (children == null) ? new ArrayList<>() : Arrays.asList((JmmNode[]) children);
+        return JmmNode.convertChildren(children);
     }
 
     public int getNumChildren() {
