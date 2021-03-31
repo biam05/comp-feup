@@ -1,4 +1,5 @@
 
+import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParser;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.report.Report;
@@ -15,9 +16,9 @@ public class Main implements JmmParser {
 		    Grammar myGrammar = new Grammar(new StringReader(jmmCode));
     		SimpleNode root = myGrammar.Program(); // returns reference to root node
             	
-    		root.dump(""); // prints the tree on the screen
-			root.toJson();
-    		return new JmmParserResult(root, new ArrayList<Report>());
+    		//root.dump(""); // prints the tree on the screen
+			var node = root.toJson();
+			return new JmmParserResult(root, new ArrayList<Report>());
 		} catch(ParseException e) {
 			throw new RuntimeException("Error while parsing", e);
 		}
