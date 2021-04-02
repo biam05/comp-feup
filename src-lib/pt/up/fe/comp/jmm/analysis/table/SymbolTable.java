@@ -33,7 +33,7 @@ public interface SymbolTable {
     List<String> getMethods();
 
     /**
-     * 
+     * @param methodName
      * @return the return type of the given method
      */
     Type getReturnType(String methodName);
