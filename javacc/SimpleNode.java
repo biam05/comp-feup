@@ -121,8 +121,8 @@ class SimpleNode implements Node, JmmNode {
      you need to do. */
 
     public String toString() {
-        if (val != -1) return GrammarTreeConstants.jjtNodeName[id] + " \"" + val + "\"";
-        else if (var != "") return GrammarTreeConstants.jjtNodeName[id] + " \"" + var + "\"";
+        if (val != -1) return GrammarTreeConstants.jjtNodeName[id] + " '" + val + "'";
+        else if (var != "") return GrammarTreeConstants.jjtNodeName[id] + " '" + var + "'";
 
         switch (this.id) {
             case GrammarTreeConstants.JJTPUBLIC:
@@ -153,8 +153,8 @@ class SimpleNode implements Node, JmmNode {
                 return "main";
             case GrammarTreeConstants.JJTLPARENTHESIS:
                 return "(";
-            case GrammarTreeConstants.JJTSTRING:
-                return "String";
+            case GrammarTreeConstants.JJTSTRINGARRAY:
+                return "String[]";
             case GrammarTreeConstants.JJTLBRACKET:
                 return "[";
             case GrammarTreeConstants.JJTRBRACKET:
