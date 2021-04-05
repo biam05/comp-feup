@@ -1,7 +1,4 @@
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
-import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
-import pt.up.fe.comp.jmm.analysis.table.Type;
+import pt.up.fe.comp.jmm.analysis.table.*;
 
 
 import java.util.ArrayList;
@@ -9,10 +6,10 @@ import java.util.List;
 
 public class GrammarSymbolTable implements SymbolTable {
 
-    private final List<String> imports = new ArrayList<>();
+    private final List<SymbolImport> imports = new ArrayList<>();
     private String className;
     private String superExtends;
-    private final List<Symbol> classFields = new ArrayList<>();
+    private final List<SymbolClass> classFields = new ArrayList<>();
     private final List<SymbolMethod> methods = new ArrayList<>();
 
     public void setClassName(String className) {
@@ -23,11 +20,11 @@ public class GrammarSymbolTable implements SymbolTable {
         this.superExtends = superExtends;
     }
 
-    public void addImport(String importName) {
+    public void addImport(SymbolImport importName) {
         this.imports.add(importName);
     }
 
-    public void addClassField(Symbol classField) {
+    public void addClassField(SymbolClass classField) {
         this.classFields.add(classField);
     }
 
