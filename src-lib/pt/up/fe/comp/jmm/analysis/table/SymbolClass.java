@@ -12,11 +12,10 @@ public class SymbolClass {
         this.methods = new ArrayList<>();
     }
 
-    public SymbolClass(String name, ArrayList<Symbol> attributes, ArrayList<Symbol> methods) {
+    public SymbolClass(String name, List<Symbol> attributes, List<Symbol> methods) {
         this.name = name;
         this.attributes = attributes;
         this.methods = methods;
-
     }
 
     public void setName(String name) {
