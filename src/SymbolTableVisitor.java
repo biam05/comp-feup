@@ -18,57 +18,45 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         addVisit("MethodDeclaration", this::visitMethod);
     }
 
-    public Boolean visitClass(JmmNode node, Boolean dummy) {
-        System.out.println("Class: " + node);
+    public GrammarSymbolTable getSymbolTable() {
+        return symbolTable;
+    }
 
-        SymbolClass symbolClass = new SymbolClass();
+    public List<Report> getReports() {
+        return reports;
+    }
+
+    public Boolean visitClass(JmmNode node, Boolean dummy) {
 
         List<JmmNode> children = node.getChildren();
 
+        Boolean classNameSet = false;
         for (int i = 0; i < children.size(); i++) {
             JmmNode child = children.get(i);
             String childKind = child.getKind();
-            if (childKind.contains("Identifier")) {
+            if (childKind.contains("Identifier") && !classNameSet) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
-                symbolClass.setName(name);
+                symbolTable.setClassName(name);
+                classNameSet = true;
             }
-            else if (childKind.equals("{")) { // attributes
-                List<JmmNode> attributes_methods = new ArrayList<>();
+            else if (childKind.contains("Identifier")) {
+                String name = childKind.replaceAll("'", "").replace("Identifier ", "");
+                symbolTable.setSuperExtends(name);
+            }
+            else if (childKind.equals("{")) {
                 while (true) {
                     i++;
                     JmmNode aux = children.get(i);
                     if (aux.getKind().equals("}")) break;
-                    attributes_methods.add(children.get(i));
+                    else if (aux.getKind().equals("MethodDeclaration")) continue;
+                    symbolTable.addClassField(parseVarDeclaration(aux));
                 }
-                getClassAttributesAndMethods(symbolClass, attributes_methods);
             }
         }
-        this.symbolTable.addClassField(symbolClass);
-
         return true;
     }
 
-    public void getClassAttributesAndMethods(SymbolClass symbolClass, List<JmmNode> nodes) {
-
-        if ((nodes.size() == 0)) return;
-
-        for (int i = 0; i < nodes.size(); i++) {
-            JmmNode node = nodes.get(i);
-            if (node.getKind().equals("VarDeclaration")) {
-                Symbol symbol = parseVarDeclaration(node);
-                symbolClass.addAttribute(symbol);
-            }
-            else
-            {
-                visitMethod(node, true);
-            }
-        }
-    }
-
     public Boolean visitImport(JmmNode node, Boolean dummy) {
-        System.out.println("Import: " + node);
-
-        SymbolImport symbolImport = new SymbolImport();
 
         List<JmmNode> children = node.getChildren();
 
@@ -76,15 +64,13 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             String childKind = child.getKind();
             if (childKind.contains("Identifier")) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
-                symbolImport.setName(name);
+                this.symbolTable.addImport(name);
             }
         }
-        this.symbolTable.addImport(symbolImport);
         return true;
     }
 
     public Boolean visitMethod(JmmNode node, Boolean dummy) {
-        System.out.println("Method: " + node);
 
         SymbolMethod method = new SymbolMethod();
 
@@ -126,7 +112,6 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         this.symbolTable.addMethod(method);
         return true;
     }
-
 
     public void getMethodParameters(SymbolMethod method, List<JmmNode> nodes) {
 

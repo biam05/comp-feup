@@ -56,4 +56,17 @@ public class SymbolMethod {
     public List<Symbol> getLocalVariables() {
         return localVariables;
     }
+
+    public boolean equalsMethod(List<String> info) {
+        if(info == null || info.size() < 2) return false;
+
+        String name = info.get(0);
+        if(name != this.name) return false;
+
+        boolean isArray = info.get(1).contains("[]");
+        String returnType = info.get(1).replace("[]", "");
+
+
+
+    }
 }

@@ -1,5 +1,6 @@
 package pt.up.fe.comp;
 
+import java.sql.SQLOutput;
 import java.util.Arrays;
 import java.util.HashMap;
 
