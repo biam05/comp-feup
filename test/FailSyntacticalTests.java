@@ -2,7 +2,7 @@
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
-public class FailTests  {
+public class FailSyntacticalTests {
 
     @Test
     public void BlowUp() {
