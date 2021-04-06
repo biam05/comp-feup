@@ -76,28 +76,31 @@ public class GrammarSymbolTable implements SymbolTable {
         return list;
     }
 
-    private SymbolMethod getMethodByName(String method) {
-        List<String> info = parseMethodInfo(method);
+    private SymbolMethod getMethodByInfo(String methodInfo) {
+        List<String> info = parseMethodInfo(methodInfo);
 
+        for(SymbolMethod method: this.methods) {
+            if(method.equalsMethod(info)) return method;
+        }
 
         return null;
     }
 
     @Override
     public Type getReturnType(String methodName) { //methodName(returnType,returnP[],returnP,returnP,....)
-        SymbolMethod method = getMethodByName(methodName);
+        SymbolMethod method = getMethodByInfo(methodName);
         return method.getReturnType();
     }
 
     @Override
     public List<Symbol> getParameters(String methodName) {
-        SymbolMethod method = getMethodByName(methodName);
+        SymbolMethod method = getMethodByInfo(methodName);
         return method.getParameters();
     }
 
     @Override
     public List<Symbol> getLocalVariables(String methodName) {
-        SymbolMethod method = getMethodByName(methodName);
+        SymbolMethod method = getMethodByInfo(methodName);
         return method.getLocalVariables();
     }
 }

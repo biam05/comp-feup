@@ -60,13 +60,27 @@ public class SymbolMethod {
     public boolean equalsMethod(List<String> info) {
         if(info == null || info.size() < 2) return false;
 
+        if((info.size() - 2) != this.parameters.size()) return false;
+
         String name = info.get(0);
-        if(name != this.name) return false;
+        if(!name.equals(this.name)) return false;
 
-        boolean isArray = info.get(1).contains("[]");
-        String returnType = info.get(1).replace("[]", "");
+        Type returnType = createType(info.get(1));
+        if(!returnType.equals(this.returnType)) return false;
 
+        for(int i = 2; i < info.size(); i++) {
+            Type type = createType(info.get(i));
+            if(!type.equals(this.parameters.get(i))) return false;
+        }
 
+        return true;
+    }
 
+    private Type createType(String t) {
+
+        boolean isArray = t.contains("[]");
+        String type = t.replace("[]", "");
+
+        return new Type(type, isArray);
     }
 }

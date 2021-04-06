@@ -42,4 +42,10 @@ public class Type {
         return "Type [name=" + name + ", isArray=" + isArray + "]";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if((obj == null) || (obj.getClass() != Type.class)) return false;
+
+        return (isArray == ((Type) obj).isArray) && (name == ((Type) obj).getName());
+    }
 }
