@@ -70,7 +70,7 @@ public class GrammarSymbolTable implements SymbolTable {
         String[] firstParse = info.split("\\(");
         list.add(firstParse[0]); //method name
 
-        String[] types = firstParse[1].replace(")", "").split(","); //return type and parameters type
+        String[] types = firstParse[1].replace(")", "").split(","); //parameters type
         list.addAll(Arrays.asList(types));
 
         return list;
@@ -87,20 +87,23 @@ public class GrammarSymbolTable implements SymbolTable {
     }
 
     @Override
-    public Type getReturnType(String methodName) { //methodName(returnType,returnP[],returnP,returnP,....)
+    public Type getReturnType(String methodName) { //methodName(returnP[],returnP,returnP,....)
         SymbolMethod method = getMethodByInfo(methodName);
+        if(method == null) return null;
         return method.getReturnType();
     }
 
     @Override
     public List<Symbol> getParameters(String methodName) {
         SymbolMethod method = getMethodByInfo(methodName);
+        if(method == null) return null;
         return method.getParameters();
     }
 
     @Override
     public List<Symbol> getLocalVariables(String methodName) {
         SymbolMethod method = getMethodByInfo(methodName);
+        if(method == null) return null;
         return method.getLocalVariables();
     }
 }

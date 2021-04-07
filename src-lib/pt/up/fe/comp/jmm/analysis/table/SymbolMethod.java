@@ -58,19 +58,16 @@ public class SymbolMethod {
     }
 
     public boolean equalsMethod(List<String> info) {
-        if(info == null || info.size() < 2) return false;
+        if(info == null || info.size() < 1) return false;
 
-        if((info.size() - 2) != this.parameters.size()) return false;
+        if((info.size() - 1) != this.parameters.size()) return false;
 
         String name = info.get(0);
         if(!name.equals(this.name)) return false;
 
-        Type returnType = createType(info.get(1));
-        if(!returnType.equals(this.returnType)) return false;
-
-        for(int i = 2; i < info.size(); i++) {
+        for(int i = 1; i < info.size(); i++) {
             Type type = createType(info.get(i));
-            if(!type.equals(this.parameters.get(i))) return false;
+            if(!type.equals(this.parameters.get(i).getType())) return false;
         }
 
         return true;
