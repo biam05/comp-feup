@@ -110,6 +110,8 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         }
 
         this.symbolTable.addMethod(method);
+
+
         return true;
     }
 
@@ -137,8 +139,50 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 Symbol localVariable = parseVarDeclaration(child);
                 method.addLocalVariables(localVariable);
             }
+            else if (child.getKind().equals("Statement"))
+                visitStatement(method, node);
         }
     }
+
+    public void visitStatement(SymbolMethod method, JmmNode node){
+        List <JmmNode> children = node.getChildren();
+        for(JmmNode child: children){
+            if(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression")){
+                System.out.println("got the while");
+                visitConditionalStatement(method, child);
+            }
+            else if(child.getKind().equals("Expression")){
+                visitExpression(child);
+            }
+        }
+    }
+
+    public void visitConditionalStatement(SymbolMethod method, JmmNode node){
+        List <JmmNode> children = node.getChildren();
+        for(JmmNode child: children){
+            if(child.getKind().equals("Expression")){
+                checkBooleanExpression(method, child);
+            }
+        }
+    }
+
+    public void checkBooleanExpression(SymbolMethod method, JmmNode node){
+        //verificar se conditional expressions (if e while) resulta num booleano
+        //se sim nice
+        //senao adiciona aos reports
+    }
+
+    public void visitExpression(JmmNode node){
+
+        //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
+        //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2)
+        //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido)
+        //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido)
+        //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!)
+        //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
+
+    }
+
 
     public Symbol parseVarDeclaration(JmmNode node) {
         List<JmmNode> children = node.getChildren();

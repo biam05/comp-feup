@@ -5,7 +5,6 @@ import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
 import pt.up.fe.comp.jmm.report.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class AnalysisStage implements JmmAnalysis {

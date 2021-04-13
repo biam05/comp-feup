@@ -1,6 +1,7 @@
 options
 {
     LOOKAHEAD=1;
+    NODE_SCOPE_HOOK=true;
 }
 
 PARSER_BEGIN(Grammar)
@@ -51,6 +52,14 @@ PARSER_BEGIN(Grammar)
                     return;
             }
             while (counter > 0);
+        }
+
+        void jjtreeOpenNodeScope(Node n) {
+            ((SimpleNode)n).put("line", Integer.toString(getToken(1).beginLine));
+            ((SimpleNode)n).put("col", Integer.toString(getToken(1).beginColumn));
+        }
+
+        void jjtreeCloseNodeScope(Node n) {
         }
     }
 PARSER_END(Grammar)
@@ -157,9 +166,9 @@ void Type() #Type : {Token t;}
 void Statement() #Statement : {}
 {
     <LBRACE> #LBrace() (Statement())* <RBRACE> #RBrace()
-    | <IF> #If <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis Statement() <ELSE> #Else Statement()
+    | (<IF>  <LPARENTHESIS> Expression() <RPARENTHESIS>) #IfExpression Statement() <ELSE> #Else Statement()
     | <WHILE> #While WhileStatement()
-    | Expression()[<ASSIGN> #Assign Expression() ] <SEMICOLON> #Semicolon
+        | Expression()[<ASSIGN> #Assign Expression() ] <SEMICOLON> #Semicolon
 }
 
 // <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
@@ -182,19 +191,19 @@ void Expression() #Expression : {Token t;}
     Less() (<AND> #And() Less())*
 }
 
-void Less() #LessFunction :{}
+void Less() :{}
 {
-    AddOrSub() (<LESS> #Less() AddOrSub())*
+    AddOrSub() (<LESS> #Less AddOrSub())*
 }
 
-void AddOrSub() #Term :{}{
+void AddOrSub() :{}{
 
     MultOrDiv() (
-    ( <ADD> #Add() | <SUB> #Sub())
+    ( <ADD> #Add | <SUB> #Sub)
      MultOrDiv()
     )*
 }
-void MultOrDiv() #Term : {}
+void MultOrDiv() : {}
 {
     Not() (
        ( <MULT> #Mult() | <DIV> #Div())
@@ -202,27 +211,28 @@ void MultOrDiv() #Term : {}
     )*
 }
 
-void Not() #NotFunction :{}
+void Not() :{}
 {
     <NOT> #Not Not() | Period()
 }
 
-void Period() #PeriodFunction :{Token t;}
+
+void Period() :{Token t;}
 {
     Arrays()(<PERIOD> #Period() (<LENGTH> #Length | (t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> #LParenthesis() (Parameter())? <RPARENTHESIS> #RParenthesis)))*
 }
 
-void Parameter() #Parameter :{}
+void Parameter() :{}
 {
     Expression() (<COMMA> #Comma Expression())*
 }
 
-void Arrays() #ArraysFunction :{}
+void Arrays() :{}
 {
     FinalTerms()(<LBRACKET> #LBracket Expression() <RBRACKET> #RBracket() (FinalTerms())?)*
 }
 
-void FinalTerms() #FinalTerms : {Token t;}
+void FinalTerms() : {Token t;}
 {
      t=<INTEGER> {jjtThis.val = Integer.parseInt(t.image);} #Number()
     | <TRUE> #True
@@ -232,3 +242,5 @@ void FinalTerms() #FinalTerms : {Token t;}
     | <NEW> #New() ((<INT> #Int <LBRACKET> #LBracket Expression() <RBRACKET> #RBracket) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
     | <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis
 }
+
+

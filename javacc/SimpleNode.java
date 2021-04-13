@@ -165,8 +165,6 @@ class SimpleNode implements Node, JmmNode {
                 return "[]";
             case GrammarTreeConstants.JJTBOOLEAN:
                 return "boolean";
-            case GrammarTreeConstants.JJTIF:
-                return "if";
             case GrammarTreeConstants.JJTELSE:
                 return "else";
             case GrammarTreeConstants.JJTWHILE:

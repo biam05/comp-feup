@@ -1,5 +1,7 @@
 package pt.up.fe.comp.jmm.analysis.table;
 
+import pt.up.fe.comp.jmm.JmmNode;
+
 public class Symbol {
     private final Type type;
     private final String name;
@@ -7,6 +9,11 @@ public class Symbol {
     public Symbol(Type type, String name) {
         this.type = type;
         this.name = name;
+    }
+
+    public Symbol(JmmNode type, JmmNode name) {
+        this.type = new Type(type);
+        this.name = name.getKind().replaceAll("'", "").replace("Identifier ", "");
     }
 
     public Type getType() {
