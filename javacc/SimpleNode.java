@@ -167,8 +167,6 @@ class SimpleNode implements Node, JmmNode {
                 return "boolean";
             case GrammarTreeConstants.JJTELSE:
                 return "else";
-            case GrammarTreeConstants.JJTWHILE:
-                return "while";
             case GrammarTreeConstants.JJTASSIGN:
                 return "=";
             case GrammarTreeConstants.JJTAND:

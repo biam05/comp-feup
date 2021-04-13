@@ -167,8 +167,8 @@ void Statement() #Statement : {}
 {
     <LBRACE> #LBrace() (Statement())* <RBRACE> #RBrace()
     | (<IF>  <LPARENTHESIS> Expression() <RPARENTHESIS>) #IfExpression Statement() <ELSE> #Else Statement()
-    | <WHILE> #While WhileStatement()
-        | Expression()[<ASSIGN> #Assign Expression() ] <SEMICOLON> #Semicolon
+    | <WHILE> WhileStatement()
+     | Expression()[<ASSIGN> #Assign Expression() ] <SEMICOLON> #Semicolon
 }
 
 // <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
@@ -191,19 +191,19 @@ void Expression() #Expression : {Token t;}
     Less() (<AND> #And() Less())*
 }
 
-void Less() :{}
+void Less() #void:{}
 {
     AddOrSub() (<LESS> #Less AddOrSub())*
 }
 
-void AddOrSub() :{}{
+void AddOrSub() #void:{}{
 
     MultOrDiv() (
     ( <ADD> #Add | <SUB> #Sub)
      MultOrDiv()
     )*
 }
-void MultOrDiv() : {}
+void MultOrDiv() #void: {}
 {
     Not() (
        ( <MULT> #Mult() | <DIV> #Div())
@@ -211,28 +211,28 @@ void MultOrDiv() : {}
     )*
 }
 
-void Not() :{}
+void Not() #void:{}
 {
     <NOT> #Not Not() | Period()
 }
 
 
-void Period() :{Token t;}
+void Period() #void:{Token t;}
 {
     Arrays()(<PERIOD> #Period() (<LENGTH> #Length | (t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> #LParenthesis() (Parameter())? <RPARENTHESIS> #RParenthesis)))*
 }
 
-void Parameter() :{}
+void Parameter() #void:{}
 {
     Expression() (<COMMA> #Comma Expression())*
 }
 
-void Arrays() :{}
+void Arrays()  #void:{}
 {
     FinalTerms()(<LBRACKET> #LBracket Expression() <RBRACKET> #RBracket() (FinalTerms())?)*
 }
 
-void FinalTerms() : {Token t;}
+void FinalTerms(): {Token t;}
 {
      t=<INTEGER> {jjtThis.val = Integer.parseInt(t.image);} #Number()
     | <TRUE> #True

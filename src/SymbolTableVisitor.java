@@ -140,19 +140,19 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 method.addLocalVariables(localVariable);
             }
             else if (child.getKind().equals("Statement"))
-                visitStatement(method, node);
+                visitStatement(method, child);
         }
     }
 
     public void visitStatement(SymbolMethod method, JmmNode node){
         List <JmmNode> children = node.getChildren();
         for(JmmNode child: children){
+            System.out.println(child);
             if(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression")){
-                System.out.println("got the while");
                 visitConditionalStatement(method, child);
             }
             else if(child.getKind().equals("Expression")){
-                visitExpression(child);
+                visitExpression(method, child);
             }
         }
     }
@@ -161,25 +161,62 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         List <JmmNode> children = node.getChildren();
         for(JmmNode child: children){
             if(child.getKind().equals("Expression")){
-                checkBooleanExpression(method, child);
+                checkBooleanExpression(child);
             }
         }
     }
 
-    public void checkBooleanExpression(SymbolMethod method, JmmNode node){
+    public boolean checkBooleanExpression( JmmNode node){
+        System.out.println("got the while");
+        List <JmmNode> children = node.getChildren();
+        for(int i = 0; i < children.size(); i++){
+            JmmNode child = children.get(i);
+            System.out.println(child);
+            if(child.getKind().equals("&&")){ //dois booleanos
+                if(checkBooleanExpression(children.get(i-1)) && checkBooleanExpression(children.get(i+1))) return true;
+                else return false;
+            }
+            else if(child.getKind().equals("<")){
+                // dois valores
+            }
+            else if(child.getKind().equals("!")){
+                if(checkBooleanExpression(children.get(i+1))) return true;
+                else return false;
+            }
+            else if(child.getKind().equals("true") || child.getKind().equals("false")){
+                return true;
+            }
+            else if(child.getKind().equals("FinalTerms")){
+                System.out.println("Yep we can catch expression");
+            }
+            //falta o caso da expressao avaliar para booleano
+            //verificar metodos?
+        }
         //verificar se conditional expressions (if e while) resulta num booleano
         //se sim nice
         //senao adiciona aos reports
+        return true;
     }
 
-    public void visitExpression(JmmNode node){
+    public void visitExpression(SymbolMethod method, JmmNode node){
 
+        System.out.println("Expression children:");
+        for(JmmNode child: node.getChildren()){
+            System.out.println(child);
+        }
         //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
         //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2)
         //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido)
         //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido)
         //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!)
         //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
+        /*
+        -> verificar se o "target" do método existe, e se este contém o método (e.g. a.foo, ver se 'a' existe e se tem um método 'foo')
+            - caso seja do tipo da classe declarada (e.g. a usar o this), se não existir declaração na própria classe: se não tiver extends retorna erro, se tiver extends assumir que é da classe super.
+        -> caso o método não seja da classe declarada, isto é uma classe importada, assumir como existente e assumir tipos esperados. (e.g. a = Foo.b(), se a é um inteiro, e Foo é uma classe importada, assumir que o método b é estático (pois estamos a aceder a uma método diretamente da classe), que não tem argumentos e que retorna um inteiro)
+        -> verificar se o número de argumentos na invocação é igual ao número de parâmetros da declaração
+        -> verificar se o tipo dos parâmetros coincide com o tipo dos argumentos
+        */
 
     }
 
