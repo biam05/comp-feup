@@ -49,6 +49,14 @@ public class SymbolMethod {
         return returnType;
     }
 
+    public Type getVariableType(String name) {
+        for(Symbol symbol: localVariables){
+            if(symbol.getName().equals(name))
+                return symbol.getType();
+        }
+        return null;
+    }
+
     public List<Symbol> getParameters() {
         return parameters;
     }

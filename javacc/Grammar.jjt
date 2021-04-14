@@ -188,32 +188,32 @@ void WhileStatement() #WhileStatement : {}
 
 void Expression() #Expression : {Token t;}
 {
-    Less() (<AND> #And() Less())*
+    Less() (<AND> Less() #And(2))*
 }
 
 void Less() #void:{}
 {
-    AddOrSub() (<LESS> #Less AddOrSub())*
+    AddOrSub() (<LESS> AddOrSub() #Less(2))*
 }
 
 void AddOrSub() #void:{}{
 
     MultOrDiv() (
-    ( <ADD> #Add | <SUB> #Sub)
-     MultOrDiv()
+    ( <ADD> |<SUB>)
+     MultOrDiv() #AddSub(2)
     )*
 }
 void MultOrDiv() #void: {}
 {
     Not() (
-       ( <MULT> #Mult() | <DIV> #Div())
-       Not()
+       ( <MULT> | <DIV> )
+       Not() #MultDiv(2)
     )*
 }
 
 void Not() #void:{}
 {
-    <NOT> #Not Not() | Period()
+    <NOT>  Not() #Not(1)| Period()
 }
 
 
@@ -234,13 +234,13 @@ void Arrays()  #void:{}
 
 void FinalTerms(): {Token t;}
 {
-     t=<INTEGER> {jjtThis.val = Integer.parseInt(t.image);} #Number()
+     t=<INTEGER> {jjtThis.val = Integer.parseInt(t.image);} #Number
     | <TRUE> #True
     | <FALSE> #False
-    | t=<IDENTIFIER> {jjtThis.var = t.image;} #Identifier()
+    | t=<IDENTIFIER> {jjtThis.var = t.image;} #Identifier
     | <THIS> #This
     | <NEW> #New() ((<INT> #Int <LBRACKET> #LBracket Expression() <RBRACKET> #RBracket) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
-    | <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis
+    | <LPARENTHESIS>  Expression() <RPARENTHESIS>
 }
 
 

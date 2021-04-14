@@ -2,6 +2,8 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.*;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -149,7 +151,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         for(JmmNode child: children){
             System.out.println(child);
             if(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression")){
-                visitConditionalStatement(method, child);
+                visitConditionalStatement(child);
             }
             else if(child.getKind().equals("Expression")){
                 visitExpression(method, child);
@@ -157,46 +159,82 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         }
     }
 
-    public void visitConditionalStatement(SymbolMethod method, JmmNode node){
+    public void visitConditionalStatement(JmmNode node){
         List <JmmNode> children = node.getChildren();
         for(JmmNode child: children){
             if(child.getKind().equals("Expression")){
-                checkBooleanExpression(child);
+                evaluatesToBoolean(child);
             }
         }
     }
 
-    public boolean checkBooleanExpression( JmmNode node){
-        System.out.println("got the while");
+    //if it is inside of the while and is a statement goes back to visitStatement
+
+    //if it finds an expression in the while it call it goes to visit expression
+
+    public boolean evaluatesToBoolean( JmmNode node){
         List <JmmNode> children = node.getChildren();
-        for(int i = 0; i < children.size(); i++){
+        for(int i = 0; i < children.size(); i++) {
             JmmNode child = children.get(i);
-            System.out.println(child);
-            if(child.getKind().equals("&&")){ //dois booleanos
-                if(checkBooleanExpression(children.get(i-1)) && checkBooleanExpression(children.get(i+1))) return true;
-                else return false;
+            System.out.println("---> " + children.get(i).getKind());
+            Report report = null;
+            switch (child.getKind()) {
+                case "And":
+                    if (evaluatesToBoolean(child.getChildren().get(0)) && evaluatesToBoolean(child.getChildren().get(1))) return true;
+                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand types for binary operator '&&'");
+                    break;
+
+                case "Less":
+                    if (evaluatesToInteger(child.getChildren().get(0)) && evaluatesToInteger(child.getChildren().get(0))) return true;
+                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand types for binary operator '<'");
+                    break;
+
+                case "Not":
+                    if (evaluatesToBoolean(child.getChildren().get(0))) return true;
+                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand type for binary operator '!'");
+
+                    break;
+
+                case "True":
+                case "False":
+                    return true;
+
+                default:
+                    return false;
             }
-            else if(child.getKind().equals("<")){
-                // dois valores
+            
+            if(report != null) {
+                System.out.println(report.toString());
+                this.reports.add(report);
             }
-            else if(child.getKind().equals("!")){
-                if(checkBooleanExpression(children.get(i+1))) return true;
-                else return false;
-            }
-            else if(child.getKind().equals("true") || child.getKind().equals("false")){
-                return true;
-            }
-            else if(child.getKind().equals("FinalTerms")){
-                System.out.println("Yep we can catch expression");
-            }
-            //falta o caso da expressao avaliar para booleano
-            //verificar metodos?
         }
+        //falta o caso da expressao avaliar para booleano
+        //verificar metodos?
+
         //verificar se conditional expressions (if e while) resulta num booleano
         //se sim nice
         //senao adiciona aos reports
-        return true;
+        return false;
     }
+    public boolean evaluatesToInteger(JmmNode node){
+        List <JmmNode> children = node.getChildren();
+        if(children.size() == 1){
+            if(children.get(0).getKind().equals("int")) return true;
+            else if(isIdentifier(children.get(0).getKind())) return true;
+        }
+        for(JmmNode child: children){
+            //check if expression evaluates to int
+            //method
+        }
+        return false;
+    }
+
+    public boolean isIdentifier(String kind){
+        String[] parts = kind.split(" ");
+        return parts[0].equals("Identifier");
+    }
+
+    // TO DO : fazer metodos
 
     public void visitExpression(SymbolMethod method, JmmNode node){
 
@@ -210,6 +248,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido)
         //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!)
         //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
+
         /*
         -> verificar se o "target" do método existe, e se este contém o método (e.g. a.foo, ver se 'a' existe e se tem um método 'foo')
             - caso seja do tipo da classe declarada (e.g. a usar o this), se não existir declaração na própria classe: se não tiver extends retorna erro, se tiver extends assumir que é da classe super.
