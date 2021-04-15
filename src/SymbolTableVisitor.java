@@ -45,11 +45,11 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 symbolTable.setSuperExtends(name);
             }
-            else if (childKind.equals("{")) {
+            else if (childKind.equals("LBrace")) {
                 while (true) {
                     i++;
                     JmmNode aux = children.get(i);
-                    if (aux.getKind().equals("}")) break;
+                    if (aux.getKind().equals("RBrace")) break;
                     else if (aux.getKind().equals("MethodDeclaration")) continue;
                     symbolTable.addClassField(parseVarDeclaration(aux));
                 }
@@ -85,15 +85,15 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             JmmNode child = children.get(i);
             String childKind = child.getKind();
 
-            if (childKind.equals("Type") || childKind.equals("void")) method.setReturnType(new Type(child)); // return type
+            if (childKind.equals("Type") || childKind.equals("Void")) method.setReturnType(new Type(child)); // return type
 
-            else if (childKind.equals("(")) { // parameters
+            else if (childKind.equals("LParenthesis")) { // parameters
                 if (alreadyInBody) break;
                 List<JmmNode> parameters = new ArrayList<>();
                 while (true) {
                     i++;
                     JmmNode aux = children.get(i);
-                    if (aux.getKind().equals(")")) break;
+                    if (aux.getKind().equals("RParenthesis")) break;
                     parameters.add(children.get(i));
                 }
                 getMethodParameters(method, parameters);
@@ -104,7 +104,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 alreadyInBody = true;
             }
 
-            else if (childKind.contains("Identifier") || childKind.equals("main")) {
+            else if (childKind.contains("Identifier") || childKind.equals("Main")) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 method.setName(name);
             }
@@ -238,9 +238,20 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
     public void visitExpression(SymbolMethod method, JmmNode node){
 
-        System.out.println("Expression children:");
-        for(JmmNode child: node.getChildren()){
+        List <JmmNode> children = node.getChildren();
+        for (int i = 0; i < children.size(); i++) {
+            JmmNode child = children.get(i);
             System.out.println(child);
+            if (child.getKind().equals("Period")) {
+                i++;
+                if (children.get(i).getKind().contains("Identifier")) {
+                    String methodName = children.get(i).getKind().replaceAll("'", "").replace("Identifier ", "");
+                } else continue;
+                i -= 2;
+                // Get var name from FinalTerms
+                i += 2;
+                // Call function to check if var exists and has method methodName and check argument types and number
+            }
         }
         //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
         //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2)

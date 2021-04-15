@@ -16,8 +16,8 @@ public class Type {
     public Type(JmmNode node) {
         if(node.getKind().equals("Type")) parseType(node);
         else {
-            this.isArray = node.getKind().contains("[]");
-            this.name = node.getKind().replace("[]", "");
+            this.isArray = node.getKind().contains("Array");
+            this.name = node.getKind().replace("Array", "");
         }
         this.name = this.name.replaceAll("'", "").replace("Identifier ", "");
     }
