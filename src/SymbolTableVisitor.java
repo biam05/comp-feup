@@ -226,9 +226,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
 
         }
-        //falta o caso da expressao avaliar para booleano
-        //verificar metodos?
-
+        //MISSING: checking if the expression or method evaluates to boolean
         return false;
     }
     public boolean evaluatesToInteger(SymbolMethod method, JmmNode node, boolean addsReport){
@@ -249,16 +247,9 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 return true;
             }
         }
-        for(JmmNode child: children){
-            //check if expression evaluates to int
-            //method
-        }
-        if(addsReport){
-            //this.reports.add(report);
-        }
-        return false;
+        // MISSING: checking if the expression or method evalutates to integer
 
-        //a[0] se a é int[] avalia para int
+        return false;
     }
 
     public boolean isIdentifier(SymbolMethod method, JmmNode node, boolean isInt, boolean isArray){
@@ -266,34 +257,32 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
         if(parts[1] != null){
             String identifier = parts[1].replace("\u0027", "");
-            if(!method.hasLocalVariable(identifier)){
-                if(true){//verificar aqui se a claase não o tem
-                    this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "identifier is not declared"));
-                    return false;
-                }
-                if(isInt){//verifica se é do tipo int
-                    if(isArray) return true; //verifica s e é array
-                }
+            Type identifierTypeLocal = method.returnTypeIfExists(identifier);
+            Type identifierTypeClass = symbolTable.returnFieldTypeIfExists(identifier);
+
+            if(identifierTypeLocal == null && identifierTypeClass == null) {
+                this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "identifier is not declared"));
+                return false;
             }
-            else{
-                    if(!(method.getVariableType(identifier).getName().equals("int") == isInt)){
-                        if(isInt) this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier is expected to be of type int"));
-                        else this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier should be of type int"));
-                        return false;
-                    }
-                    if(!(method.getVariableType(identifier).isArray() == isArray)){
-                        if(isArray) this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier is expected to be of type int array"));
-                        else this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier is expected to be of type int, int array found"));
-                        return false;
-                    }
+            boolean local = (identifierTypeLocal != null) ;
+
+            if((local && !(identifierTypeLocal.getName().equals("int") == isInt)) ||(!local && !(identifierTypeClass.getName().equals("int") == isInt))) {
+                if(isInt) this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier is expected to be of type int"));
+                else this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier should be of type int"));
+                return false;
             }
+
+            if((local && !(identifierTypeLocal.isArray() == isInt) )||(!local && !(identifierTypeClass.isArray() == isInt))) {
+                if(isArray) this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier is expected to be of type int array"));
+                else this.reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Identifier is expected to be of type int, int array found"));
+                return false;
+            }
+            return true;
         }
-        return true;
+        return false;
 
     }
 
-
-    // TO DO : fazer metodos
 
     public void visitAssign(SymbolMethod method, JmmNode node){
         System.out.println("----> Assign children:");
@@ -334,7 +323,6 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
     public void visitExpression(SymbolMethod method, JmmNode node){
         Report report = null;
-        //System.out.println("Expression children:");
         for(JmmNode children: node.getChildren()){
             System.out.println(children);
             List<JmmNode> child = children.getChildren();
@@ -375,10 +363,11 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
         //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
         //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
-
         //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2) --> quando se tem um operador verificar se se avalia para um inteiro
-        //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido) --> quando se encontra um ArrayAccess verificar se antes tem uma variabel array
+
         //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido) --> quando se encontra um ArrayAccess a expressao interior tem que avaliar para um inteiro
+        //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido) --> quando se encontra um ArrayAccess verificar se antes tem uma variabel array
+
 
         //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!) --> quando se encontra um assign, verificar que os dois lados avaliam para o mesmo
 

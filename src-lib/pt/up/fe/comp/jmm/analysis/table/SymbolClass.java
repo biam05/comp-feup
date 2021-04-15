@@ -25,13 +25,6 @@ public class SymbolClass {
         this.attributes.add(attribute);
     }
 
-    public Type returnAttributeTypeIfExists(String attr){
-        for(Symbol symbol: attributes){
-            if(symbol.getName().equals(attr)) return symbol.getType();
-        }
-        return null;
-    }
-
     public String getName() {
         return name;
     }

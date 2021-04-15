@@ -56,12 +56,12 @@ public class SymbolMethod {
         }
         return null;
     }
-    public boolean hasLocalVariable(String name){
+    public Type returnTypeIfExists(String name){
         for(Symbol symbol: localVariables){
             if(symbol.getName().equals(name))
-                return true;
+                return symbol.getType();
         }
-        return false;
+        return null;
     }
 
     public List<Symbol> getParameters() {

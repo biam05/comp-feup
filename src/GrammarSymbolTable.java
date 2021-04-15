@@ -106,4 +106,12 @@ public class GrammarSymbolTable implements SymbolTable {
         if(method == null) return null;
         return method.getLocalVariables();
     }
+
+    public Type returnFieldTypeIfExists(String field){
+        for(Symbol symbol: classFields)
+            if(symbol.getName().equals(field))
+                return symbol.getType();
+
+        return null;
+    }
 }
