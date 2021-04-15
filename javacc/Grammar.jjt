@@ -168,14 +168,14 @@ void Statement() #Statement : {}
     <LBRACE> #LBrace() (Statement())* <RBRACE> #RBrace()
     | (<IF>  <LPARENTHESIS> Expression() <RPARENTHESIS>) #IfExpression Statement() <ELSE> #Else Statement()
     | <WHILE> WhileStatement()
-     | Expression()[<ASSIGN> #Assign Expression() ] <SEMICOLON> #Semicolon
+     | Expression()[<ASSIGN> Expression() #Assign(2)]  <SEMICOLON> #Semicolon
 }
 
-// <WHILE> <LPARENTHESIS> Expression() <RPARENTHESIS> Statement()
+
 void WhileStatement() #WhileStatement : {}
 {
     try {
-        <LPARENTHESIS> #LParenthesis Expression() <RPARENTHESIS> #RParenthesis
+        <LPARENTHESIS>  Expression() <RPARENTHESIS>
     }
     catch (ParseException e){
         error_skipto("Error on While Condition");
@@ -229,7 +229,7 @@ void Parameter() #void:{}
 
 void Arrays()  #void:{}
 {
-    FinalTerms()(<LBRACKET> #LBracket Expression() <RBRACKET> #RBracket() (FinalTerms())?)*
+    FinalTerms()((<LBRACKET> Expression() <RBRACKET>) #ArrayAccess(1) (FinalTerms())?)*
 }
 
 void FinalTerms(): {Token t;}
@@ -239,7 +239,7 @@ void FinalTerms(): {Token t;}
     | <FALSE> #False
     | t=<IDENTIFIER> {jjtThis.var = t.image;} #Identifier
     | <THIS> #This
-    | <NEW> #New() ((<INT> #Int <LBRACKET> #LBracket Expression() <RBRACKET> #RBracket) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
+    | <NEW> #New() ((<INT> <LBRACKET>  Expression() <RBRACKET> #IntArrayExpression(1)) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
     | <LPARENTHESIS>  Expression() <RPARENTHESIS>
 }
 

@@ -5,7 +5,9 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
@@ -150,73 +152,87 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         List <JmmNode> children = node.getChildren();
         for(JmmNode child: children){
             System.out.println(child);
-            if(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression")){
-                visitConditionalStatement(child);
-            }
-            else if(child.getKind().equals("Expression")){
-                visitExpression(method, child);
-            }
+            if(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression")) visitConditionalStatement(child);
+
+            else if(child.getKind().equals("Expression")) visitExpression(child);
+
+            else if(child.getKind().equals("Assign")) visitAssign(method, child);
+
+            else if (child.getKind().equals("Statement")) visitStatement(method, child);
+
         }
     }
 
     public void visitConditionalStatement(JmmNode node){
         List <JmmNode> children = node.getChildren();
-        for(JmmNode child: children){
-            if(child.getKind().equals("Expression")){
-                evaluatesToBoolean(child);
-            }
+        if(children.size() != 1 || !children.get(0).getKind().equals("Expression")){
+            Report report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "no while conditional expression");
+            this.reports.add(report);
         }
-    }
+        else evaluatesToBoolean(children.get(0), true);
 
-    //if it is inside of the while and is a statement goes back to visitStatement
+    }
 
     //if it finds an expression in the while it call it goes to visit expression
 
-    public boolean evaluatesToBoolean( JmmNode node){
+    public boolean evaluatesToBoolean( JmmNode node, boolean addsReport){
         List <JmmNode> children = node.getChildren();
         for(int i = 0; i < children.size(); i++) {
             JmmNode child = children.get(i);
             System.out.println("---> " + children.get(i).getKind());
-            Report report = null;
+            Report report;
             switch (child.getKind()) {
                 case "And":
-                    if (evaluatesToBoolean(child.getChildren().get(0)) && evaluatesToBoolean(child.getChildren().get(1))) return true;
-                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand types for binary operator '&&'");
-                    break;
+                    if (!evaluatesToBoolean(child.getChildren().get(0), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "left operand for binary operator '&&' is not a boolean");
+                        break;
+                    }
+                    if(!evaluatesToBoolean(child.getChildren().get(1), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "right operand for binary operator '&&' is not a boolean");
+                        break;
+                    }
+                    return true;
 
                 case "Less":
-                    if (evaluatesToInteger(child.getChildren().get(0)) && evaluatesToInteger(child.getChildren().get(0))) return true;
-                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand types for binary operator '<'");
-                    break;
+                    if (evaluatesToInteger(child.getChildren().get(0), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "left operand types for binary operator '<' is not an integer");
+                        break;
+                    }
+                    if(evaluatesToInteger(child.getChildren().get(0), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "right operand types for binary operator '<' is not an integer");
+                        break;
+                    }
+
+                    return true;
 
                 case "Not":
-                    if (evaluatesToBoolean(child.getChildren().get(0))) return true;
-                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand type for binary operator '!'");
-
+                    if (evaluatesToBoolean(child.getChildren().get(0), false)) return true;
+                    report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "bad operand type for binary operator '!': boolean expected");
                     break;
-
+                case "FinalTerms":
+                    //if(child.getChildren().size)
                 case "True":
                 case "False":
                     return true;
-
+                //variable is boolean
                 default:
                     return false;
             }
-            
-            if(report != null) {
+
+            if(addsReport){
                 System.out.println(report.toString());
                 this.reports.add(report);
             }
+
+
         }
         //falta o caso da expressao avaliar para booleano
         //verificar metodos?
 
-        //verificar se conditional expressions (if e while) resulta num booleano
-        //se sim nice
-        //senao adiciona aos reports
         return false;
     }
-    public boolean evaluatesToInteger(JmmNode node){
+    public boolean evaluatesToInteger(JmmNode node, boolean addsReport){
+        Report report;
         List <JmmNode> children = node.getChildren();
         if(children.size() == 1){
             if(children.get(0).getKind().equals("int")) return true;
@@ -226,7 +242,12 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             //check if expression evaluates to int
             //method
         }
+        if(addsReport){
+            //this.reports.add(report);
+        }
         return false;
+
+        //a[0] se a é int[] avalia para int
     }
 
     public boolean isIdentifier(String kind){
@@ -236,26 +257,102 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
     // TO DO : fazer metodos
 
-    public void visitExpression(SymbolMethod method, JmmNode node){
-
-        System.out.println("Expression children:");
+    public void visitAssign(SymbolMethod method, JmmNode node){
+        System.out.println("----> Assign children:");
         for(JmmNode child: node.getChildren()){
-            System.out.println(child);
+            System.out.println("child");
+            List<String> param = visitExpression(method, child);
+            if(param != null && (param.size() == 2)) System.out.println("->" + param.get(0) + param.get(1));
         }
-        //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
-        //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2)
-        //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido)
-        //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido)
-        //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!)
-        //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
+        System.out.println("----> Final children");
+    }
+
+    public List<String> visitFinalTerms(JmmNode node) {
+
+        /*String[] childType = child.get(0).getKind().split(" ");
+        System.out.println("size: " + childType.length);
+        System.out.println("->" + childType[0] + ", " + childType[1]);
+        String name = childType[1].replaceAll("'", "");*/
 
         /*
-        -> verificar se o "target" do método existe, e se este contém o método (e.g. a.foo, ver se 'a' existe e se tem um método 'foo')
-            - caso seja do tipo da classe declarada (e.g. a usar o this), se não existir declaração na própria classe: se não tiver extends retorna erro, se tiver extends assumir que é da classe super.
-        -> caso o método não seja da classe declarada, isto é uma classe importada, assumir como existente e assumir tipos esperados. (e.g. a = Foo.b(), se a é um inteiro, e Foo é uma classe importada, assumir que o método b é estático (pois estamos a aceder a uma método diretamente da classe), que não tem argumentos e que retorna um inteiro)
-        -> verificar se o número de argumentos na invocação é igual ao número de parâmetros da declaração
-        -> verificar se o tipo dos parâmetros coincide com o tipo dos argumentos
+        FINAL TERMS:
+            -> Identifier '...'
+            -> Number '...'
+            -> This
+
+
         */
+
+        List<JmmNode> children = node.getChildren();
+
+        if(children.get(0).getKind().contains("Identifier")) {
+            //String[] childType =
+        }
+
+        return null;
+    }
+
+    /*
+        [FinalTerms (col: 13, line: 22), Period (col: 14, line: 22), Identifier 'printL' (col: 21, line: 22), LParenthesis (col: 21, line: 22), Expression (col: 22, line: 22), RParenthesis (col: 23, line: 22)]
+        [Not (col: 21, line: 38)]
+        [FinalTerms (col: 9, line: 51)]
+        [FinalTerms (col: 25, line: 51), Period (col: 26, line: 51), Length (col: 27, line: 51)]
+        [FinalTerms (col: 20, line: 41), Period (col: 24, line: 41), Identifier 'quicksort' (col: 34, line: 41), LParenthesis (col: 34, line: 41), Expression (col: 35, line: 41), Comma (col: 36, line: 41), Expression (col: 38, line: 41), Comma (col: 39, line: 41), Expression (col: 41, line: 41), RParenthesis (col: 53, line: 41)
+
+    */
+    public List<String> visitExpression(SymbolMethod method, JmmNode node) {
+        System.out.println(node + ", "+ node.getChildren());
+        return null;
+    }
+
+    public void visitExpression(JmmNode node){
+        Report report = null;
+        //System.out.println("Expression children:");
+        for(JmmNode children: node.getChildren()){
+            System.out.println(children);
+            List<JmmNode> child = children.getChildren();
+
+            switch(children.getKind()) {
+                case "AND":
+                    if(!evaluatesToBoolean(child.get(0), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get(0).get("line")), Integer.parseInt(child.get(0).get("col")), "left operand for binary operator '&&' is not a boolean");
+                        break;
+                    }
+                    else if(!evaluatesToBoolean(child.get(1), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get(1).get("line")), Integer.parseInt(child.get(1).get("col")), "left operand for binary operator '&&' is not a boolean");
+                        break;
+                    }
+                    else return;
+
+                case "LESS":
+                case "ADDSUB":
+                case "MultDiv":
+                    if(!evaluatesToInteger(child.get(0), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get(0).get("line")), Integer.parseInt(child.get(0).get("col")), "left operand types for binary operator '<' is not an integer");
+                        break;
+                    }
+                    else if(!evaluatesToInteger(child.get(1), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get(0).get("line")), Integer.parseInt(child.get(0).get("col")), "right operand types for binary operator '<' is not an integer");
+                        break;
+                    }else return;
+                case "NOT":
+                    if(!evaluatesToBoolean(child.get(0), false)){
+                        report = new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get(0).get("line")), Integer.parseInt(child.get(0).get("col")), "bad operand type for binary operator '!': boolean expected");
+                        break;
+                    }
+                    else return;
+            }
+            this.reports.add(report);
+        }
+
+
+        //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
+        //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2) --> quando se tem um operador verificar se se avalia para um inteiro
+        //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido) --> quando se encontra um ArrayAccess verificar se antes tem uma variabel array
+        //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido) --> quando se encontra um ArrayAccess a expressao interior tem que avaliar para um inteiro
+        //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!) --> quando se encontra um assign, verificar que os dois lados avaliam para o mesmo
+        //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
+        
 
     }
 
