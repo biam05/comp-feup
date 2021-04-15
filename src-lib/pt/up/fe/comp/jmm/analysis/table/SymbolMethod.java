@@ -56,6 +56,13 @@ public class SymbolMethod {
         }
         return null;
     }
+    public boolean hasLocalVariable(String name){
+        for(Symbol symbol: localVariables){
+            if(symbol.getName().equals(name))
+                return true;
+        }
+        return false;
+    }
 
     public List<Symbol> getParameters() {
         return parameters;

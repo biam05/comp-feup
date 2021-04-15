@@ -13,7 +13,7 @@ class Lazysort extends Quicksort {
         i = 0;
         while (i < L.length) {
             L[i] = L.length - i;
-            i = i + 1;
+            i = L[i] + 1;
         }
 
         q = new Lazysort();

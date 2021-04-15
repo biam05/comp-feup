@@ -229,7 +229,7 @@ void Parameter() #void:{}
 
 void Arrays()  #void:{}
 {
-    FinalTerms()((<LBRACKET> Expression() <RBRACKET>) #ArrayAccess(1) (FinalTerms())?)*
+    FinalTerms()((<LBRACKET> Expression() <RBRACKET>) #ArrayAccess(2) (FinalTerms())?)*
 }
 
 void FinalTerms(): {Token t;}
