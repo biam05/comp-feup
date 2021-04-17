@@ -201,11 +201,6 @@ public class EvaluateUtils {
         return checkTypeIdentifier(isInt, isArray, typeIdentifier, node.get("line"), node.get("col"));
     }
 
-    /*
-    | <THIS> #This
-    | <NEW> #New() ((<INT> <LBRACKET>  Expression() <RBRACKET> #IntArrayExpression(1)) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
-    | <LPARENTHESIS>  Expression() <RPARENTHESIS>
-    * */
     private static Type evaluateFinalTerms(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
         List<JmmNode> children = node.getChildren();
         System.out.println("Evaluate Final Terms: " + node + ", " + children);
@@ -213,11 +208,11 @@ public class EvaluateUtils {
         JmmNode firstChild = children.get(0);
 
         if (firstChild.getKind().contains("Number")) return new Type("Int", false);
-        else if (firstChild.getKind().equals("NewIntArrayExpression")) {
+        else if (firstChild.getKind().equals("NewIntArrayExpression") && rightOperand) {
             if (evaluatesToInteger(symbolTable, method, firstChild.getChildren().get(0), reports))
                 return new Type("Int", true);
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.getChildren().get(0).get("line")), Integer.parseInt(firstChild.getChildren().get(0).get("col")), "bad array access: integer expected"));
-        } else if (firstChild.getKind().contains("NewIdentifier")) {
+        } else if (firstChild.getKind().contains("NewIdentifier") && rightOperand) {
             String newIdentifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
             return new Type(newIdentifier, false);
         } else if (firstChild.getKind().contains("Identifier")) {
