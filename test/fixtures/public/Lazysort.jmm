@@ -8,7 +8,7 @@ class Lazysort extends Quicksort {
 		boolean d;
         Lazysort q;
 
-        L = new int[10];
+        L =  new int[10];
 
         i = 0;
         while (i < L.length) {

@@ -1,5 +1,7 @@
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.*;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -40,16 +42,14 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 symbolTable.setClassName(name);
                 classNameSet = true;
-            }
-            else if (childKind.contains("Identifier")) {
+            } else if (childKind.contains("Identifier")) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 symbolTable.setSuperExtends(name);
-            }
-            else if (childKind.equals("{")) {
+            } else if (childKind.equals("LBrace")) {
                 while (true) {
                     i++;
                     JmmNode aux = children.get(i);
-                    if (aux.getKind().equals("}")) break;
+                    if (aux.getKind().equals("RBrace")) break;
                     else if (aux.getKind().equals("MethodDeclaration")) continue;
                     symbolTable.addClassField(parseVarDeclaration(aux));
                 }
@@ -85,26 +85,23 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             JmmNode child = children.get(i);
             String childKind = child.getKind();
 
-            if (childKind.equals("Type") || childKind.equals("void")) method.setReturnType(new Type(child)); // return type
+            if (childKind.equals("Type") || childKind.equals("Void"))
+                method.setReturnType(new Type(child)); // return type
 
-            else if (childKind.equals("(")) { // parameters
+            else if (childKind.equals("LParenthesis")) { // parameters
                 if (alreadyInBody) break;
                 List<JmmNode> parameters = new ArrayList<>();
                 while (true) {
                     i++;
                     JmmNode aux = children.get(i);
-                    if (aux.getKind().equals(")")) break;
+                    if (aux.getKind().equals("RParenthesis")) break;
                     parameters.add(children.get(i));
                 }
                 getMethodParameters(method, parameters);
-            }
-
-            else if(childKind.equals("MethodBody")) { //method body (local variables)
+            } else if (childKind.equals("MethodBody")) { //method body (local variables)
                 visitMethodBody(method, child);
                 alreadyInBody = true;
-            }
-
-            else if (childKind.contains("Identifier") || childKind.equals("main")) {
+            } else if (childKind.contains("Identifier") || childKind.equals("Main")) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 method.setName(name);
             }
@@ -137,17 +134,16 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             if (child.getKind().equals("VarDeclaration")) {
                 Symbol localVariable = parseVarDeclaration(child);
                 method.addLocalVariables(localVariable);
-            }
-            else if (child.getKind().equals("Statement"))
+            } else if (child.getKind().equals("Statement"))
                 visitStatement(method, child);
         }
     }
 
-    public void visitStatement(SymbolMethod method, JmmNode node){
-        List <JmmNode> children = node.getChildren();
+    public void visitStatement(SymbolMethod method, JmmNode node) {
+        List<JmmNode> children = node.getChildren();
         System.out.println("Visit Statement: " + node + ", " + node.getChildren());
 
-        for(JmmNode child: children){
+        for (JmmNode child : children) {
 
             switch (child.getKind()) {
                 case "WhileStatement":
@@ -164,12 +160,11 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     visitStatement(method, child);
                     break;
             }
-
         }
     }
 
-    public void visitConditionalStatement(SymbolMethod method, JmmNode node){
-        List <JmmNode> children = node.getChildren();
+    public void visitConditionalStatement(SymbolMethod method, JmmNode node) {
+        List<JmmNode> children = node.getChildren();
         System.out.println("Visit Conditional Statement: " + node + ", " + node.getChildren());
         EvaluateUtils.evaluatesToBoolean(symbolTable, method, children.get(0), this.reports);
     }
@@ -177,52 +172,49 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     //if it finds an expression in the while it call it goes to visit expression
 
 
-    public void visitAssign(SymbolMethod method, JmmNode node){
+    public void visitAssign(SymbolMethod method, JmmNode node) {
         System.out.println("Visit Assign: " + node + ", " + node.getChildren());
-        List<JmmNode> children = node.getChildren();
-
-    }
-
-    public List<String> visitFinalTerms(JmmNode node) {
-
-
-        /*
-        FINAL TERMS:
-            -> Identifier '...'
-            -> Number '...'
-            -> This
-
-
-        */
 
         List<JmmNode> children = node.getChildren();
+        if (children.size() != 2) return; // ver isto
+        if (!children.get(0).getKind().equals("Expression") || !children.get(1).getKind().equals("Expression"))
+            return; //ver isto
 
-        if(children.get(0).getKind().contains("Identifier")) {
-            //String[] childType =
+        Type leftOperandType = EvaluateUtils.evaluateExpression(symbolTable, method, children.get(0), reports, false);
+        if (leftOperandType == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "unexpected type in left assigned operator"));
+            return;
         }
 
-        return null;
+        Type rightOperandType = EvaluateUtils.evaluateExpression(symbolTable, method, children.get(1), reports, true);
+
+        if ((rightOperandType == null) || (!leftOperandType.getClass().getName().equals(rightOperandType.getClass().getName())))
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "unexpected type in right assigned operator"));
+        if (rightOperandType != null && leftOperandType.isArray())
+            if (!rightOperandType.isArray())
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "expected array type in right assigned operator"));
+
     }
 
-    public void visitExpression(SymbolMethod method, JmmNode node){
+    public void visitExpression(SymbolMethod method, JmmNode node) {
         System.out.println("Visit Expression: " + node + ", " + node.getChildren());
-        for(JmmNode child: node.getChildren()){
+        for (JmmNode child : node.getChildren()) {
             List<Report> allReports = new ArrayList<>();
 
-            switch(child.getKind()) {
-                case "AND":
+            switch (child.getKind()) {
+                case "And":
                     allReports = EvaluateUtils.evaluateOperationWithBooleans(symbolTable, child, method);
                     break;
 
-                case "LESS":
-                case "ADD":
-                case "SUB":
-                case "MULT":
-                case "DIV":
+                case "Less":
+                case "Add":
+                case "Sub":
+                case "Mult":
+                case "Div":
                     allReports = EvaluateUtils.evaluateOperationWithIntegers(symbolTable, child, method);
                     break;
 
-                case "NOT":
+                case "Not":
                     allReports = EvaluateUtils.evaluateNotOperation(symbolTable, child, method);
                     break;
             }

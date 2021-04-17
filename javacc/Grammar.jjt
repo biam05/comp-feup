@@ -239,7 +239,7 @@ void FinalTerms(): {Token t;}
     | <FALSE> #False
     | t=<IDENTIFIER> {jjtThis.var = t.image;} #Identifier
     | <THIS> #This
-    | <NEW> #New() ((<INT> <LBRACKET>  Expression() <RBRACKET> #IntArrayExpression(1)) | (t=<IDENTIFIER> #Identifier {jjtThis.var=t.image;}  <LPARENTHESIS> #LParenthesis <RPARENTHESIS> #RParenthesis))
+    | <NEW> ((<INT> <LBRACKET>  Expression() <RBRACKET> #NewIntArrayExpression(1)) | (t=<IDENTIFIER>  {jjtThis.var=t.image;} #NewIdentifier  <LPARENTHESIS><RPARENTHESIS> ))
     | <LPARENTHESIS>  Expression() <RPARENTHESIS>
 }
 

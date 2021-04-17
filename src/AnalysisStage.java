@@ -3,7 +3,9 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
-import pt.up.fe.comp.jmm.report.*;
+import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +34,7 @@ public class AnalysisStage implements JmmAnalysis {
 
         System.out.println("------------ REPORTS ------------");
         List<Report> reports = visitor.getReports();
-        for(Report report: reports)
+        for (Report report : reports)
             System.out.println(report);
 
 
