@@ -64,6 +64,10 @@ public class GrammarSymbolTable implements SymbolTable {
         return methodsNames;
     }
 
+    public List<SymbolMethod> getMethodsAndParameters() {
+        return methods;
+    }
+
     private List<String> parseMethodInfo(String info) {
         List<String> list = new ArrayList<>();
 
