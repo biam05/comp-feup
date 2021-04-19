@@ -30,7 +30,7 @@ public class MethodVerificationVisitor extends PreorderJmmVisitor<Boolean, Boole
         return reports;
     }
 
-    public Boolean visitExpression(JmmNode node, boolean dummy) {
+    public Boolean visitExpression(JmmNode node, Boolean dummy) {
         List<JmmNode> children = node.getChildren();
         for (int index = 0; index < children.size(); index++) {
             JmmNode child = children.get(index);
@@ -60,7 +60,7 @@ public class MethodVerificationVisitor extends PreorderJmmVisitor<Boolean, Boole
                 int col = Integer.parseInt(child.get("col"));
 
                 // Call function to check if var exists and has method methodName and check argument types and number
-                if (!isValidMethodCall(method, varName, methodName, parameters, line, col)) {
+                if (!isValidMethodCall(method, varName, methodName, parameters)) {
                     Report report = new Report(ReportType.ERROR, Stage.SEMANTIC, line, col, "Invalid method call");
                     reports.add(report);
                     System.out.println(report);
@@ -70,42 +70,63 @@ public class MethodVerificationVisitor extends PreorderJmmVisitor<Boolean, Boole
         return true;
     }
 
-    public Boolean isValidMethodCall(SymbolMethod currentMethod, String varName, String methodName, List<JmmNode> parameters, int line, int col) {
+    public Boolean isValidMethodCall(SymbolMethod currentMethod, String varName, String methodName, List<JmmNode> parameters) {
         for (String importName: symbolTable.getImports()) {
             if(varName.equals(importName)) return true;
         }
-        for (Symbol var: currentMethod.getLocalVariables()) {
-            if ((var.getName().equals(varName) && var.getType().getName().equals(this.symbolTable.getClassName())) || varName.equals("this")) {
-                for (SymbolMethod method: symbolTable.getMethodsAndParameters()) {
-                    if (method.getName().equals(methodName)) {
-                        if (method.getParameters().size() != parameters.size())
-                            return false;
-                        /*for (int i = 0; i < method.getParameters().size(); i++)
-                            if (method.getParameters().get(i).getType() != getType(parameters.get(i), currentMethod))
+        if (currentMethod.getLocalVariables().size() != 0)
+            for (Symbol var: currentMethod.getLocalVariables()) {
+                if ((var.getName().equals(varName) && var.getType().getName().equals(this.symbolTable.getClassName())) || varName.equals("This")) {
+                    for (SymbolMethod method: symbolTable.getMethodsAndParameters()) {
+                        if (method.getName().equals(methodName)) {
+                            if (method.getParameters().size() != parameters.size())
                                 return false;
-                        */return true;
+                            for (int i = 0; i < method.getParameters().size(); i++)
+                                if ((!method.getParameters().get(i).getType().equals(getType(parameters.get(i), currentMethod))) && (!getType(parameters.get(i), currentMethod).equals(new Type("imported", false))))
+                                    return false;
+                            return true;
+                        }
                     }
+                    return symbolTable.getSuper() != null;
                 }
-                //TODO: confirm if "!= null" is right
-                return symbolTable.getSuper() != null;
             }
+        else if (varName.equals("This")) {
+            for (SymbolMethod method : symbolTable.getMethodsAndParameters()) {
+                if (method.getName().equals(methodName)) {
+                    if (method.getParameters().size() != parameters.size())
+                        return false;
+                    for (int i = 0; i < method.getParameters().size(); i++)
+                        if ((!method.getParameters().get(i).getType().equals(getType(parameters.get(i), currentMethod))) && (!getType(parameters.get(i), currentMethod).equals(new Type("imported", false))))
+                            return false;
+                    return true;
+                }
+            }
+            return symbolTable.getSuper() != null;
         }
         return false;
-        /*
-        -> verificar se o "target" do método existe, e se este contém o método (e.g. a.foo, ver se 'a' existe e se tem um método 'foo')
-            - caso seja do tipo da classe declarada (e.g. a usar o this), se não existir declaração na própria classe: se não tiver extends retorna erro, se tiver extends assumir que é da classe super.
-        -> caso o método não seja da classe declarada, isto é uma classe importada, assumir como existente e assumir tipos esperados. (e.g. a = Foo.b(), se a é um inteiro, e Foo é uma classe importada, assumir que o método b é estático (pois estamos a aceder a uma método diretamente da classe), que não tem argumentos e que retorna um inteiro)
-        -> verificar se o número de argumentos na invocação é igual ao número de parâmetros da declaração
-        -> verificar se o tipo dos parâmetros coincide com o tipo dos argumentos
-
-        ->  this.foo();, class FindMaximum {FindMaximum fm; fm.foo();}
-        ->  class Lazysort extends Quicksort {Lazysort ls; ls.quicksort();} (quicksort belonging to class Quicksort)
-        ->  import ioPlus; class FindMaximum {a = ioPlus.foo();}
-        */
     }
 
-    public Type getType(JmmNode node, SymbolMethod method) {
-        System.out.println(node.getKind());
+    public Type getType(JmmNode node, SymbolMethod currentMethod) {
+        visitExpression(node, true);
+        if (node.getChildren().size() == 1) {
+            String varName = node.getChildren().get(0).getChildren().get(0).getKind().replaceAll("'", "").replace("Identifier ", "");
+            for (Symbol var : currentMethod.getLocalVariables())
+                if (var.getName().equals(varName))
+                    return var.getType();
+        }
+        else
+            for (int i = 0; i < node.getChildren().size(); i++)
+                if (node.getChildren().get(i).getKind().equals("Period")) {
+                    i++;
+                    String methodName;
+                    if (node.getChildren().get(i).getKind().contains("Identifier"))
+                        methodName = node.getChildren().get(i).getKind().replaceAll("'", "").replace("Identifier ", "");
+                    else continue;
+                    for (SymbolMethod method : symbolTable.getMethodsAndParameters())
+                        if (method.getName().equals(methodName))
+                            return method.getReturnType();
+                    return new Type("imported", false);
+                }
         return new Type("", false);
     }
 }

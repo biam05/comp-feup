@@ -25,7 +25,7 @@ public class Type {
     public void parseType(JmmNode node){
         List<JmmNode> children = node.getChildren();
         this.name = children.get(0).getKind();
-        this.isArray = (children.size() == 2) && (children.get(1).getKind().equals("[]"));
+        this.isArray = (children.size() == 2) && (children.get(1).getKind().equals("Array"));
     }
 
     public String getName() {
