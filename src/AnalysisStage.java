@@ -3,9 +3,12 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
+import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
 import pt.up.fe.comp.jmm.report.*;
 
 import java.util.Arrays;
+import java.util.Map;
 
 public class AnalysisStage implements JmmAnalysis {
 
@@ -30,6 +33,11 @@ public class AnalysisStage implements JmmAnalysis {
         visitor.visit(node);
 
         // TODO: SEMANTIC ANALYSIS
+        for (Map.Entry<JmmNode, SymbolMethod> expression : visitor.getExpressionNodes().entrySet())
+        {
+            MethodVerificationVisitor methodVisitor = new MethodVerificationVisitor(visitor.getSymbolTable(), expression.getValue());
+            methodVisitor.visit(expression.getKey());
+        }
 
         /*
         System.out.println(

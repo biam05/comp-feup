@@ -6,15 +6,19 @@ import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     private final GrammarSymbolTable symbolTable;
     private final List<Report> reports;
+    private final Map<JmmNode, SymbolMethod> expressionNodes;
 
     public SymbolTableVisitor() {
         this.symbolTable = new GrammarSymbolTable();
         this.reports = new ArrayList<>();
+        this.expressionNodes = new HashMap<>();
         addVisit("ClassDeclaration", this::visitClass);
         addVisit("ImportDeclaration", this::visitImport);
         addVisit("MethodDeclaration", this::visitMethod);
@@ -26,6 +30,10 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
     public List<Report> getReports() {
         return reports;
+    }
+
+    public Map<JmmNode, SymbolMethod> getExpressionNodes() {
+        return expressionNodes;
     }
 
     public Boolean visitClass(JmmNode node, Boolean dummy) {
@@ -108,11 +116,8 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 method.setName(name);
             }
-
         }
-
         this.symbolTable.addMethod(method);
-
 
         return true;
     }
@@ -153,7 +158,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 visitConditionalStatement(child);
             }
             else if(child.getKind().equals("Expression")){
-                visitExpression(method, child);
+                checkExpressionHasMethod(method, child);
             }
         }
     }
@@ -168,7 +173,6 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     }
 
     //if it is inside of the while and is a statement goes back to visitStatement
-
     //if it finds an expression in the while it call it goes to visit expression
 
     public boolean evaluatesToBoolean( JmmNode node){
@@ -233,93 +237,27 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         return parts[0].equals("Identifier");
     }
 
-    // TODO : fazer metodos
-
-    public void visitExpression(SymbolMethod method, JmmNode node){
-
+    public void checkExpressionHasMethod(SymbolMethod method, JmmNode node){
         List <JmmNode> children = node.getChildren();
-        List<MethodCall> methodCalls = new ArrayList<>();
         for (int i = 0; i < children.size(); i++) {
             JmmNode child = children.get(i);
             if (child.getKind().equals("Period")) {
                 i++;
-                // Get method name after period
-                String methodName;
-                if (children.get(i).getKind().contains("Identifier"))
-                     methodName = children.get(i).getKind().replaceAll("'", "").replace("Identifier ", "");
-                else continue;
-                i -= 2;
-                // Get var name before period
-                JmmNode aux = children.get(i).getChildren().get(0);
-                String varName;
-                varName = aux.getKind().replaceAll("'", "").replace("Identifier ", "");
-                i += 3;
-                // Get parameters passed on method call
-                List<Type> parameters = new ArrayList<>();
-                if (children.get(i).getKind().equals("LParenthesis")) {
-                    while (true) {
-                        i++;
-                        aux = children.get(i);
-                        if (aux.getKind().equals("RParenthesis")) break;
-                        //TODO: Add type of the parameter being passed
-                    }
-                }
-                // Add to list to post-process
-                methodCalls.add(new MethodCall(method, varName, methodName, parameters, Integer.parseInt(children.get(i - 1).get("line")), Integer.parseInt(children.get(i - 1).get("col"))));
+                if (!children.get(i).getKind().contains("Identifier"))
+                    continue;
+                // Add to map to post-process
+                expressionNodes.put(node, method);
             }
         }
-        for (MethodCall methodCall : methodCalls)
-        // Call function to check if var exists and has method methodName and check argument types and number
-        if (!isValidMethodCall(methodCall)) {
-            Report report = new Report(ReportType.ERROR, Stage.SEMANTIC, methodCall.getLine(), methodCall.getCol(), "Invalid method call");
-            reports.add(report);
-            System.out.println(report);
-        }
-
         //verificar se operações são efetuadas com o mesmo tipo (e.g. int + boolean tem de dar erro)
         //não é possível utilizar arrays diretamente para operações aritmeticas (e.g. array1 + array2)
         //verificar se um array access é de facto feito sobre um array (e.g. 1[10] não é permitido)
         //verificar se o indice do array access é um inteiro (e.g. a[true] não é permitido)
         //verificar se valor do assignee é igual ao do assigned (a_int = b_boolean não é permitido!)
         //verificar se operação booleana (&&, < ou !) é efetuada só com booleanos
-
     }
 
-    public Boolean isValidMethodCall(MethodCall methodCall) {
-        for (String importName: symbolTable.getImports()) {
-            if(methodCall.getVarName().equals(importName)) return true;
-        }
-        for (Symbol var: methodCall.getMethod().getLocalVariables()) {
-            if ((var.getName().equals(methodCall.getVarName()) && var.getType().getName().equals(this.symbolTable.getClassName())) || methodCall.getVarName().equals("this")) {
-                for (SymbolMethod method: symbolTable.getMethodsAndParameters()) {
-                    if (method.getName().equals(methodCall.getMethodName())) {
-                        //TODO: Delete this return
-                        return true;
-                        /*if (method.getParameters().size() != methodCall.getParameters().size())
-                            return false;
-                        for (int i = 0; i < method.getParameters().size(); i++)
-                            if (method.getParameters().get(i).getType() != methodCall.getParameters().get(i))
-                                return false;
-                        return true;*/
-                    }
-                }
-                //TODO: confirm if "!= null" is right
-                return symbolTable.getSuper() != null;
-            }
-        }
-        return false;
-        /*
-        -> verificar se o "target" do método existe, e se este contém o método (e.g. a.foo, ver se 'a' existe e se tem um método 'foo')
-            - caso seja do tipo da classe declarada (e.g. a usar o this), se não existir declaração na própria classe: se não tiver extends retorna erro, se tiver extends assumir que é da classe super.
-        -> caso o método não seja da classe declarada, isto é uma classe importada, assumir como existente e assumir tipos esperados. (e.g. a = Foo.b(), se a é um inteiro, e Foo é uma classe importada, assumir que o método b é estático (pois estamos a aceder a uma método diretamente da classe), que não tem argumentos e que retorna um inteiro)
-        -> verificar se o número de argumentos na invocação é igual ao número de parâmetros da declaração
-        -> verificar se o tipo dos parâmetros coincide com o tipo dos argumentos
 
-        ->  this.foo();, class FindMaximum {FindMaximum fm; fm.foo();}
-        ->  class Lazysort extends Quicksort {Lazysort ls; ls.quicksort();} (quicksort belonging to class Quicksort)
-        ->  import ioPlus; class FindMaximum {a = ioPlus.foo();}
-        */
-    }
 
     public Symbol parseVarDeclaration(JmmNode node) {
         List<JmmNode> children = node.getChildren();
