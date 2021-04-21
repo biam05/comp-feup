@@ -124,7 +124,7 @@ class SimpleNode implements Node, JmmNode {
         if (val != -1) return GrammarTreeConstants.jjtNodeName[id] + " '" + val + "'";
         else if (var != "") return GrammarTreeConstants.jjtNodeName[id] + " '" + var + "'";
 
-        switch (this.id) {
+        /*switch (this.id) {
             case GrammarTreeConstants.JJTPUBLIC:
                 return "public";
             case GrammarTreeConstants.JJTVOID:
@@ -165,12 +165,8 @@ class SimpleNode implements Node, JmmNode {
                 return "[]";
             case GrammarTreeConstants.JJTBOOLEAN:
                 return "boolean";
-            case GrammarTreeConstants.JJTIF:
-                return "if";
             case GrammarTreeConstants.JJTELSE:
                 return "else";
-            case GrammarTreeConstants.JJTWHILE:
-                return "while";
             case GrammarTreeConstants.JJTASSIGN:
                 return "=";
             case GrammarTreeConstants.JJTAND:
@@ -191,15 +187,8 @@ class SimpleNode implements Node, JmmNode {
                 return "this";
             case GrammarTreeConstants.JJTNEW:
                 return "new";
-            case GrammarTreeConstants.JJTADD:
-                return "+";
-            case GrammarTreeConstants.JJTSUB:
-                return "-";
-            case GrammarTreeConstants.JJTDIV:
-                return "/";
-            case GrammarTreeConstants.JJTMULT:
-                return "*";
-        }
+
+        }*/
 
         return GrammarTreeConstants.jjtNodeName[id];
     }
