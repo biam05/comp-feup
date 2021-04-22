@@ -337,6 +337,7 @@ public class SemanticAnalysisUtils {
             if (!symbolTable.getSuper().equals("")) return new Type("Accepted", false);
         }
 
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "method does not exist"));
         return null;
     }
 
