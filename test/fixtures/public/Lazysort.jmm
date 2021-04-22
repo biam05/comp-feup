@@ -12,13 +12,13 @@ class Lazysort extends Quicksort {
 
         i = 0;
         while (i < L.length) {
-            L[i] = L.length - i;
+            L[i] = L.length - 1;
             i = L[i] + 1;
         }
 
         q = new Lazysort();
 
-        q.quicksort(L);
+        q.quicksort(L, q);
         d = q.printL(L);
     }
 

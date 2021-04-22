@@ -36,6 +36,12 @@ public class Type {
         return isArray;
     }
 
+    public String printType() {
+        String type = name;
+        if (isArray) type += "[]";
+        return type;
+    }
+
     @Override
     public String toString() {
         return "Type [name=" + name + ", isArray=" + isArray + "]";

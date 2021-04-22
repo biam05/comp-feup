@@ -1,5 +1,7 @@
 package pt.up.fe.comp.jmm.analysis.table;
 
+import jdk.swing.interop.SwingInterOpUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,12 +25,10 @@ public class SymbolMethod {
     }
 
     public void addParameter(Symbol parameter) {
-        System.out.println("Parameter: " + parameter);
         this.parameters.add(parameter);
     }
 
     public void addLocalVariables(Symbol localVariable) {
-        System.out.println("LocalVariable: " + localVariable);
         this.localVariables.add(localVariable);
     }
 
@@ -37,7 +37,6 @@ public class SymbolMethod {
     }
 
     public void setName(String name) {
-        System.out.println("Name: " + name);
         this.name = name;
     }
 
@@ -46,7 +45,6 @@ public class SymbolMethod {
     }
 
     public void setReturnType(Type returnType) {
-        System.out.println("Return type: " + returnType);
         this.returnType = returnType;
     }
 
@@ -74,9 +72,11 @@ public class SymbolMethod {
         String name = info.get(0);
         if (!name.equals(this.name)) return false;
 
+        int n_param = 0;
         for (int i = 1; i < info.size(); i++) {
             Type type = createType(info.get(i));
-            if (!type.equals(this.parameters.get(i).getType())) return false;
+            if (!type.equals(this.parameters.get(n_param).getType())) return false;
+            n_param++;
         }
 
         return true;
@@ -84,8 +84,8 @@ public class SymbolMethod {
 
     private Type createType(String t) {
 
-        boolean isArray = t.contains("Array");
-        String type = t.replace("Array", "");
+        boolean isArray = t.contains("[]");
+        String type = t.replace("[]", "");
 
         return new Type(type, isArray);
     }

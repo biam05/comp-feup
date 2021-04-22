@@ -12,21 +12,18 @@ public class GrammarSymbolTable implements SymbolTable {
     private final List<String> imports = new ArrayList<>();
     private final List<Symbol> classFields = new ArrayList<>();
     private final List<SymbolMethod> methods = new ArrayList<>();
-    private String className;
-    private String superExtends;
+    private String className = "";
+    private String superExtends = "";
 
     public void setSuperExtends(String superExtends) {
-        System.out.println("SuperExtends: " + superExtends);
         this.superExtends = superExtends;
     }
 
     public void addImport(String importName) {
-        System.out.println("Import: " + importName);
         this.imports.add(importName);
     }
 
     public void addClassField(Symbol classField) {
-        System.out.println("Class field: " + classField);
         this.classFields.add(classField);
     }
 
@@ -45,7 +42,6 @@ public class GrammarSymbolTable implements SymbolTable {
     }
 
     public void setClassName(String className) {
-        System.out.println("Class: " + className);
         this.className = className;
     }
 
@@ -70,10 +66,6 @@ public class GrammarSymbolTable implements SymbolTable {
         return methodsNames;
     }
 
-    public List<SymbolMethod> getMethodsAndParameters() {
-        return methods;
-    }
-
     private List<String> parseMethodInfo(String info) {
         List<String> list = new ArrayList<>();
 
@@ -86,7 +78,7 @@ public class GrammarSymbolTable implements SymbolTable {
         return list;
     }
 
-    private SymbolMethod getMethodByInfo(String methodInfo) {
+    public SymbolMethod getMethodByInfo(String methodInfo) {
         List<String> info = parseMethodInfo(methodInfo);
 
         for (SymbolMethod method : this.methods) {

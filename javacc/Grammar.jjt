@@ -129,7 +129,7 @@ SimpleNode Program(): {}
 
 void ImportDeclaration() #ImportDeclaration: {Token t1,t2;}
 {
-    (<IMPORT> #Import() t1=<IDENTIFIER> { jjtThis.var=t1.image; } #Identifier() (<PERIOD> #Period t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier() )* <SEMICOLON> #Semicolon)*
+    (<IMPORT> #Import t1=<IDENTIFIER> { jjtThis.var=t1.image; } #Identifier() (<PERIOD> #Period t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier() )* <SEMICOLON> #Semicolon)*
 }
 
 void ClassDeclaration() #ClassDeclaration : {Token t1,t2;}
@@ -219,12 +219,12 @@ void Not() #void:{}
 
 void Period() #void:{Token t;}
 {
-    Arrays()(<PERIOD> #Period() (<LENGTH> #Length | (t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> #LParenthesis() (Parameter())? <RPARENTHESIS> #RParenthesis)))*
+    Arrays()(<PERIOD> (<LENGTH> #Length(1) | (t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> (Parameter())? <RPARENTHESIS>) #MethodCall()))*
 }
 
 void Parameter() #void:{}
 {
-    Expression() (<COMMA> #Comma Expression())*
+    Expression() (<COMMA> Expression())*
 }
 
 void Arrays()  #void:{}

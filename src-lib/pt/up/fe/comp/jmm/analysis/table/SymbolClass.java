@@ -16,12 +16,10 @@ public class SymbolClass {
     }
 
     public void setName(String name) {
-        System.out.println("Name: " + name);
         this.name = name;
     }
 
     public void addAttribute(Symbol attribute) {
-        System.out.println("Attribute: " + attribute);
         this.attributes.add(attribute);
     }
 
