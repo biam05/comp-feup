@@ -31,30 +31,18 @@ public class AnalysisStage implements JmmAnalysis {
 
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(node);
-
-        System.out.println("------------ REPORTS ------------");
         List<Report> reports = visitor.getReports();
+
+        SemanticAnalysisVisitor semanticAnalysisVisitor = new SemanticAnalysisVisitor(visitor.getSymbolTable());
+        semanticAnalysisVisitor.visit(node);
+        reports.addAll(semanticAnalysisVisitor.getReports());
+
+        System.out.println("\n\n------------ REPORTS ------------");
         for (Report report : reports)
             System.out.println(report);
-
-
-        /*
-        System.out.println(
-                "Create histogram of node kinds with Visitor that automatically performs postorder tree traversal");
-        var postOrderVisitor = new ExamplePostorderVisitor();
-        var kindCount = new HashMap<String, Integer>();
-        postOrderVisitor.visit(node, kindCount);
-        System.out.println("Kinds count: " + kindCount + "\n");
-        */
-        /*
-        System.out.println(
-                "Print variables name and line, and their corresponding parent with Visitor that automatically performs preorder tree traversal");
-        var varPrinter = new ExamplePrintVariables("Variable", "name", "line");
-        varPrinter.visit(node, null);
-        */
+        System.out.println("---------------------------------");
 
         return new JmmSemanticsResult(parserResult, visitor.getSymbolTable(), visitor.getReports());
-
     }
 
 }

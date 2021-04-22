@@ -246,7 +246,6 @@ public class EvaluateUtils {
             }
         } else if (children.size() == 3) {
             if (children.get(0).getKind().equals("FinalTerms") && children.get(1).getKind().equals("Period") && children.get(2).getKind().equals("Length")) {
-
                 JmmNode firstChild = children.get(0).getChildren().get(0);
                 if (firstChild.getKind().contains("Identifier")) {
                     if ((isIdentifier(symbolTable, method, firstChild, true, true) == null) || (isIdentifier(symbolTable, method, firstChild, false, true) == null))

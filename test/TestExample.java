@@ -6,7 +6,7 @@ public class TestExample {
 
     @Test
     public void testExpression() {
-        String jmmCode = SpecsIo.getResource("fixtures/public/" +"Lazysort.jmm");
+        String jmmCode = SpecsIo.getResource("fixtures/public/" + "Lazysort.jmm");
         TestUtils.analyse(jmmCode);
     }
 }
