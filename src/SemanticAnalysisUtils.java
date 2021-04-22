@@ -297,8 +297,9 @@ public class SemanticAnalysisUtils {
 
             for (String importName : symbolTable.getImports()) {
                 String[] imports = importName.split("\\.");
-                if (imports[imports.length - 1].equals(importName)) return new Type("Accepted", false);
+                if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);
             }
+
             Type identifierType = checkIfIdentifierExists(symbolTable, method, identifierName);
 
             if (identifierType == null) {

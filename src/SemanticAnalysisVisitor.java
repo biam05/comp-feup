@@ -83,7 +83,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
                     visitConditionalStatement(method, child);
                     break;
                 case "Expression":
-                    SemanticAnalysisUtils.evaluateExpression(symbolTable, method, node, reports, true);
+                    SemanticAnalysisUtils.evaluateExpression(symbolTable, method, child, reports, true);
                     break;
                 case "Assign":
                     visitAssign(method, child);
