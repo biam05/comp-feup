@@ -241,7 +241,6 @@ public class SemanticAnalysisUtils {
     }
 
     public static Type evaluateExpression(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
-
         List<JmmNode> children = node.getChildren();
 
         if (children.size() == 1) {
