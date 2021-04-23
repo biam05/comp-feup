@@ -32,7 +32,7 @@ public class BackendStage implements JasminBackend {
             // Example of what you can do with the OLLIR class
             ollirClass.checkMethodLabels(); // check the use of labels in the OLLIR loaded
             ollirClass.buildCFGs(); // build the CFG of each method
-            ollirClass.outputCFGs(); // output to .dot files the CFGs, one per method
+            //ollirClass.outputCFGs(); // output to .dot files the CFGs, one per method
             ollirClass.buildVarTables(); // build the table of variables for each method
             ollirClass.show(); // print to console main information about the input OLLIR
 
@@ -40,6 +40,19 @@ public class BackendStage implements JasminBackend {
             StringBuilder jasminCode = new StringBuilder(); // Convert node ...
             // More reports from this stage
             List<Report> reports = new ArrayList<>();
+
+            jasminCode.append(".class public ").append(ollirClass.getClassName());
+            /*
+            TODO: SymbolTable is NULL. Why? Because we are generating directly from OLLIR file. Verify after OLLIR implementation
+            jasminCode.append("\n.super ");
+            if(ollirResult.getSymbolTable().getSuper() == null)
+                jasminCode.append("java/lang/Object");
+            else
+                jasminCode.append(ollirResult.getSymbolTable().getSuper());
+            */
+
+            jasminCode.append("\n.super java/lang/Object");
+
             for (var method : ollirClass.getMethods()){
                 MethodJasmin methodJasmin = new MethodJasmin(method);
                 methodJasmin.generateJasminCode();
@@ -47,7 +60,7 @@ public class BackendStage implements JasminBackend {
                 reports.addAll(methodJasmin.getReports());
             }
 
-
+            System.out.println("JASMIN CODE:\n" + jasminCode);
 
             return new JasminResult(ollirResult, jasminCode.toString(), reports);
 
