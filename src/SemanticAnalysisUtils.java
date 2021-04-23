@@ -15,7 +15,7 @@ public class SemanticAnalysisUtils {
 
         for (JmmNode child : children) {
 
-            List<Report> allReports;
+            List<Report> allReports = new ArrayList<>();
 
             if (child.getKind().contains("Identifier")) {
                 Report report = isIdentifier(symbolTable, method, child, false, false);
@@ -39,18 +39,22 @@ public class SemanticAnalysisUtils {
                     break;
 
                 case "FinalTerms":
-                    //if(child.getChildren().size)
+                    return evaluatesToBoolean(symbolTable, method, child, reports);
+                //if(child.getChildren().size)
                 case "True":
                 case "False":
                     return true;
 
                 default:
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "Expression should return boolean"));
                     return false;
             }
-
             reports.addAll(allReports);
+            if (!allReports.isEmpty())
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "Expression should return boolean"));
+            else return true;
         }
-        //MISSING: checking if the expression or method evaluates to boolean
+
         return false;
     }
 
@@ -170,7 +174,7 @@ public class SemanticAnalysisUtils {
             if (isInt)
                 return new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(line), Integer.parseInt(col), "Identifier is expected to be of type int");
             else
-                return new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(line), Integer.parseInt(col), "Identifier should be of type int");
+                return new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(line), Integer.parseInt(col), "Identifier is expected to be type different of int");
         }
 
         if (type.isArray() != isArray) {
@@ -337,7 +341,7 @@ public class SemanticAnalysisUtils {
             if (!symbolTable.getSuper().equals("")) return new Type("Accepted", false);
         }
 
-        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "method does not exist"));
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "method does not exist or is being invoked with the wrong arguments"));
         return null;
     }
 
