@@ -1,5 +1,4 @@
-import org.specs.comp.ollir.ClassUnit;
-import org.specs.comp.ollir.OllirErrorException;
+import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
@@ -7,7 +6,7 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,7 +29,6 @@ public class BackendStage implements JasminBackend {
         ClassUnit ollirClass = ollirResult.getOllirClass();
 
         try {
-
             // Example of what you can do with the OLLIR class
             ollirClass.checkMethodLabels(); // check the use of labels in the OLLIR loaded
             ollirClass.buildCFGs(); // build the CFG of each method
@@ -39,16 +37,23 @@ public class BackendStage implements JasminBackend {
             ollirClass.show(); // print to console main information about the input OLLIR
 
             // Convert the OLLIR to a String containing the equivalent Jasmin code
-            String jasminCode = ""; // Convert node ...
-
+            StringBuilder jasminCode = new StringBuilder(); // Convert node ...
             // More reports from this stage
             List<Report> reports = new ArrayList<>();
+            for (var method : ollirClass.getMethods()){
+                MethodJasmin methodJasmin = new MethodJasmin(method);
+                methodJasmin.generateJasminCode();
+                jasminCode.append(methodJasmin.getJasminCode());
+                reports.addAll(methodJasmin.getReports());
+            }
 
-            return new JasminResult(ollirResult, jasminCode, reports);
+
+
+            return new JasminResult(ollirResult, jasminCode.toString(), reports);
 
         } catch (OllirErrorException e) {
             return new JasminResult(ollirClass.getClassName(), null,
-                    Arrays.asList(Report.newError(Stage.GENERATION, -1, -1, "Exception during Jasmin generation", e)));
+                    Collections.singletonList(Report.newError(Stage.GENERATION, -1, -1, "Exception during Jasmin generation", e)));
         }
 
     }
