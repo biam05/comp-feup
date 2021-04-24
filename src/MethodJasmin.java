@@ -24,9 +24,10 @@ public class MethodJasmin {
     }
 
     public void generateJasminCode(){
+        System.out.println("------------------------------------------");
         System.out.println("Method Name: " + method.getMethodName());
 
-        jasminCode.append("\n.method ");
+        jasminCode.append("\n\n.method ");
         jasminCode.append(method.getMethodAccessModifier().toString().toLowerCase());
 
         if(method.isConstructMethod())

@@ -6,16 +6,16 @@ import java.util.List;
 
 public class InstructionJasmin {
     private final Instruction instruction;
-    private final String jasminCode;
+    private final StringBuilder jasminCode;
     private final List<Report> reports;
 
     public InstructionJasmin(Instruction instruction) {
         this.instruction = instruction;
-        this.jasminCode = "";
+        this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
     }
 
-    public String getJasminCode() {
+    public StringBuilder getJasminCode() {
         return jasminCode;
     }
 
@@ -25,6 +25,7 @@ public class InstructionJasmin {
 
     public void generateJasminCode(){
         System.out.println("Instruction Name: " + instruction.getInstType());
+        instruction.show();
         switch(instruction.getInstType()){
             case ASSIGN:
                 generateAssign((AssignInstruction) instruction);
@@ -59,6 +60,8 @@ public class InstructionJasmin {
             default:
                 break;
         }
+
+        System.out.println("------------------------------------------");
     }
 
     // --------------- Deal With Instructions Functions ---------------
@@ -67,11 +70,25 @@ public class InstructionJasmin {
     }
 
     private void generateCall(CallInstruction instruction) {
-        // TODO
+        System.out.println("\t* Num Operands: " + instruction.getNumOperands());
+        System.out.println("\t* Return Type: " + instruction.getReturnType().getTypeOfElement());
+        System.out.println("\t* First Arg: " + instruction.getFirstArg());
+        System.out.println("\t* Second Arg: " + instruction.getSecondArg());
+
+        jasminCode.append("\n\taload_0");
+        jasminCode.append("\n\tinvokespecial java/lang/Object.<init>()V;");
+        switch (instruction.getReturnType().getTypeOfElement()){
+            default:
+                jasminCode.append("\n\treturn");
+                break;
+        }
+        // TODO: Can a Call Instruction be something different from a Constructor?
     }
 
     private void generateGoTo(GotoInstruction instruction) {
         // TODO
+        jasminCode.append("\n\tLoop:");
+        jasminCode.append("\n\t\tgoto Loop");
     }
 
     private void generateBranch(CondBranchInstruction instruction) {
@@ -79,7 +96,16 @@ public class InstructionJasmin {
     }
 
     private void generateReturn(ReturnInstruction instruction) {
-        // TODO
+        // TODO: falta a variavel q é retornada. Onde arranjo isso?
+        System.out.println("\t* Operand: " + instruction.getOperand());
+        System.out.println(instruction.getOperand().isLiteral());
+        jasminCode.append("\n\tEnd:");
+        switch (instruction.getOperand().getType().getTypeOfElement()) {
+            case INT32 -> jasminCode.append("\n\t\tireturn");
+            case BOOLEAN -> jasminCode.append("\n\t\tireturn"); // weird... == int? confirm
+            case ARRAYREF -> jasminCode.append("\n\t\tareturn");
+            default -> jasminCode.append("\n\t\treturn");
+        }
     }
 
     private void generatePutField(PutFieldInstruction instruction) {
