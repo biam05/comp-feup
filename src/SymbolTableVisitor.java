@@ -51,7 +51,8 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     JmmNode aux = children.get(i);
                     if (aux.getKind().equals("RBrace")) break;
                     else if (aux.getKind().equals("MethodDeclaration")) continue;
-                    symbolTable.addClassField(parseVarDeclaration(aux));
+                    Symbol localVariable = parseVarDeclaration(aux);
+                    if (localVariable != null) symbolTable.addClassField(localVariable);
                 }
             }
         }
