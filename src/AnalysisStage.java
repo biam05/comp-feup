@@ -3,6 +3,7 @@ import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;
 import pt.up.fe.comp.jmm.analysis.JmmAnalysis;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;
+import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
@@ -28,9 +29,11 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         JmmNode node = parserResult.getRootNode();
+        System.out.println(node.toJson());
 
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(node);
+
         List<Report> reports = visitor.getReports();
 
         SemanticAnalysisVisitor semanticAnalysisVisitor = new SemanticAnalysisVisitor(visitor.getSymbolTable());
@@ -42,7 +45,7 @@ public class AnalysisStage implements JmmAnalysis {
             System.out.println(report);
         System.out.println("---------------------------------");
 
-        return new JmmSemanticsResult(parserResult, visitor.getSymbolTable(), visitor.getReports());
+        return new JmmSemanticsResult(parserResult, visitor.getSymbolTable(), reports);
     }
 
 }

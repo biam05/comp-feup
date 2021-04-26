@@ -120,7 +120,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         else if (rightOperandType.getName().equals("Accepted")) return;
         else if (!leftOperandType.getName().equals(rightOperandType.getName()))
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "unexpected type in right assigned operator: should be " + leftOperandType.getName() + " but it is " + rightOperandType.getName()));
-        if (rightOperandType != null && leftOperandType.isArray())
+        else if (leftOperandType.isArray())
             if (!rightOperandType.isArray())
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "expected array type in right assigned operator"));
 

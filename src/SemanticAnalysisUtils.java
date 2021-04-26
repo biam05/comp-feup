@@ -246,6 +246,7 @@ public class SemanticAnalysisUtils {
 
     public static Type evaluateExpression(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
         List<JmmNode> children = node.getChildren();
+        System.out.println("node: " + node + ", " + children);
 
         if (children.size() == 1) {
             JmmNode child = children.get(0);
@@ -259,7 +260,7 @@ public class SemanticAnalysisUtils {
                 reports.addAll(r);
             } else if ((child.getKind().equals("Add") || child.getKind().equals("Sub") || child.getKind().equals("Div") || child.getKind().equals("Mult")) && rightOperand) {
                 List<Report> r = evaluateOperationWithIntegers(symbolTable, child, method);
-                if (r.size() == 0) return new Type("Boolean", false);
+                if (r.size() == 0) return new Type("Int", false);
                 reports.addAll(r);
             } else if (child.getKind().equals("Not") && rightOperand) {
                 List<Report> r = evaluateNotOperation(symbolTable, child, method);
@@ -269,7 +270,7 @@ public class SemanticAnalysisUtils {
                 return evaluateFinalTerms(symbolTable, method, child, reports, rightOperand);
             } else if (child.getKind().equals("ArrayAccess")) {
                 if (evaluateArrayAccess(symbolTable, method, child, reports))
-                    return new Type("Int", true);
+                    return new Type("Int", false);
             } else if (child.getKind().equals("Length") && rightOperand) {
                 if (evaluateArray(symbolTable, method, child, reports))
                     return new Type("Int", false);
@@ -318,6 +319,7 @@ public class SemanticAnalysisUtils {
             }
         }
 
+        System.out.println("Evaluate method call: " + methodNode + ", " + methodNode.getChildren());
         String methodName = methodNode.getChildren().get(0).getKind().replaceAll("'", "").replace("Identifier ", "");
         List<JmmNode> parameters = methodNode.getChildren();
         parameters.remove(0);
@@ -334,6 +336,7 @@ public class SemanticAnalysisUtils {
         }
 
         String methodInfo = methodName + "(" + String.join(",", p) + ")";
+
         Type type = symbolTable.getReturnType(methodInfo);
         if (type != null) return type;
 
