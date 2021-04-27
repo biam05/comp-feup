@@ -89,4 +89,9 @@ public class SymbolMethod {
 
         return new Type(type, isArray);
     }
+
+    @Override
+    public String toString() {
+        return ("Name: " +  name + ", return: " + returnType + ", parameters: " + parameters);
+    }
 }
