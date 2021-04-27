@@ -8,11 +8,13 @@ public class InstructionJasmin {
     private final Instruction instruction;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
+    private MethodJasmin method;
 
-    public InstructionJasmin(Instruction instruction) {
+    public InstructionJasmin(Instruction instruction, MethodJasmin method) {
         this.instruction = instruction;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
+        this.method = method;
     }
 
     public StringBuilder getJasminCode() {
@@ -33,12 +35,6 @@ public class InstructionJasmin {
             case CALL:
                 generateCall((CallInstruction) instruction);
                 break;
-            case GOTO:
-                generateGoTo((GotoInstruction) instruction);
-                break;
-            case BRANCH:
-                generateBranch((CondBranchInstruction) instruction);
-                break;
             case RETURN:
                 generateReturn((ReturnInstruction) instruction);
                 break;
@@ -48,15 +44,6 @@ public class InstructionJasmin {
             case GETFIELD:
                 generateGetField((GetFieldInstruction) instruction);
                 break;
-            case UNARYOPER:
-                generateUnaryOp((UnaryOpInstruction) instruction);
-                break;
-            case BINARYOPER:
-                generateBinaryOp((BinaryOpInstruction) instruction);
-                break;
-            case NOPER:
-                generateNOper((SingleOpInstruction) instruction); //TODO: ??? not sure
-                break;
             default:
                 break;
         }
@@ -64,9 +51,61 @@ public class InstructionJasmin {
         System.out.println("------------------------------------------");
     }
 
-    // --------------- Deal With Instructions Functions ---------------
     private void generateAssign(AssignInstruction instruction) {
-        // TODO
+        String value, variable;
+        Instruction rhs = instruction.getRhs();
+        switch (rhs.getInstType()){
+            case NOPER:
+                variable = ((Operand)instruction.getDest()).getName();
+                Element rhsElement = ((SingleOpInstruction) rhs).getSingleOperand();
+                if (rhsElement.isLiteral()){
+                    value = ((LiteralElement)rhsElement).getLiteral();
+                    decideType(rhsElement);
+                    jasminCode.append("const_");
+                }
+                else {
+                    value = method.getLocalVariables().get(((Operand)rhsElement).getName()).toString();
+                    decideType(rhsElement);
+                    jasminCode.append("load_");
+                }
+                jasminCode.append(value);
+                decideType(rhsElement);
+                jasminCode.append("store_");
+                if (method.addLocalVariable(variable,method.getN_locals())){
+                    jasminCode.append(method.getN_locals());
+                    method.incNLocals();
+                }
+                else{
+                    jasminCode.append(method.getLocalVariables().get(variable));
+                }
+                jasminCode.append("\n");
+                break;
+
+            case BINARYOPER:
+                variable = ((Operand)instruction.getDest()).getName();
+                value = method.getLocalVariables().get(variable).toString();
+
+                OperationType operation = ((BinaryOpInstruction) rhs).getUnaryOperation().getOpType();
+                switch (operation){
+                    case ADD:
+                        Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
+                        Element rightElement = ((BinaryOpInstruction) rhs).getRightOperand();
+                        decideType(leftElement);
+                        jasminCode.append("load_");
+                        jasminCode.append(method.getLocalVariables().get(((Operand)leftElement).getName()));
+                        decideType(instruction.getDest());
+                        jasminCode.append("add");
+                        decideType(rightElement);
+                        jasminCode.append("load_");
+                        jasminCode.append(method.getLocalVariables().get(((Operand)rightElement).getName()));
+                        decideType(instruction.getDest());
+                        jasminCode.append("store_");
+                        jasminCode.append(value);
+                }
+
+                jasminCode.append("\n");
+                break;
+        }
     }
 
     private void generateCall(CallInstruction instruction) {
@@ -75,37 +114,26 @@ public class InstructionJasmin {
         System.out.println("\t* First Arg: " + instruction.getFirstArg());
         System.out.println("\t* Second Arg: " + instruction.getSecondArg());
 
-        jasminCode.append("\n\taload_0");
-        jasminCode.append("\n\tinvokespecial java/lang/Object.<init>()V;");
+        if(method.getMethod().isConstructMethod()){
+            jasminCode.append("\n\taload_0");
+            jasminCode.append("\n\tinvokespecial java/lang/Object.<init>()V;");
+        }
         switch (instruction.getReturnType().getTypeOfElement()){
             default:
                 jasminCode.append("\n\treturn");
                 break;
         }
-        // TODO: Can a Call Instruction be something different from a Constructor?
-    }
-
-    private void generateGoTo(GotoInstruction instruction) {
-        // TODO
-        jasminCode.append("\n\tLoop:");
-        jasminCode.append("\n\t\tgoto Loop");
-    }
-
-    private void generateBranch(CondBranchInstruction instruction) {
-        // TODO
     }
 
     private void generateReturn(ReturnInstruction instruction) {
-        // TODO: falta a variavel q é retornada. Onde arranjo isso?
-        System.out.println("\t* Operand: " + instruction.getOperand());
-        System.out.println(instruction.getOperand().isLiteral());
-        jasminCode.append("\n\tEnd:");
-        switch (instruction.getOperand().getType().getTypeOfElement()) {
-            case INT32 -> jasminCode.append("\n\t\tireturn");
-            case BOOLEAN -> jasminCode.append("\n\t\tireturn"); // weird... == int? confirm
-            case ARRAYREF -> jasminCode.append("\n\t\tareturn");
-            default -> jasminCode.append("\n\t\treturn");
-        }
+        decideType(instruction.getOperand());
+        jasminCode.append("load_");
+        String returnedVariable = ((Operand) instruction.getOperand()).getName();
+        String value = method.getLocalVariables().get(returnedVariable).toString();
+        jasminCode.append(value);
+
+        decideType(instruction.getOperand());
+        jasminCode.append("return");
     }
 
     private void generatePutField(PutFieldInstruction instruction) {
@@ -116,15 +144,13 @@ public class InstructionJasmin {
         // TODO
     }
 
-    private void generateUnaryOp(UnaryOpInstruction instruction) {
-        // TODO
-    }
-
-    private void generateBinaryOp(BinaryOpInstruction instruction) {
-        // TODO
-    }
-
-    private void generateNOper(SingleOpInstruction instruction) {
-        // TODO
+    private void decideType(Element element){
+        switch (element.getType().getTypeOfElement()){
+            case INT32 -> jasminCode.append("\n\t\ti");
+            case BOOLEAN -> jasminCode.append("\n\t\ti"); // weird... == int? confirm
+            case ARRAYREF -> jasminCode.append("\n\t\ta");
+            default -> jasminCode.append("\n\t\t");
+        }
+        // other types of variables
     }
 }

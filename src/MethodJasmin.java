@@ -2,17 +2,25 @@ import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MethodJasmin {
     private final Method method;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
+    private int n_locals;
+    private int n_stack;
+    private Map<String, Integer> localVariables;
 
     public MethodJasmin(Method method) {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
+        this.n_locals = 0;
+        this.n_stack = 0;
+        this.localVariables = new HashMap<String, Integer>();
     }
 
     public StringBuilder getJasminCode() {
@@ -21,6 +29,46 @@ public class MethodJasmin {
 
     public List<Report> getReports() {
         return reports;
+    }
+
+    public Method getMethod() {
+        return method;
+    }
+
+    public void incNLocals(){
+        this.n_locals++;
+    }
+
+    public void incNStack(){
+        this.n_stack++;
+    }
+
+    public void decNLocals(){
+        this.n_locals--;
+    }
+
+    public void decNStack(){
+        this.n_stack--;
+    }
+
+    public int getN_locals() {
+        return n_locals;
+    }
+
+    public int getN_stack() {
+        return n_stack;
+    }
+
+    public Map<String, Integer> getLocalVariables() {
+        return localVariables;
+    }
+
+    public Boolean addLocalVariable(String variable, int id){
+        if(!localVariables.containsKey(variable)){
+            localVariables.put(variable, id);
+            return true;
+        }
+        return false;
     }
 
     public void generateJasminCode(){
@@ -67,14 +115,18 @@ public class MethodJasmin {
                 break;
         }
         jasminCode.append(methodReturn);
-
+        StringBuilder auxiliaryJasmin = new StringBuilder();
         for(var inst : method.getInstructions()){
-            InstructionJasmin instructionJasmin = new InstructionJasmin(inst);
+            InstructionJasmin instructionJasmin = new InstructionJasmin(inst, this);
             instructionJasmin.generateJasminCode();
-            this.jasminCode.append(instructionJasmin.getJasminCode());
+            auxiliaryJasmin.append(instructionJasmin.getJasminCode());
             this.reports.addAll(instructionJasmin.getReports());
         }
-
+        if(!this.method.isConstructMethod()){
+            this.jasminCode.append("\n\t\t.limit locals 99");
+            this.jasminCode.append("\n\t\t.limit stack 99\n");
+        }
+        this.jasminCode.append(auxiliaryJasmin);
         jasminCode.append("\n.end method");
     }
 
@@ -100,6 +152,8 @@ public class MethodJasmin {
                 default:
                     break;
             }
+            addLocalVariable(((Operand)param).getName(), n_locals);
+            incNLocals();
         }
     }
 }
