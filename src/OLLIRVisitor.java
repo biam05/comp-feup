@@ -78,19 +78,19 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     }
 
     private String visitMethodBody(SymbolMethod method, JmmNode node) {
-        String res = OLLIRTemplates.localVariables(method.getLocalVariables());
+        StringBuilder res = new StringBuilder(OLLIRTemplates.localVariables(method.getLocalVariables()));
 
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
-            if (child.getKind().equals("Statement")) res += visitStatement(method, child);
+            if (child.getKind().equals("Statement")) res.append(visitStatement(method, child));
         }
 
-        return res;
+        return res.toString();
     }
 
     public String visitStatement(SymbolMethod method, JmmNode node) {
-        String res = "";
+        StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
@@ -100,112 +100,156 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     return "";
                 case "Expression":
                     //chamar metodo
-                    res += "";
+                    res.append("");
                     break;
                 case "Assign":
-                    res += visitAssign(method, child);
+                    res.append(visitAssign(method, child));
                     break;
                 case "Statement":
-                    res += visitStatement(method, child);
+                    res.append(visitStatement(method, child));
                     break;
             }
         }
 
-        return res;
+        return res.toString();
     }
 
     public String visitAssign(SymbolMethod method, JmmNode node) {
-        System.out.println(node.toJson());
         List<JmmNode> children = node.getChildren();
         String res = "";
 
         if (children.size() != 2) return "";
-        /*if (!children.get(0).getKind().equals("Expression") || !children.get(1).getKind().equals("Expression"))
-            return "";*/
 
-        String leftOperandType = visitExpression(children.get(0));
+        List<String> leftOperandType = visitExpression(children.get(0), method);
         if (leftOperandType == null) {
             return "";
         }
+        res += leftOperandType.get(0) + " =" + leftOperandType.get(1) + " ";
 
-        String rightOperandType = visitExpression(children.get(1));
+        List<String> rightOperandType = visitExpression(children.get(1), method);
         if (rightOperandType == null)
             return "";
 
+        res += rightOperandType.get(0) + ";\n";
         return res;
     }
 
-    public String visitExpression(JmmNode node){
+    public List<String> visitExpression(JmmNode node, SymbolMethod method){
         List<JmmNode> children = node.getChildren();
+        System.out.println("Visit Expression: " + node + ", " + children);
+        String ret = "";
         String res = "";
         if (children.size() == 1) {
             JmmNode child = children.get(0);
-            if (child.getKind().equals("And")) {
-                String[] eval = visitOperator();
-                res = eval[0] + " &&.bool " + eval[1];
-            } else if (child.getKind().equals("Less")) {
-                String[] eval = visitOperator();
-                res = eval[0] + " <.i32 " + eval[1];
-            } else if (child.getKind().equals("Add")){
-                String[] eval = visitOperator();
-                res = eval[0] + " +.i32 " + eval[1];
-            } else if(child.getKind().equals("Sub")){
-                String[] eval = visitOperator();
-                res = eval[0] + " -.i32 " + eval[1];
-            } else if(child.getKind().equals("Div")){
-                String[] eval = visitOperator();
-                res = eval[0] + " /.i32 " + eval[1];
-            } else if(child.getKind().equals("Mult")) {
-                String[] eval = visitOperator();
-                res = eval[0] + " *.i32 " + eval[1];
-            } else if (child.getKind().equals("Not")) {
-                String[] eval = visitOperator();
-                res = eval[0] + " !.bool " + eval[1];
-            } else if (child.getKind().equals("FinalTerms")) {
-                res = "hi2";
-            } else if (child.getKind().equals("ArrayAccess")) {
-                res = "hi3";
-            } else if (child.getKind().equals("Length")) {
-                res = "hi4";
+            List<String> eval;
+            System.out.println("child : " + child);
+            switch (child.getKind()) {
+                case "And":
+                    eval = visitOperator();
+                    res += eval.get(0) + " &&.bool " + eval.get(1);
+                    ret = ".bool";
+                    break;
+
+                case "Less":
+                    eval = visitOperator();
+                    res += eval.get(0) + " <.i32 " + eval.get(1);
+                    ret = ".i32";
+                    break;
+
+                case "Add":
+                    eval = visitOperator();
+                    res += eval.get(0) + " +.i32 " + eval.get(1);
+                    ret = ".i32";
+                    break;
+
+                case "Sub":
+                    eval = visitOperator();
+                    res += eval.get(0) + " -.i32 " + eval.get(1);
+                    ret = ".i32";
+                    break;
+
+                case "Div":
+                    eval = visitOperator();
+                    res += eval.get(0) + " /.i32 " + eval.get(1);
+                    ret = ".i32";
+                    break;
+
+                case "Mult":
+                    eval = visitOperator();
+                    res += eval.get(0) + " *.i32 " + eval.get(1);
+                    break;
+
+                case "Not":
+                    eval = visitOperator();
+                    res += eval.get(0) + " !.bool " + eval.get(1);
+                    ret = ".bool";
+                    break;
+
+                case "FinalTerms":
+                    return visitFinalTerms(child, method);
+                case "ArrayAccess":
+                    res += ".hi3";
+                    ret = ".ret_hi3";
+                    break;
+                case "Length":
+                    res += ".hi4";
+                    ret = ".ret_hi4";
+                    break;
             }
         } else if (children.size() == 2) {
             if (children.get(0).getKind().equals("FinalTerms") && children.get(1).getKind().equals("MethodCall")) {
-                res = "oo";
+                res += ".hi5";
+                ret = ".ret_hi5";
             }
         }
 
-        return res;
+        List<String> result = new ArrayList<>();
+        result.add(res);
+        result.add(ret);
+
+        return result;
     }
 
-    private static Type visitFinalTerms(JmmNode node) {
+    private List<String> visitFinalTerms(JmmNode node, SymbolMethod method) {
         List<JmmNode> children = node.getChildren();
-        System.out.println("he");
-        JmmNode firstChild = children.get(0);
+        List<String> result = new ArrayList<>();
 
-        /*if (firstChild.getKind().contains("Number")) return new Type("Int", false);
-        else if (firstChild.getKind().equals("NewIntArrayExpression") && rightOperand) {
-            if (evaluatesToInteger(symbolTable, method, firstChild.getChildren().get(0), reports))
-                return new Type("Int", true);
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.getChildren().get(0).get("line")), Integer.parseInt(firstChild.getChildren().get(0).get("col")), "bad array access: integer expected"));
-        } else if (firstChild.getKind().contains("NewIdentifier") && rightOperand) {
-            String newIdentifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
-            return new Type(newIdentifier, false);
+        JmmNode firstChild = children.get(0);
+        String ret = "";
+        String res = "";
+
+        if (firstChild.getKind().contains("Number")) {
+            ret = ".i32";
+            res = firstChild.getKind().replace("Number", "").replaceAll("'", "") + ".i32";
+        }
+        else if (firstChild.getKind().equals("NewIntArrayExpression")) { //not for this checkpoint
+            ret = "";
+            res = "";
+        } else if (firstChild.getKind().contains("NewIdentifier")) {
+            String identifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
+            res = "new(" + identifier + ")." + identifier;
+            ret = "." + identifier;
+
         } else if (firstChild.getKind().contains("Identifier")) {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("Identifier ", "");
-            Type type = checkIfIdentifierExists(symbolTable, method, identifier);
-            if (type == null)
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.get("line")), Integer.parseInt(firstChild.get("col")), "identifier '" + identifier + "' is not declared"));
-            return type;
-        } else if (rightOperand && (firstChild.getKind().equals("True") || firstChild.getKind().equals("False")))
-            return new Type("Boolean", false);*/
-
-
-        return null;
+            String type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, identifier).toOLLIR();
+            res = identifier + type;
+            ret = type;
+        } else if (firstChild.getKind().equals("True") || firstChild.getKind().equals("False")) {
+            int bool = firstChild.getKind().equals("True") ? 1 : 0;
+            res = bool + ".bool";
+            ret = ".bool";
+        }
+        result.add(res);
+        result.add(ret);
+        return result;
     }
 
-    public String[] visitOperator(){
+    public List<String> visitOperator(){
+        List<String> a = new ArrayList<>();
+        a.add("aa");
+        a.add("bb");
 
-
-        return null;
+        return a;
     }
 }

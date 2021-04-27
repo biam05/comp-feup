@@ -246,7 +246,6 @@ public class SemanticAnalysisUtils {
 
     public static Type evaluateExpression(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
         List<JmmNode> children = node.getChildren();
-        System.out.println("node: " + node + ", " + children);
 
         if (children.size() == 1) {
             JmmNode child = children.get(0);
@@ -319,7 +318,6 @@ public class SemanticAnalysisUtils {
             }
         }
 
-        System.out.println("Evaluate method call: " + methodNode + ", " + methodNode.getChildren());
         String methodName = methodNode.getChildren().get(0).getKind().replaceAll("'", "").replace("Identifier ", "");
         List<JmmNode> parameters = methodNode.getChildren();
         parameters.remove(0);

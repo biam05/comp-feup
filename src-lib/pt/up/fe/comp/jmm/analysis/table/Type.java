@@ -84,10 +84,18 @@ public class Type {
         if(isArray()) res.append(".array");
 
         switch (getName()) {
-            case "Int" -> res.append(".i32");
-            case "Boolean" -> res.append(".bool");
-            case "Void" -> res.append(".V");
-            default -> res.append(".").append(getName());
+            case "Int":
+                res.append(".i32");
+                break;
+            case "Boolean":
+                res.append(".bool");
+                break;
+            case "Void":
+                res.append(".V");
+                break;
+            default:
+                res.append(".").append(getName());
+                break;
         }
 
         return res.toString();
