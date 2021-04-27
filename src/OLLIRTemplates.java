@@ -16,8 +16,6 @@ public class OLLIRTemplates {
         return res.toString();
     }
 
-
-
     public static String init(String className, List<Symbol> fields){
         StringBuilder res = new StringBuilder(className);
         res.append(" {\n").append(fields(fields)).append("\n.construct ").append(className).append("().V{\n invokespecial(this, \"<init>\").V;\n}\n");
@@ -39,16 +37,6 @@ public class OLLIRTemplates {
 
 
         return String.join(",", param);
-    }
-
-    public static String localVariables(List<Symbol> localVariables) {
-        if(localVariables.isEmpty()) return "";
-
-        StringBuilder param = new StringBuilder();
-        for (Symbol parameter: localVariables) param.append(parameter.toOLLIR()).append(";\n");
-
-
-        return String.join(";\n", param);
     }
 
 }

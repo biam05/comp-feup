@@ -78,7 +78,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     }
 
     private String visitMethodBody(SymbolMethod method, JmmNode node) {
-        StringBuilder res = new StringBuilder(OLLIRTemplates.localVariables(method.getLocalVariables()));
+        StringBuilder res = new StringBuilder();
 
         List<JmmNode> children = node.getChildren();
 
@@ -124,7 +124,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         if (leftOperandType == null) {
             return "";
         }
-        res += leftOperandType.get(0) + " =" + leftOperandType.get(1) + " ";
+        res += leftOperandType.get(0) + " :=" + leftOperandType.get(1) + " ";
 
         List<String> rightOperandType = visitExpression(children.get(1), method);
         if (rightOperandType == null)
@@ -145,43 +145,37 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             System.out.println("child : " + child);
             switch (child.getKind()) {
                 case "And":
-                    eval = visitOperator();
-                    res += eval.get(0) + " &&.bool " + eval.get(1);
+                    res = visitOperator( child, method, "&&.bool");
                     ret = ".bool";
                     break;
 
                 case "Less":
-                    eval = visitOperator();
-                    res += eval.get(0) + " <.i32 " + eval.get(1);
+                    res = visitOperator(child, method, "<.i32");
                     ret = ".i32";
                     break;
 
                 case "Add":
-                    eval = visitOperator();
-                    res += eval.get(0) + " +.i32 " + eval.get(1);
+                    res = visitOperator(child, method, "+.i32");
                     ret = ".i32";
                     break;
 
                 case "Sub":
-                    eval = visitOperator();
-                    res += eval.get(0) + " -.i32 " + eval.get(1);
+                    res = visitOperator(child, method, "-.i32");
                     ret = ".i32";
                     break;
 
                 case "Div":
-                    eval = visitOperator();
-                    res += eval.get(0) + " /.i32 " + eval.get(1);
+                    res = visitOperator(child, method, "/.i32");
                     ret = ".i32";
                     break;
 
                 case "Mult":
-                    eval = visitOperator();
-                    res += eval.get(0) + " *.i32 " + eval.get(1);
+                    res = visitOperator(child, method, "*.i32");
+                    ret = ".i32";
                     break;
 
                 case "Not":
-                    eval = visitOperator();
-                    res += eval.get(0) + " !.bool " + eval.get(1);
+                    res = visitOperator(child, method, "!.bool");
                     ret = ".bool";
                     break;
 
@@ -215,12 +209,11 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         List<String> result = new ArrayList<>();
 
         JmmNode firstChild = children.get(0);
-        String ret = "";
-        String res = "";
+        String ret = "", res = "", met = "";
 
         if (firstChild.getKind().contains("Number")) {
             ret = ".i32";
-            res = firstChild.getKind().replace("Number", "").replaceAll("'", "") + ".i32";
+            res = firstChild.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "") + ".i32";
         }
         else if (firstChild.getKind().equals("NewIntArrayExpression")) { //not for this checkpoint
             ret = "";
@@ -229,7 +222,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
             res = "new(" + identifier + ")." + identifier;
             ret = "." + identifier;
-
+            met = ""
         } else if (firstChild.getKind().contains("Identifier")) {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("Identifier ", "");
             String type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, identifier).toOLLIR();
@@ -240,16 +233,16 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             res = bool + ".bool";
             ret = ".bool";
         }
+
         result.add(res);
         result.add(ret);
         return result;
     }
 
-    public List<String> visitOperator(){
-        List<String> a = new ArrayList<>();
-        a.add("aa");
-        a.add("bb");
-
-        return a;
+    public String visitOperator(JmmNode node, SymbolMethod method, String operator){
+        String res = "";
+        //evaluates both children of the node, 1
+        //res += eval.get(0) + operator + eval.get(1);
+        return res;
     }
 }
