@@ -78,4 +78,18 @@ public class Type {
         } else return name.equals(other.name);
     }
 
+    public String toOLLIR(){
+        StringBuilder res = new StringBuilder();
+
+        if(isArray()) res.append(".array");
+
+        switch (getName()) {
+            case "Int" -> res.append(".i32");
+            case "Boolean" -> res.append(".bool");
+            case "Void" -> res.append(".V");
+            default -> res.append(".").append(getName());
+        }
+
+        return res.toString();
+    }
 }
