@@ -222,7 +222,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
             res = "new(" + identifier + ")." + identifier;
             ret = "." + identifier;
-            met = ""
+            met = "ola";
         } else if (firstChild.getKind().contains("Identifier")) {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("Identifier ", "");
             String type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, identifier).toOLLIR();
@@ -236,11 +236,42 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
         result.add(res);
         result.add(ret);
+        if(!met.equals("")) result.add(met);
         return result;
     }
 
     public String visitOperator(JmmNode node, SymbolMethod method, String operator){
-        String res = "";
+        StringBuilder res = new StringBuilder();
+        List<JmmNode> children = node.getChildren();
+        if(children.size() > 2) return "";
+        else if(children.size() == 2){
+            for(JmmNode child: children){
+                if (node.getKind().equals("Length")) {
+                    //return evaluateArray(symbolTable, method, node, reports);
+                }
+                List<JmmNode> c = node.getChildren();
+                if (c.size() == 1) {
+                    JmmNode ch = c.get(0);
+                    if (ch.getKind().contains("Number")) res.append(".i32");
+                    else if (ch.getKind().contains("Identifier")) {
+                        Report report = isIdentifier(symbolTable, method, ch, true, false);
+                        if (report != null) reports.add(report);
+                        else return true;
+                    } else if (ch.getKind().equals("ArrayAccess")) {
+                        return evaluateArrayAccess(symbolTable, method, ch, reports);
+                    } else if (ch.getKind().equals("Expression") || ch.getKind().equals("FinalTerms"))
+                        return evaluatesToInteger(symbolTable, method, ch, reports);
+
+                } else if (c.size() == 2) {
+                    List<Report> allReports = evaluateOperationWithIntegers(symbolTable, node, method);
+                }
+            }
+        }
+        else if (children.size() == 1){
+
+        }
+
+
         //evaluates both children of the node, 1
         //res += eval.get(0) + operator + eval.get(1);
         return res;
