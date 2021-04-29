@@ -1,5 +1,7 @@
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
@@ -10,6 +12,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     private final GrammarSymbolTable symbolTable;
     private final List<Report> reports;
     private String code;
+    private int var_temp = 1;
 
     public OLLIRVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -52,7 +55,9 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 }
                 methodInfo.append(SemanticAnalysisUtils.getTypeParameters(parameters));
 
-            } else if (childKind.contains("Identifier") || childKind.equals("Main")) {
+            } else if (childKind.equals("Main")) {
+                methodInfo.append("Main(");
+            } else if (childKind.contains("Identifier")) {
                 String methodName = childKind.replaceAll("'", "").replace("Identifier ", "");
                 methodInfo.append(methodName).append("(");
 
@@ -63,7 +68,10 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 if (method == null) return false;
 
                 res.append(OLLIRTemplates.methodDeclaration(method));
-                res.append(" {\n").append(visitMethodBody(method, child)).append("\n}\n");
+                res.append(" {\n").append(visitMethodBody(method, child)).append("\n");
+
+                res.append(visitReturn(method, children.get(++i)));
+                res.append("}\n");
 
                 alreadyInBody = true;
             }
@@ -71,6 +79,13 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
         this.code += res.toString();
         return true;
+    }
+
+    private String visitReturn(SymbolMethod method, JmmNode node) {
+        if(!node.getKind().equals("Return")) return OLLIRTemplates.returnVoid();
+        System.out.println("visit return : " + node + ", " + node.getChildren());
+        List<String> values = visitExpression(node.getChildren().get(0), method);
+        return OLLIRTemplates.returnTemplate(values.get(0), method.getReturnType().toOLLIR());
     }
 
     private String visitMethodBody(SymbolMethod method, JmmNode node) {
@@ -126,6 +141,11 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             return "";
 
         res += rightOperandType.get(0) + ";\n";
+
+        //isto não está bonito
+        if (rightOperandType.get(0).contains("new"))
+            res += OLLIRTemplates.invokeSpecial(leftOperandType.get(2) + "." + rightOperandType.get(2));
+
         return res;
     }
 
@@ -136,44 +156,21 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         String res = "";
         if (children.size() == 1) {
             JmmNode child = children.get(0);
-            List<String> eval;
             System.out.println("child : " + child);
             switch (child.getKind()) {
                 case "And":
-                    res = visitOperator(child, method, "&&.bool");
+                    res = visitOperator(child, method);
                     ret = ".bool";
                     break;
-
                 case "Less":
-                    res = visitOperator(child, method, "<.i32");
-                    ret = ".i32";
-                    break;
-
                 case "Add":
-                    res = visitOperator(child, method, "+.i32");
-                    ret = ".i32";
-                    break;
-
                 case "Sub":
-                    res = visitOperator(child, method, "-.i32");
-                    ret = ".i32";
-                    break;
-
                 case "Div":
-                    res = visitOperator(child, method, "/.i32");
-                    ret = ".i32";
-                    break;
-
                 case "Mult":
-                    res = visitOperator(child, method, "*.i32");
-                    ret = ".i32";
-                    break;
-
                 case "Not":
-                    res = visitOperator(child, method, "!.bool");
-                    ret = ".bool";
+                    res = visitOperator(child, method);
+                    ret = OLLIRTemplates.getOperationReturn(child);
                     break;
-
                 case "FinalTerms":
                     return visitFinalTerms(child, method);
                 case "ArrayAccess":
@@ -199,28 +196,27 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         return result;
     }
 
-    private List<String> visitFinalTerms(JmmNode node, SymbolMethod method) {
+
+    private List<String> visitFinalTerms(JmmNode node, SymbolMethod method) { //melhorar codigo por favorzinho
         List<JmmNode> children = node.getChildren();
         List<String> result = new ArrayList<>();
-
+        System.out.println("final terms");
         JmmNode firstChild = children.get(0);
-        String ret = "", res = "";
+        String ret = "", res = "", value = "";
 
         if (firstChild.getKind().contains("Number")) {
             ret = ".i32";
-            res = firstChild.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "") + ".i32";
+            value = firstChild.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "");
+            res = value + ret;
         } else if (firstChild.getKind().equals("NewIntArrayExpression")) { //not for this checkpoint
             ret = "";
             res = "";
         } else if (firstChild.getKind().contains("NewIdentifier")) {
-            String identifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
-            res = "new(" + identifier + ")." + identifier;
-            ret = "." + identifier;
-        } else if (firstChild.getKind().contains("Identifier")) {
-            String identifier = firstChild.getKind().replaceAll("'", "").replace("Identifier ", "");
-            String type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, identifier).toOLLIR();
-            res = identifier + type;
-            ret = type;
+            value = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
+            res = "new(" + value + ")." + value;
+            ret = "." + value;
+        } else if (firstChild.getKind().contains("Identifier")){
+            res = OLLIRTemplates.getIdentifier(firstChild.getKind(), symbolTable, method);
         } else if (firstChild.getKind().equals("True") || firstChild.getKind().equals("False")) {
             int bool = firstChild.getKind().equals("True") ? 1 : 0;
             res = bool + ".bool";
@@ -229,43 +225,137 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
         result.add(res);
         result.add(ret);
+        result.add(value);
         return result;
     }
 
-    public String visitOperator(JmmNode node, SymbolMethod method, String operator) {
+    public String visitOperator(JmmNode node, SymbolMethod method) {
+        System.out.println("operator");
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
-        /*if(children.size() > 2) return "";
-        else if(children.size() == 2){
-            for(JmmNode child: children){
-                if (node.getKind().equals("Length")) {
-                    //return evaluateArray(symbolTable, method, node, reports);
-                }
-                List<JmmNode> c = node.getChildren();
-                if (c.size() == 1) {
-                    JmmNode ch = c.get(0);
-                    if (ch.getKind().contains("Number")) res.append(".i32");
-                    else if (ch.getKind().contains("Identifier")) {
-                        Report report = isIdentifier(symbolTable, method, ch, true, false);
-                        if (report != null) reports.add(report);
-                        else return true;
-                    } else if (ch.getKind().equals("ArrayAccess")) {
-                        return evaluateArrayAccess(symbolTable, method, ch, reports);
-                    } else if (ch.getKind().equals("Expression") || ch.getKind().equals("FinalTerms"))
-                        return evaluatesToInteger(symbolTable, method, ch, reports);
+        if (children.size() > 2) return "";
+        else if (children.size() == 2) {
+            JmmNode left = children.get(0);
+            JmmNode right = children.get(1);
+            List<String> lres = checkNodeAndVisit(left, method);
+            List<String> rres = checkNodeAndVisit(right, method);
+            //List<String> leftR = breakNestedOperations(left, lres.get(0));
+            //List<String> rightR = breakNestedOperations(right, rres.get(0));
+            if (!lres.isEmpty()) res.append(lres.get(0));
+            if (!rres.isEmpty()) res.append(rres.get(0));
+//            res.append(leftR.get(0)).append(rightR.get(0));
+//            res.append(leftR.get(1));
+//            res.append(" ").append(OLLIRTemplates.getOperationType(node)).append(" ");
+//            res.append(rightR.get(1));
+//            res.append(";");
+        } else if (children.size() == 1) {
+            JmmNode child = children.get(0);
+            List<String> result = null;
+            List<String> filho = checkNodeAndVisit(child, method);
+            List<String> filhoR = breakNestedOperations(child, filho.get(0));
+            res.append(filho);
+            res.append(" ").append(OLLIRTemplates.getOperationType(node)).append(" ");
+            res.append(filho);
 
-                } else if (c.size() == 2) {
-                    List<Report> allReports = evaluateOperationWithIntegers(symbolTable, node, method);
+        }
+
+
+        return res.toString();
+    }
+
+    public List<String> breakNestedOperations(JmmNode node, String currentRes) {//deals with temp vars
+        String aux = "";
+        List<String> res = new ArrayList<>();
+        //se tiver uma operação dentro de uma operaçao ou uma chamada a um metodo houver uma operaçao ou a chamada de outro metodo  tambem é necessário variavel temporaria
+        if (OLLIRTemplates.isOperator(node) || node.getKind().equals("Call")) {
+            //construct the needed temporary variables
+            if (currentRes.contains(":=.")) {
+                //se for num assign temos que partir a variavek temporaria e manter o assign
+            } else {
+                //apenas chamada do metodo
+            }
+
+            var_temp++;
+        }
+
+        res.add(aux);
+        res.add(currentRes);
+        return res;
+
+    }
+
+    public List<String> checkNodeAndVisit(JmmNode node, SymbolMethod method) {
+        List<String> result = new ArrayList<>();
+        String res = "";
+        switch (node.getKind()) {
+            case "Expression":
+                result = visitExpression(node, method);
+                break;
+            case "FinalTerm":
+                result = visitFinalTerms(node, method);
+                break;
+            case "Call":
+                result = visitedCall(node, method);
+            case "Assign":
+                res = visitAssign(method, node);
+                result.add(res);
+                break;
+            case "Statement":
+                res = visitStatement(method, node);
+                result.add(res);
+                break;
+            case "And":
+            case "Less":
+            case "Add":
+            case "Sub":
+            case "Div":
+            case "Mult":
+            case "Not":
+                res = visitOperator(node, method);
+                result.add(res);
+                break;
+
+        }
+        return result;
+    }
+
+    public List<String> visitedCall(JmmNode node, SymbolMethod method) {
+        List<String> res = new ArrayList<>();
+        List<JmmNode> children = node.getChildren();
+        JmmNode left = children.get(0);
+        JmmNode right = children.get(1);
+        if(left.getChildren().get(0).getKind().equals("This")) {
+            if (right.getKind().equals("MethodCall"))
+                visitMethodCall(children.get(1), method, "virtual");
+            else if (right.getKind().equals("Identifier")) {
+                if (node.getParent().getKind().equals("Assign")) {
+                    List<JmmNode> nodes = node.getParent().getChildren();
+                    if(nodes.get(0).getKind().equals("Call")){
+                        //put field
+                        String aux = "putfied(this, " + OLLIRTemplates.getIdentifier(right.getKind(), symbolTable, method);
+                        //primeiro argumento é o identifier.tipo e o segundo é o valor que passa a ter
+                        res.add(aux);
+                    }
+                    else if(nodes.get(1).getKind().equals("Call")){
+                        //geet field
+                        String aux = "getfield(this," + OLLIRTemplates.getIdentifier(right.getKind(), symbolTable, method);
+                        //o argumento é o identifier.tipo).tipo
+
+                    }
+                    //getfield ou putfield
+
                 }
             }
         }
-        else if (children.size() == 1){
-
-        }*/
-
-
-        //evaluates both children of the node, 1
-        //res += eval.get(0) + operator + eval.get(1);
-        return res.toString();
+        return res;
     }
+
+    public List<String> visitMethodCall(JmmNode node, SymbolMethod method, String type) {
+        List<String> res = new ArrayList<>();
+        if (type.equals("virtual")) {
+            res.add("invokevirtual(this,");
+        }
+        return res;
+    }
+
 }

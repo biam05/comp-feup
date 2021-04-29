@@ -122,4 +122,12 @@ public class GrammarSymbolTable implements SymbolTable {
             if (symbol.getName().equals(field)) return symbol.getType();
         return null;
     }
+
+    public Type hasImport(String identifierName){
+        for (String importName : getImports()) {
+            String[] imports = importName.split("\\.");
+            if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);
+        }
+        return null;
+    }
 }

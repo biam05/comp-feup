@@ -1,3 +1,4 @@
+import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 
@@ -29,6 +30,14 @@ public class OLLIRTemplates {
         return "invokespecial(" + identifierClass + ", \"<init>\").V;\n";
     }
 
+    public static String returnVoid() {
+        return "ret.V;\n";
+    }
+
+    public static String returnTemplate(String identifier, String type) {
+        return "ret" + type + " " + identifier + ";\n";
+    }
+
     public static String methodDeclaration(SymbolMethod method) {
         StringBuilder res = new StringBuilder();
         res.append(".method public ").append(method.getName()).append("(").append(parameters(method.getParameters())).append(")").append(method.getReturnType().toOLLIR());
@@ -44,5 +53,50 @@ public class OLLIRTemplates {
 
         return String.join(",", param);
     }
+
+    public static String getOperationType(JmmNode node){
+        switch(node.getKind()){
+            case "And":
+                return "&&.bool";
+            case "Not":
+                return "!.bool";
+            case "Add":
+                return "+.i32";
+            case "Sub":
+                return "-.i32";
+            case "Mul":
+                return "*.i32";
+            case "Div":
+                return "/.i32";
+            default:
+                return "";
+        }
+    }
+
+    public static String getOperationReturn(JmmNode node){
+        switch(node.getKind()){
+            case "And":
+            case "Not":
+                return ".bool";
+            case "Add":
+            case "Sub":
+            case "Mul":
+            case "Div":
+                return ".i32";
+            default:
+                return "";
+        }
+    }
+
+    public static boolean isOperator(JmmNode node){
+        return node.getKind().equals("Add") || node.getKind().equals("Sub") || node.getKind().equals("Mul") || node.getKind().equals("Div") || node.getKind().equals("And") || node.getKind().equals("Not") || node.getKind().equals("Less");
+    }
+
+    public static String getIdentifier(String kind, GrammarSymbolTable symbolTable, SymbolMethod method){
+        String value = kind.replaceAll("'", "").replace("Identifier ", "");
+        String ret = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, value).toOLLIR();
+        return value + ret;
+    }
+
 
 }

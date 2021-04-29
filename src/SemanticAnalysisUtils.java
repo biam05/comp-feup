@@ -293,7 +293,6 @@ public class SemanticAnalysisUtils {
             }
         }
 
-
         return null;
     }
 
@@ -327,10 +326,9 @@ public class SemanticAnalysisUtils {
         if (!identifierKind.equals("This")) {
             String identifierName = identifierKind.replaceAll("'", "").replace("Identifier ", "");
 
-            for (String importName : symbolTable.getImports()) {
-                String[] imports = importName.split("\\.");
-                if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);
-            }
+            Type res = symbolTable.hasImport(identifierName);
+            if(res != null) return res;
+
 
             Type identifierType = checkIfIdentifierExists(symbolTable, method, identifierName);
 
