@@ -1,21 +1,17 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
-    private GrammarSymbolTable symbolTable;
-    private List<Report> reports;
+    private final GrammarSymbolTable symbolTable;
+    private final List<Report> reports;
     private String code;
 
-    public OLLIRVisitor(GrammarSymbolTable symbolTable){
+    public OLLIRVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         this.code = OLLIRTemplates.init(symbolTable.getClassName(), symbolTable.getFields());
@@ -31,7 +27,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
     }
 
     public Boolean visitMethod(JmmNode node, Boolean dummy) {
-        StringBuilder res = new StringBuilder("");
+        StringBuilder res = new StringBuilder();
 
         List<JmmNode> children = node.getChildren();
 
@@ -100,7 +96,6 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     return "";
                 case "Expression":
                     //chamar metodo
-                    res.append("");
                     break;
                 case "Assign":
                     res.append(visitAssign(method, child));
@@ -134,7 +129,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         return res;
     }
 
-    public List<String> visitExpression(JmmNode node, SymbolMethod method){
+    public List<String> visitExpression(JmmNode node, SymbolMethod method) {
         List<JmmNode> children = node.getChildren();
         System.out.println("Visit Expression: " + node + ", " + children);
         String ret = "";
@@ -145,7 +140,7 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             System.out.println("child : " + child);
             switch (child.getKind()) {
                 case "And":
-                    res = visitOperator( child, method, "&&.bool");
+                    res = visitOperator(child, method, "&&.bool");
                     ret = ".bool";
                     break;
 
@@ -209,20 +204,18 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         List<String> result = new ArrayList<>();
 
         JmmNode firstChild = children.get(0);
-        String ret = "", res = "", met = "";
+        String ret = "", res = "";
 
         if (firstChild.getKind().contains("Number")) {
             ret = ".i32";
             res = firstChild.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "") + ".i32";
-        }
-        else if (firstChild.getKind().equals("NewIntArrayExpression")) { //not for this checkpoint
+        } else if (firstChild.getKind().equals("NewIntArrayExpression")) { //not for this checkpoint
             ret = "";
             res = "";
         } else if (firstChild.getKind().contains("NewIdentifier")) {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
             res = "new(" + identifier + ")." + identifier;
             ret = "." + identifier;
-            met = "ola";
         } else if (firstChild.getKind().contains("Identifier")) {
             String identifier = firstChild.getKind().replaceAll("'", "").replace("Identifier ", "");
             String type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, identifier).toOLLIR();
@@ -236,14 +229,13 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
         result.add(res);
         result.add(ret);
-        if(!met.equals("")) result.add(met);
         return result;
     }
 
-    public String visitOperator(JmmNode node, SymbolMethod method, String operator){
+    public String visitOperator(JmmNode node, SymbolMethod method, String operator) {
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
-        if(children.size() > 2) return "";
+        /*if(children.size() > 2) return "";
         else if(children.size() == 2){
             for(JmmNode child: children){
                 if (node.getKind().equals("Length")) {
@@ -269,11 +261,11 @@ public class OLLIRVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         }
         else if (children.size() == 1){
 
-        }
+        }*/
 
 
         //evaluates both children of the node, 1
         //res += eval.get(0) + operator + eval.get(1);
-        return res;
+        return res.toString();
     }
 }

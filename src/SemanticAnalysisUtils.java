@@ -11,8 +11,13 @@ import java.util.List;
 public class SemanticAnalysisUtils {
 
     public static boolean evaluatesToBoolean(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
-        List<JmmNode> children = node.getChildren();
 
+        if (node.getKind().equals("Call")) {
+            Type type = new Type("Boolean ", false);
+            return type.equals(evaluateCall(symbolTable, method, node, reports));
+        }
+
+        List<JmmNode> children = node.getChildren();
         for (JmmNode child : children) {
 
             List<Report> allReports = new ArrayList<>();
@@ -40,7 +45,6 @@ public class SemanticAnalysisUtils {
 
                 case "FinalTerms":
                     return evaluatesToBoolean(symbolTable, method, child, reports);
-                //if(child.getChildren().size)
                 case "True":
                 case "False":
                     return true;
@@ -60,8 +64,9 @@ public class SemanticAnalysisUtils {
 
     public static boolean evaluatesToInteger(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
 
-        if (node.getKind().equals("Length")) {
-            return evaluateArray(symbolTable, method, node, reports);
+        if (node.getKind().equals("Call")) {
+            Type type = new Type("Int ", false);
+            return type.equals(evaluateCall(symbolTable, method, node, reports));
         }
 
         List<JmmNode> children = node.getChildren();
@@ -75,9 +80,12 @@ public class SemanticAnalysisUtils {
                 else return true;
             } else if (child.getKind().equals("ArrayAccess")) {
                 return evaluateArrayAccess(symbolTable, method, child, reports);
-            } else if (child.getKind().equals("Expression") || child.getKind().equals("FinalTerms"))
+            } else if (child.getKind().equals("FinalTerms"))
                 return evaluatesToInteger(symbolTable, method, child, reports);
-
+            else if (child.getKind().equals("Expression")) {
+                Type type = new Type("Int", false);
+                return type.equals(evaluateExpression(symbolTable, method, child, reports, true));
+            }
         } else if (children.size() == 2) {
             List<Report> allReports = evaluateOperationWithIntegers(symbolTable, node, method);
             if (allReports.size() == 0) return true;
@@ -194,7 +202,7 @@ public class SemanticAnalysisUtils {
     }
 
     public static Report isIdentifier(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, boolean isInt, boolean isArray) {
-        String identifier = node.getKind().replaceAll("'", "").replace("Identifier ", "");
+        String identifier = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
 
         Type typeIdentifier = checkIfIdentifierExists(symbolTable, method, identifier);
         if (typeIdentifier == null) {
@@ -231,16 +239,23 @@ public class SemanticAnalysisUtils {
     }
 
     private static boolean evaluateArray(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
-        JmmNode firstChild = node.getChildren().get(0);
+        System.out.println("evaluate array: " + node + ", " + node.getChildren());
 
-        if (firstChild.getKind().equals("FinalTerms")) {
-            JmmNode child = firstChild.getChildren().get(0);
-            if (child.getKind().contains("Identifier")) {
-                if ((isIdentifier(symbolTable, method, child, true, true) == null) || (isIdentifier(symbolTable, method, child, false, true) == null))
+        if (node.getKind().equals("Call")) {
+            Type type = evaluateCall(symbolTable, method, node, reports);
+            if (type == null) return false;
+            if (type.equals(new Type("String", true)) || type.equals(new Type("Int", true))) return true;
+        }
+
+        List<JmmNode> children = node.getChildren();
+        if (children.size() == 1) {
+            if (children.get(0).getKind().contains("Identifier")) {
+                if ((isIdentifier(symbolTable, method, children.get(0), true, true) == null) || (isIdentifier(symbolTable, method, children.get(0), false, true) == null))
                     return true;
             }
         }
-        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.get("line")), Integer.parseInt(firstChild.get("col")), "length can only be used for int[] or String[]"));
+
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "length can only be used for int[] or String[]"));
         return false;
     }
 
@@ -273,12 +288,26 @@ public class SemanticAnalysisUtils {
             } else if (child.getKind().equals("Length") && rightOperand) {
                 if (evaluateArray(symbolTable, method, child, reports))
                     return new Type("Int", false);
-            }
-        } else if (children.size() == 2 && rightOperand) {
-            if (children.get(0).getKind().equals("FinalTerms") && children.get(1).getKind().equals("MethodCall")) {
-                return evaluateMethodCall(symbolTable, method, children, reports);
+            } else if (child.getKind().equals("Call")) {
+                return evaluateCall(symbolTable, method, child, reports);
             }
         }
+
+
+        return null;
+    }
+
+    private static Type evaluateCall(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
+        List<JmmNode> children = node.getChildren();
+        if (children.size() != 2) return null;
+
+        if (children.get(0).getKind().equals("FinalTerms") || children.get(0).getKind().equals("Call")) {
+            if (children.get(1).getKind().equals("MethodCall"))
+                return evaluateMethodCall(symbolTable, method, children, reports);
+            if (children.get(1).getKind().equals("Length") && evaluateArray(symbolTable, method, children.get(0), reports))
+                return new Type("Int", false);
+        }
+
         return null;
     }
 
