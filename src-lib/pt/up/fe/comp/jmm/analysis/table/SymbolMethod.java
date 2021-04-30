@@ -1,7 +1,5 @@
 package pt.up.fe.comp.jmm.analysis.table;
 
-import jdk.swing.interop.SwingInterOpUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,5 +91,14 @@ public class SymbolMethod {
     @Override
     public String toString() {
         return ("Name: " +  name + ", return: " + returnType + ", parameters: " + parameters);
+    }
+
+    public int getParameterOrder(String parameter){
+        int counter = 1;
+        for(Symbol s: parameters){
+            if(s.getName().equals(parameter)) return counter;
+            counter++;
+        }
+        return 0;
     }
 }
