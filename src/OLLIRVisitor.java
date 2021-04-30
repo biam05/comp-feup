@@ -1,7 +1,6 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
-import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         addVisit("Div", this::visitOperation);
         addVisit("Not", this::visitOperation);
         addVisit("And", this::visitOperation);
+        addVisit("Less", this::visitOperation);
         addVisit("ArrayAccess", this::visitArrayAccess);
         addVisit("Length", this::visitLength);
         setDefaultVisit(this::defaultVisit);
@@ -108,14 +108,13 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
     private String visitReturn(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
-        String exp = visit(node.getChildren().get(0));
-        String result = OLLIRTemplates.checkReturnTemporary(exp, var_temp);
+        String result = OLLIRTemplates.checkReturnTemporary(node.getChildren().get(0), var_temp);
         return "";
         //return OLLIRTemplates.returnTemplate(values.get(0), method.getReturnType().toOLLIR());
     }
 
 
-    // TO DO : ou apos receber o retorno dos filhos ele vai ver se necessita de criar variaveis temporarias ou ao correr o visit fazer logo isso (variaveis temporarias)
+    // TODO : ou apos receber o retorno dos filhos ele vai ver se necessita de criar variaveis temporarias ou ao correr o visit fazer logo isso (variaveis temporarias)
     private String visitAssign(JmmNode node, StringBuilder stringBuilder) {
         List<JmmNode> children = node.getChildren();
         String left = visit(children.get(0));
@@ -149,13 +148,11 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         return visit(node.getChildren().get(0));
     }
 
-    // TODO: verificar tudoooo e limpar
     private String visitFinalTerms(JmmNode node, StringBuilder stringBuilder) {
-        System.out.println("visit final term: " + node.getParent());
         StringBuilder result = new StringBuilder();
         List<JmmNode> children = node.getChildren();
         JmmNode child = children.get(0);
-        String ret = "", res = "", value = "";
+        String ret, res = "", value;
         if(child.getKind().contains("Number")){
             ret = ".i32";
             value = child.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "");
@@ -165,25 +162,25 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             res = "";
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
-            res = "new(" + value + ")." + value;
-            ret = "." + value;
+            res = "new(" + value + ")." + value; // new(myClass).myClass
         } else if (child.getKind().contains("Identifier")){
             value = child.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
             Optional<JmmNode> ancestor = child.getAncestor("MethodDeclaration");
             if(ancestor.isEmpty()) return "";
             ret = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, this.currentMethod, value).toOLLIR();
             res = value + ret;
-            res = "";
         } else if (child.getKind().equals("True") || child.getKind().equals("False")) {
-            int bool = child.getKind().equals("True") ? 1 : 0;
-            res = bool + ".bool";
             ret = ".bool";
-        } else if(child.getKind().equals("Expression")){
+            int bool = child.getKind().equals("True") ? 1 : 0;
+            res = bool + ret;
+        } else if(child.getKind().equals("Expression")){ // new int[EXPRESSION] -> nao é necessário nesta entrega
             res = visit(child);
+            //System.out.println("Visiting Expression");
+            //System.out.println("* Child: " + child);
         }
 
         result.append(res);
-        return "ola1";
+        return result.toString();
     }
 
     //TODO
@@ -205,30 +202,51 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         else if(left.getKind().equals("Identifier") && right.getKind().equals("Length")){
 
         }
-        return "ola2";
+        return res.toString();
     }
 
     //TODO
     private String visitMethodCall(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
-        return "ola3";
+        return res.toString();
     }
 
     //TODO
     private String visitLength(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
-        return "ola4";
+        return res.toString();
     }
 
-    // TODO: construir operação e adicionar à frente o retorno da operaçao
     private String visitOperation(JmmNode node, StringBuilder stringBuilder) {
-        StringBuilder res = new StringBuilder();
-        return "ola5";
+        String result;
+        switch (node.getKind()){
+            // Binary Instructions
+            case "Add":
+            case "Sub":
+            case "Mult":
+            case "Div":
+            case "And":
+            case "Less":
+                result = OLLIRTemplates.checkReturnTemporary(node.getChildren().get(1),0);
+                if (result.equals(""))
+                    return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1));
+                else
+                    return "";
+                // Unary Instruction
+            case "Not":
+                result = OLLIRTemplates.checkReturnTemporary(node.getChildren().get(0),0);
+                if (result.equals(""))
+                    return OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(0));
+                else
+                    return "";
+            default: // FinalTerms
+                return "";
+        }
     }
 
     private String visitArrayAccess(JmmNode node, StringBuilder stringBuilder) { //not for this checkpoint
         StringBuilder res = new StringBuilder();
-        return "ola6";
+        return res.toString();
     }
 
 }

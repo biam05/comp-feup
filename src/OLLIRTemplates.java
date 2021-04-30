@@ -3,7 +3,6 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class OLLIRTemplates {
@@ -80,11 +79,13 @@ public class OLLIRTemplates {
                 return "&&.bool";
             case "Not":
                 return "!.bool";
+            case "Less":
+                return "<.i32";
             case "Add":
                 return "+.i32";
             case "Sub":
                 return "-.i32";
-            case "Mul":
+            case "Mult":
                 return "*.i32";
             case "Div":
                 return "/.i32";
@@ -100,8 +101,9 @@ public class OLLIRTemplates {
                 return ".bool";
             case "Add":
             case "Sub":
-            case "Mul":
+            case "Mult":
             case "Div":
+            case "Less":
                 return ".i32";
             default:
                 return "";
@@ -149,49 +151,38 @@ public class OLLIRTemplates {
 
     public static String getReturnTypeExpression(String expression) { //for example, parse a.i32: return .i32
         if(expression.equals("")) return "";
-        String[] values = expression.split(".");
+        String[] values = expression.split("\\.");
         if(values.length < 2) return "";
         if(values.length == 2) return "." + values[1].trim();
         return "." + values[1].trim() + "." + values[2].trim();
     }
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a
-        String[] values = expression.split(".");
+        String[] values = expression.split("\\.");
         return values[0].trim();
     }
 
-    public static int countNumberOperations(String expression) {
-        int counter = 0;
-        List<String> values = Arrays.asList(expression.split(" "));
-
-        for(String value: values) {
-            if(value.contains("+") || value.contains("-") || value.contains("*") || value.contains("/") || value.contains("<") || value.contains("!") || value.contains("&&"))
-                counter++;
-        }
-
-        return counter;
+    public static boolean hasOperation(JmmNode expression) {
+        return expression.getKind().equals("Add") ||
+                expression.getKind().equals("Sub") ||
+                expression.getKind().equals("Mult") ||
+                expression.getKind().equals("Div") ||
+                expression.getKind().equals("Less") ||
+                expression.getKind().equals("Not") ||
+                expression.getKind().equals("And");
     }
 
-    public static int countCalls(String expression) {
-        int counter = 0;
-        List<String> values = Arrays.asList(expression.split(" "));
-
-        for(String value: values) {
-            if(value.contains("length") || value.contains("(")) //não sei se é preciso contar os invokes; não sei se nesta parte já existe essa possibilidade
-                counter++;
-        }
-
-        return counter;
+    public static boolean hasCall(JmmNode expression) {
+        if (expression.getChildren().size() < 2) return false;
+        return expression.getChildren().get(1).getKind().equals("Length") ||
+                expression.getChildren().get(1).getKind().equals("MethodCall");
     }
 
-    public static String checkReturnTemporary(String expression, int var_temp) {
-        int n_operations = countNumberOperations(expression);
-        int n_calls = countCalls(expression);
-
-        if(n_operations == 0 && n_calls == 0) return expression;
+    public static String checkReturnTemporary(JmmNode expression, int var_temp) {
+        //TODO
+        if(!hasOperation(expression) && !hasCall(expression)) return "";
 
         StringBuilder result = new StringBuilder();
-
         // return this.a(1+2)
         // t1 = 1+2
         // t2 = this.a(t1)
