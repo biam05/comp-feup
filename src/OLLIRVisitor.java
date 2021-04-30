@@ -11,7 +11,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private final GrammarSymbolTable symbolTable;
     private final List<Report> reports;
     private String code = "";
-    private int var_temp = 1;
+    private int var_temp = 0;
     private SymbolMethod currentMethod;
 
     public OLLIRVisitor(GrammarSymbolTable symbolTable) {
@@ -56,6 +56,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     }
 
     private String visitMethod(JmmNode node, StringBuilder stringBuilder) {
+        var_temp = 0;
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
         boolean ret = false;
@@ -100,7 +101,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             res.append(OLLIRTemplates.returnVoid());
             res.append("\n}\n");
         }
-        var_temp = 1;
         this.currentMethod = null;
         return res.toString();
     }
@@ -108,7 +108,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
     private String visitReturn(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
-        String result = OLLIRTemplates.checkReturnTemporary(node.getChildren().get(0), var_temp);
+        String result = checkReturnTemporary(node.getChildren().get(0));
         return "";
         //return OLLIRTemplates.returnTemplate(values.get(0), method.getReturnType().toOLLIR());
     }
@@ -208,7 +208,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     //TODO
     private String visitMethodCall(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
-        return res.toString();
+        return "TODO";
     }
 
     //TODO
@@ -218,7 +218,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     }
 
     private String visitOperation(JmmNode node, StringBuilder stringBuilder) {
-        String result;
+        String resultLeft, resultRight;
         switch (node.getKind()){
             // Binary Instructions
             case "Add":
@@ -227,18 +227,23 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             case "Div":
             case "And":
             case "Less":
-                result = OLLIRTemplates.checkReturnTemporary(node.getChildren().get(1),0);
-                if (result.equals(""))
+                resultLeft = checkReturnTemporary(node.getChildren().get(0));
+                resultRight = checkReturnTemporary(node.getChildren().get(1));
+                if (resultLeft.equals("") && resultRight.equals(""))
                     return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1));
+                else if (resultLeft.equals(""))
+                    return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight;
+                else if (resultRight.equals(""))
+                    return resultRight + visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
                 else
-                    return "";
+                    return resultRight + visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
                 // Unary Instruction
             case "Not":
-                result = OLLIRTemplates.checkReturnTemporary(node.getChildren().get(0),0);
-                if (result.equals(""))
+                resultRight = checkReturnTemporary(node.getChildren().get(0));
+                if (resultRight.equals(""))
                     return OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(0));
                 else
-                    return "";
+                    return OLLIRTemplates.getOperationType(node) + " " + resultRight;
             default: // FinalTerms
                 return "";
         }
@@ -247,6 +252,34 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private String visitArrayAccess(JmmNode node, StringBuilder stringBuilder) { //not for this checkpoint
         StringBuilder res = new StringBuilder();
         return res.toString();
+    }
+
+    public String checkReturnTemporary(JmmNode expression) {
+        //TODO
+        StringBuilder result = new StringBuilder();
+        if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression))
+        {
+            String aux = visit(expression);
+            System.out.println("HERE: " + aux);
+            String type = OLLIRTemplates.getReturnTypeExpression(aux);
+            var_temp++;
+            result.append("aux").append(var_temp).append(type).append(" :=").append(type).append(" ").append(aux);
+            /*
+            c = a + this.constInstr();
+            aux1 := this.constInstr();
+            c := a+aux1;
+            */
+        }
+
+        // return this.a(1+2)
+        // t1 = 1+2
+        // t2 = this.a(t1)
+        // return t2
+
+        // aux1 = 1+2
+        // aux2 = this.a(aux1)
+        // return aux2
+        return result.toString();
     }
 
 }

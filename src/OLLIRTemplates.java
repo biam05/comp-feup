@@ -54,7 +54,11 @@ public class OLLIRTemplates {
     }
 
     public static String assign(String left, String type, String right) {
-        return (left + " :=" + type + " " + right + ";\n");
+        StringBuilder result = new StringBuilder();
+        String[] reversed = (left + " :=" + type + " " + right + ";").split("\\n");
+        for (int i = reversed.length - 1; i >= 0; i--)
+            result.append(reversed[i]).append("\n");
+        return result.toString();
     }
 
     public static String methodDeclaration(SymbolMethod method) {
@@ -177,19 +181,5 @@ public class OLLIRTemplates {
         return expression.getChildren().get(1).getKind().equals("Length") ||
                 expression.getChildren().get(1).getKind().equals("MethodCall");
     }
-
-    public static String checkReturnTemporary(JmmNode expression, int var_temp) {
-        //TODO
-        if(!hasOperation(expression) && !hasCall(expression)) return "";
-
-        StringBuilder result = new StringBuilder();
-        // return this.a(1+2)
-        // t1 = 1+2
-        // t2 = this.a(t1)
-        // return t2
-        return result.toString();
-    }
-
-
 
 }
