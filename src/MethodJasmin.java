@@ -75,8 +75,8 @@ public class MethodJasmin {
         System.out.println("------------------------------------------");
         System.out.println("Method Name: " + method.getMethodName());
 
-        jasminCode.append("\n\n.method ");
-        jasminCode.append(method.getMethodAccessModifier().toString().toLowerCase());
+        jasminCode.append("\n\n.method public");
+        //jasminCode.append(method.getMethodAccessModifier().toString().toLowerCase());
 
         if(method.isConstructMethod())
             jasminCode.append(" <init>");

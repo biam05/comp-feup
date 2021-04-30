@@ -3,6 +3,7 @@ import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class InstructionJasmin {
     private final Instruction instruction;
@@ -86,22 +87,23 @@ public class InstructionJasmin {
                 value = method.getLocalVariables().get(variable).toString();
 
                 OperationType operation = ((BinaryOpInstruction) rhs).getUnaryOperation().getOpType();
-                switch (operation){
-                    case ADD:
-                        Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
-                        Element rightElement = ((BinaryOpInstruction) rhs).getRightOperand();
-                        decideType(leftElement);
-                        jasminCode.append("load_");
-                        jasminCode.append(method.getLocalVariables().get(((Operand)leftElement).getName()));
-                        decideType(instruction.getDest());
-                        jasminCode.append("add");
-                        decideType(rightElement);
-                        jasminCode.append("load_");
-                        jasminCode.append(method.getLocalVariables().get(((Operand)rightElement).getName()));
-                        decideType(instruction.getDest());
-                        jasminCode.append("store_");
-                        jasminCode.append(value);
-                }
+                Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
+                Element rightElement = ((BinaryOpInstruction) rhs).getRightOperand();
+
+                decideType(leftElement);
+                jasminCode.append("load_");
+                jasminCode.append(method.getLocalVariables().get(((Operand)leftElement).getName()));
+
+                decideType(instruction.getDest());
+                jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
+
+                decideType(rightElement);
+                jasminCode.append("load_");
+                jasminCode.append(method.getLocalVariables().get(((Operand)rightElement).getName()));
+
+                decideType(instruction.getDest());
+                jasminCode.append("store_");
+                jasminCode.append(value);
 
                 jasminCode.append("\n");
                 break;
