@@ -130,4 +130,11 @@ public class GrammarSymbolTable implements SymbolTable {
         }
         return null;
     }
+
+    public Boolean hasMethod(String methodName){
+        for(SymbolMethod method: methods){
+            if(method.getName().equals(methodName)) return true;
+        }
+        return false;
+    }
 }

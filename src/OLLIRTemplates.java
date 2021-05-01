@@ -21,7 +21,7 @@ public class OLLIRTemplates {
         StringBuilder res = new StringBuilder(className);
         res.append(" {\n").append(fields(fields)).append("\n.construct ").append(className).append("().V {\n");
         res.append(invokeSpecial("this"));
-        res.append("}\n");
+        res.append("}\n\n");
         return res.toString();
     }
 
@@ -134,6 +134,7 @@ public class OLLIRTemplates {
 
     public static String getIdentifierType(String value, GrammarSymbolTable symbolTable, SymbolMethod method){
         String ret = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, value).toOLLIR();
+        if(ret == null) return "";
         return ret;
     }
 
@@ -181,5 +182,27 @@ public class OLLIRTemplates {
         return expression.getChildren().get(1).getKind().equals("Length") ||
                 expression.getChildren().get(1).getKind().equals("MethodCall");
     }
+
+
+    public static String checkReturnTemporary(JmmNode expression, int var_temp) {
+        //TODO
+        if(!hasOperation(expression) && !hasCall(expression)) return "";
+
+        StringBuilder result = new StringBuilder();
+        // return this.a(1+2)
+        // t1 = 1+2
+        // t2 = this.a(t1)
+        // return t2
+        return result.toString();
+    }
+
+    public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable, SymbolMethod currentMethod){
+        String methodName = method.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
+        String identifierName = "";
+        if(identifier.contains("this") || symbolTable.hasMethod(methodName)) return "virtual"; // if it belongs to the class
+        if(symbolTable.hasImport(identifierName) != null) return "static"; //if it is an imported method or static
+        else return "special";
+    }
+
 
 }

@@ -1,5 +1,6 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
@@ -26,7 +27,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         addVisit("Expression", this::visitExpression);
         addVisit("FinalTerms", this::visitFinalTerms);
         addVisit("Call", this::visitCall);
-        addVisit("MethodCall", this::visitMethodCall);
         addVisit("Add", this::visitOperation);
         addVisit("Sub", this::visitOperation);
         addVisit("Mult", this::visitOperation);
@@ -35,7 +35,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         addVisit("And", this::visitOperation);
         addVisit("Less", this::visitOperation);
         addVisit("ArrayAccess", this::visitArrayAccess);
-        addVisit("Length", this::visitLength);
         setDefaultVisit(this::defaultVisit);
     }
 
@@ -47,7 +46,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         List<JmmNode> nodes = node.getChildren();
         StringBuilder res = new StringBuilder();
         for(JmmNode child: nodes){
-            System.out.println("default: " + child.getKind());
             String re = visit(child);
             res.append(re);
         }
@@ -66,7 +64,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
         for(int i = 0; i < children.size(); i++){
             JmmNode child = children.get(i);
-             if (child.getKind().equals("LParenthesis")) { // parameters
+            if (child.getKind().equals("LParenthesis")) { // parameters
                 if (alreadyInBody) break;
                 List<JmmNode> parameters = new ArrayList<>();
                 while (true) {
@@ -94,12 +92,12 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             else if(child.getKind().equals("Return")){
                 ret = true;
                 res.append(visit(child));
-                res.append("\n}\n");
+                res.append("\n}\n\n");
             }
         }
         if(!ret){
             res.append(OLLIRTemplates.returnVoid());
-            res.append("\n}\n");
+            res.append("\n}\n\n");
         }
         this.currentMethod = null;
         return res.toString();
@@ -109,7 +107,8 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private String visitReturn(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
         String result = checkReturnTemporary(node.getChildren().get(0));
-        return "";
+
+        return "return";
         //return OLLIRTemplates.returnTemplate(values.get(0), method.getReturnType().toOLLIR());
     }
 
@@ -167,7 +166,9 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             value = child.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
             Optional<JmmNode> ancestor = child.getAncestor("MethodDeclaration");
             if(ancestor.isEmpty()) return "";
-            ret = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, this.currentMethod, value).toOLLIR();
+            Type aux = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, this.currentMethod, value);
+            if(aux == null) ret = "";
+            else ret = aux.toOLLIR();
             res = value + ret;
         } else if (child.getKind().equals("True") || child.getKind().equals("False")) {
             ret = ".bool";
@@ -177,6 +178,9 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             res = visit(child);
             //System.out.println("Visiting Expression");
             //System.out.println("* Child: " + child);
+        }else if(child.getKind().equals("This")){
+            res = "this";
+
         }
 
         result.append(res);
@@ -185,40 +189,45 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
     //TODO
     private String visitCall(JmmNode node, StringBuilder stringBuilder) {
-        StringBuilder res = new StringBuilder();
+        String res = "";
         List<JmmNode> children = node.getChildren();
         if(children.size() != 2) return "";
         JmmNode left = children.get(0);
-        JmmNode right = children.get(1);
-        if(left.getKind().equals("This") && right.getKind().equals("MethodCall")){
+        System.out.println(left);
 
-        }
-        else if(left.getKind().contains("Identifier") && right.getKind().equals("FinalTerms")){
+        JmmNode right = children.get(1);
+        System.out.println(right);
+        if(left.getKind().contains("FinalTerms") && right.getKind().equals("FinalTerms")){
             //getfield ou putfield
         }
-        else if(left.getKind().contains("Identifier") && right.getKind().contains("MethodCall")){
-            //ver qual o tipo de call
+        else if(left.getKind().contains("FinalTerms") && right.getKind().contains("MethodCall")){
+            res = visitMethodCall(left, right); //ver qual o tipo de call pode ser this ou um identifier
         }
-        else if(left.getKind().equals("Identifier") && right.getKind().equals("Length")){
-
+        else if(left.getKind().equals("FinalTerms") && right.getKind().equals("Length")){
+            res = visitLength(left);
         }
         return res.toString();
     }
 
     //TODO
-    private String visitMethodCall(JmmNode node, StringBuilder stringBuilder) {
+    private String visitMethodCall(JmmNode finalterm, JmmNode method ) {
+        String identifier = visit(finalterm);
+        String invokeType = OLLIRTemplates.getInvokeType(identifier, method, symbolTable, currentMethod);
+
         StringBuilder res = new StringBuilder();
         return "TODO";
     }
 
-    //TODO
-    private String visitLength(JmmNode node, StringBuilder stringBuilder) {
-        StringBuilder res = new StringBuilder();
-        return res.toString();
+
+    private String visitLength(JmmNode identifier) {
+        String array = visit(identifier);
+        return "arraylength(" + array + ").i32";
+
     }
 
     private String visitOperation(JmmNode node, StringBuilder stringBuilder) {
         String resultLeft, resultRight;
+
         switch (node.getKind()){
             // Binary Instructions
             case "Add":
