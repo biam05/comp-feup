@@ -243,9 +243,9 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
                 else if (resultLeft.equals(""))
                     return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight;
                 else if (resultRight.equals(""))
-                    return resultRight + visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
+                    return resultLeft + "\n\n\n" + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
                 else
-                    return resultRight + visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
+                    return resultLeft + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
                 // Unary Instruction
             case "Not":
                 resultRight = checkReturnTemporary(node.getChildren().get(0));
@@ -269,25 +269,11 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression))
         {
             String aux = visit(expression);
-            System.out.println("HERE: " + aux);
-            String type = OLLIRTemplates.getReturnTypeExpression(aux);
+            String type = OLLIRTemplates.getReturnTypeExpression(visit(expression.getChildren().get(0)));
             var_temp++;
             result.append("aux").append(var_temp).append(type).append(" :=").append(type).append(" ").append(aux);
-            /*
-            c = a + this.constInstr();
-            aux1 := this.constInstr();
-            c := a+aux1;
-            */
+            System.out.println(result);
         }
-
-        // return this.a(1+2)
-        // t1 = 1+2
-        // t2 = this.a(t1)
-        // return t2
-
-        // aux1 = 1+2
-        // aux2 = this.a(aux1)
-        // return aux2
         return result.toString();
     }
 
