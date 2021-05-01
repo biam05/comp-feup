@@ -21,6 +21,8 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         this.code = OLLIRTemplates.init(symbolTable.getClassName(), symbolTable.getFields());
         addVisit("MethodDeclaration", this::visitMethod);
         addVisit("Statement", this::visitStatement);
+        addVisit("Expression", this::visitExpression);
+        addVisit("ClassDeclaration", this::visitClassDeclaration);
         addVisit("Return", this::visitReturn);
         addVisit("Assign", this::visitAssign);
         addVisit("MethodBody", this::visitMethodBody);
@@ -148,6 +150,17 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
         for(JmmNode child: children){
             if(!(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression"))) res.append(visit(child)); //ifs and whiles are not for this checkpoint
+        }
+        return res.toString();
+    }
+
+    private String visitExpression(JmmNode node, StringBuilder stringBuilder) {
+        return visit(node.getChildren().get(0));
+    }
+    private String visitClassDeclaration(JmmNode node, StringBuilder stringBuilder) {
+        StringBuilder res = new StringBuilder();
+        for(JmmNode child : node.getChildren()){
+            res.append(visit(child));
         }
         return res.toString();
     }
