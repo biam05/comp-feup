@@ -237,15 +237,17 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             case "And":
             case "Less":
                 resultLeft = checkReturnTemporary(node.getChildren().get(0));
+                String leftAux = "aux" + var_temp;
                 resultRight = checkReturnTemporary(node.getChildren().get(1));
+                String rightAux = "aux" + var_temp;
                 if (resultLeft.equals("") && resultRight.equals(""))
                     return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1));
                 else if (resultLeft.equals(""))
-                    return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight;
+                    return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight;
                 else if (resultRight.equals(""))
-                    return resultLeft + "\n\n\n" + " " + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
+                    return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1)) + ";\n" + resultLeft;
                 else
-                    return resultLeft + OLLIRTemplates.getOperationType(node) + " " + "aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0)));
+                    return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight + ";\n" + resultLeft;
                 // Unary Instruction
             case "Not":
                 resultRight = checkReturnTemporary(node.getChildren().get(0));
@@ -272,7 +274,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             String type = OLLIRTemplates.getReturnTypeExpression(visit(expression.getChildren().get(0)));
             var_temp++;
             result.append("aux").append(var_temp).append(type).append(" :=").append(type).append(" ").append(aux);
-            System.out.println(result);
         }
         return result.toString();
     }

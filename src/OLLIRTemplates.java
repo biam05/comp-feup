@@ -159,7 +159,7 @@ public class OLLIRTemplates {
         String[] values = expression.split("\\.");
         if(values.length < 2) return "";
         if(values.length == 2) return "." + values[1].trim();
-        return "." + values[1].trim() + "." + values[2].trim();
+        return "." + values[1].split(" ")[0];
     }
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a
@@ -181,19 +181,6 @@ public class OLLIRTemplates {
         if (expression.getChildren().size() < 2) return false;
         return expression.getChildren().get(1).getKind().equals("Length") ||
                 expression.getChildren().get(1).getKind().equals("MethodCall");
-    }
-
-
-    public static String checkReturnTemporary(JmmNode expression, int var_temp) {
-        //TODO
-        if(!hasOperation(expression) && !hasCall(expression)) return "";
-
-        StringBuilder result = new StringBuilder();
-        // return this.a(1+2)
-        // t1 = 1+2
-        // t2 = this.a(t1)
-        // return t2
-        return result.toString();
     }
 
     public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable, SymbolMethod currentMethod){
