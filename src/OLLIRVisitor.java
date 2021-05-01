@@ -70,9 +70,10 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
                         i++;
                         JmmNode aux = children.get(i);
                         if (aux.getKind().equals("RParenthesis")) break;
-                        parameters.add(children.get(i));
+                        parameters.add(aux);
                     }
                     methodInfo.append(SemanticAnalysisUtils.getTypeParameters(parameters));
+
                 }
             } else if (child.getKind().equals("Main")) {
                 methodInfo.append("Main(");
@@ -199,12 +200,12 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
     private String visitMethodCall(JmmNode call, JmmNode finalterm, JmmNode method ) {
         String identifier = visit(finalterm);
-        String invokeType = OLLIRTemplates.getInvokeType(identifier, method, symbolTable);
+        String invokeType = OLLIRTemplates.getInvokeType(identifier, method.getChildren().get(0), symbolTable);
 
         switch(invokeType){
             case "virtual":
-                String methodInfo = OLLIRTemplates.getMethodInfo(method);
                 List<String> args = getMethodArgs(method);
+                String methodInfo = OLLIRTemplates.getMethodInfo(method, args);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
                 return OLLIRTemplates.invokeStaticVirtual(false, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR());
             case "static":

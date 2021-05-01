@@ -120,7 +120,6 @@ public class OLLIRTemplates {
     }
 
     public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
-        System.out.println(node.toJson());
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         if(symbolTable.returnFieldTypeIfExists(ret) != null){ //é field da classe, get field e put field
             if(node.getParent().getKind().equals("Assign") && node.getParent().getChildren().get(0).getChildren().get(0).equals(node.getParent())){
@@ -195,15 +194,40 @@ public class OLLIRTemplates {
         return method.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
     }
 
-    public static String getMethodInfo(JmmNode method){
+    public static String getMethodInfo(JmmNode method, List<String> p){
         List<JmmNode> children = method.getChildren();
         String methodName = OLLIRTemplates.getMethodName(children.get(0));
         if(children.size() == 1) return methodName + "()";
+        List<String> param = new ArrayList<>();
+        for(String s: p){
+            param.add(OLLIRTemplates.getReturnTypeExpression(s));
+        }
 
-        List<JmmNode> args = new ArrayList<>();
-        for(int i = 1; i < children.size(); i++) args.add(children.get(i));
+        String res =  methodName + "(" + ollirListToJavaType(param) + ")";
+        return res;
+    }
 
-        return methodName + "(" + SemanticAnalysisUtils.getTypeParameters(args) + ")";
+    public static String ollirListToJavaType(List<String> ollir){
+        List<String> types = new ArrayList<>();
+        for(String aux: ollir){
+            switch(aux){
+                case ".i32":
+                    types.add("Int");
+                    break;
+                case ".array":
+                    types.add("Int[]");
+                    break;
+                case ".bool":
+                    types.add("Boolean");
+                    break;
+                case ".V":
+                    types.add("Void");
+                default:
+                    types.add(aux.replaceAll(".", ""));
+                    break;
+            }
+        }
+        return String.join(",", types);
     }
 
 }
