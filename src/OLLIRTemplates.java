@@ -1,6 +1,7 @@
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +26,9 @@ public class OLLIRTemplates {
         return res.toString();
     }
 
-    //invokespecial(A.myClass,"<init>").V -> chamaria: invokeSpecial("A.myClass")
+
     public static String invokeSpecial(String identifierClass) {
-        return "invokespecial(" + identifierClass + ", \"<init>\").V;\n";
+        return "invokespecial(" + identifierClass + ", \"<init>\").V;\n"; //invokespecial(A.myClass,"<init>").V
     }
 
     //invokestatic(io, "println", t2.String, t1.i32).V; //io.println("val = ", this.get());  -> invokeStaticVirtual(true, "io", "println", ["t2.String", "t1.i32"], ".V")
@@ -119,39 +120,39 @@ public class OLLIRTemplates {
     }
 
     public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
+        System.out.println(node.toJson());
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         if(symbolTable.returnFieldTypeIfExists(ret) != null){ //é field da classe, get field e put field
-            if(node.getParent().getKind().equals("Assign") && node.getParent().getChildren().get(0).equals(node)){
-                return putField(ret, node, node.getParent().getChildren().get(0), symbolTable, method);
+            if(node.getParent().getKind().equals("Assign") && node.getParent().getChildren().get(0).getChildren().get(0).equals(node.getParent())){
+                return "putfield = " + ret + getIdentifierType(node, symbolTable, method);
             }
             return getField(ret, node, symbolTable, method);
         }
         else if(method.returnTypeIfExists(ret) != null){
-            return "$" + method.getParameterOrder(ret) + "." + ret;
+            int  param = method.getParameterOrder(ret);
+            if(param > 0) return "$" + method.getParameterOrder(ret) + "." + ret;
+            return  ret;
         }
         return ret;
     }
 
-    public static String getIdentifierType(String value, GrammarSymbolTable symbolTable, SymbolMethod method){
-        String ret = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, value).toOLLIR();
-        if(ret == null) return "";
-        return ret;
+    public static String getIdentifierType(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
+        String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
+        Type type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, ret);
+        if(type == null) return "";
+        return type.toOLLIR();
     }
 
-    //getfield(obj, variable).valor ex: this.a --> getfield(this, a.i32).i32
+
     public static String getField(String obj, JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
-        String var = OLLIRTemplates.getIdentifier(node, symbolTable, method);
-        String type = getIdentifierType(var, symbolTable, method);
-        return "getfield(" + obj + "," + var + ")" + type;
+        String var = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
+        String type = getIdentifierType(node, symbolTable, method);
+        return "getfield(this" + "," + var + ")" + type; //getfield(obj, variable).returnType
     }
 
-    // putfield(obj, variable, value).V
-    public static String putField(String obj, JmmNode assignee, JmmNode assigned, GrammarSymbolTable symbolTable, SymbolMethod method){
-        String value_1 = getIdentifier(assignee, symbolTable, method);
-        String a_1 = value_1 + getIdentifierType(value_1,symbolTable, method);
-        String value_2 = getIdentifier(assigned, symbolTable, method);
-        String a_2 = value_2 + getIdentifierType(assigned.getKind(), symbolTable, method);
-        return "putfield(" + obj + "," + a_1 + "," + a_2 + ").V;";
+
+    public static String putField(String assigned, String assignee){
+        return "putfield(this" +  "," + assigned + "," + assignee + ").V;"; // putfield(obj, variable, value).V
     }
 
     public static String getReturnTypeExpression(String expression) { //for example, parse a.i32: return .i32
@@ -183,13 +184,26 @@ public class OLLIRTemplates {
                 expression.getChildren().get(1).getKind().equals("MethodCall");
     }
 
-    public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable, SymbolMethod currentMethod){
-        String methodName = method.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
-        String identifierName = "";
+
+    public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable){
+        String methodName = getMethodName(method);
         if(identifier.contains("this") || symbolTable.hasMethod(methodName)) return "virtual"; // if it belongs to the class
-        if(symbolTable.hasImport(identifierName) != null) return "static"; //if it is an imported method or static
-        else return "special";
+        return "static";
     }
 
+    public static String getMethodName(JmmNode method){
+        return method.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
+    }
+
+    public static String getMethodInfo(JmmNode method){
+        List<JmmNode> children = method.getChildren();
+        String methodName = OLLIRTemplates.getMethodName(children.get(0));
+        if(children.size() == 1) return methodName + "()";
+
+        List<JmmNode> args = new ArrayList<>();
+        for(int i = 1; i < children.size(); i++) args.add(children.get(i));
+
+        return methodName + "(" + SemanticAnalysisUtils.getTypeParameters(args) + ")";
+    }
 
 }

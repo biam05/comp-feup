@@ -24,7 +24,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         addVisit("Return", this::visitReturn);
         addVisit("Assign", this::visitAssign);
         addVisit("MethodBody", this::visitMethodBody);
-        addVisit("Expression", this::visitExpression);
         addVisit("FinalTerms", this::visitFinalTerms);
         addVisit("Call", this::visitCall);
         addVisit("Add", this::visitOperation);
@@ -65,16 +64,16 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         for(int i = 0; i < children.size(); i++){
             JmmNode child = children.get(i);
             if (child.getKind().equals("LParenthesis")) { // parameters
-                if (alreadyInBody) break;
-                List<JmmNode> parameters = new ArrayList<>();
-                while (true) {
-                    i++;
-                    JmmNode aux = children.get(i);
-                    if (aux.getKind().equals("RParenthesis")) break;
-                    parameters.add(children.get(i));
+                if (!alreadyInBody) {
+                    List<JmmNode> parameters = new ArrayList<>();
+                    while (true) {
+                        i++;
+                        JmmNode aux = children.get(i);
+                        if (aux.getKind().equals("RParenthesis")) break;
+                        parameters.add(children.get(i));
+                    }
+                    methodInfo.append(SemanticAnalysisUtils.getTypeParameters(parameters));
                 }
-                methodInfo.append(SemanticAnalysisUtils.getTypeParameters(parameters));
-
             } else if (child.getKind().equals("Main")) {
                 methodInfo.append("Main(");
             } else if (child.getKind().contains("Identifier")) {
@@ -84,10 +83,9 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             else if(child.getKind().equals("MethodBody")){
                 methodInfo.append(")");
                 this.currentMethod = symbolTable.getMethodByInfo(methodInfo.toString());
-                System.out.println("method body 1: " + res);
                 res.append(OLLIRTemplates.methodDeclaration(this.currentMethod));
-                System.out.println("method body 2: " + res);
                 res.append("{\n").append(visit(child)).append("\n");
+                alreadyInBody = true;
             }
             else if(child.getKind().equals("Return")){
                 ret = true;
@@ -97,30 +95,40 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         }
         if(!ret){
             res.append(OLLIRTemplates.returnVoid());
-            res.append("\n}\n\n");
+            res.append("}\n\n");
         }
         this.currentMethod = null;
         return res.toString();
     }
 
-
+    //TODO
     private String visitReturn(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
         String result = checkReturnTemporary(node.getChildren().get(0));
-
-        return "return";
         //return OLLIRTemplates.returnTemplate(values.get(0), method.getReturnType().toOLLIR());
+        return "return";
     }
 
 
     // TODO : ou apos receber o retorno dos filhos ele vai ver se necessita de criar variaveis temporarias ou ao correr o visit fazer logo isso (variaveis temporarias)
     private String visitAssign(JmmNode node, StringBuilder stringBuilder) {
         List<JmmNode> children = node.getChildren();
+        JmmNode leftchild = children.get(0);
+        JmmNode rightchild = children.get(1);
+
         String left = visit(children.get(0));
         String right = visit(children.get(1));
-        String type = OLLIRTemplates.getReturnTypeExpression(left);
+        if(left.contains("putfield")){
+            String[] args = left.split(" ");
+            String var = args[2];
+            return OLLIRTemplates.putField(var, right);
+        }
+        else{
+            String type = OLLIRTemplates.getReturnTypeExpression(left);
+            return OLLIRTemplates.assign(left, type, right);
+        }
+        //verificar variaveis temporrias
 
-        return OLLIRTemplates.assign(left, type, right);
     }
 
 
@@ -143,9 +151,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         return res.toString();
     }
 
-    private String visitExpression(JmmNode node, StringBuilder stringBuilder) {
-        return visit(node.getChildren().get(0));
-    }
 
     private String visitFinalTerms(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder result = new StringBuilder();
@@ -163,21 +168,15 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
             res = "new(" + value + ")." + value; // new(myClass).myClass
         } else if (child.getKind().contains("Identifier")){
-            value = child.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
-            Optional<JmmNode> ancestor = child.getAncestor("MethodDeclaration");
-            if(ancestor.isEmpty()) return "";
-            Type aux = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, this.currentMethod, value);
-            if(aux == null) ret = "";
-            else ret = aux.toOLLIR();
-            res = value + ret;
+            value = OLLIRTemplates.getIdentifier(child, symbolTable, currentMethod);
+            if(!value.equals("putfield"))res  =  value + OLLIRTemplates.getIdentifierType(child, symbolTable, currentMethod);
+            else res = value;
         } else if (child.getKind().equals("True") || child.getKind().equals("False")) {
             ret = ".bool";
             int bool = child.getKind().equals("True") ? 1 : 0;
             res = bool + ret;
         } else if(child.getKind().equals("Expression")){ // new int[EXPRESSION] -> nao é necessário nesta entrega
             res = visit(child);
-            //System.out.println("Visiting Expression");
-            //System.out.println("* Child: " + child);
         }else if(child.getKind().equals("This")){
             res = "this";
 
@@ -187,47 +186,60 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         return result.toString();
     }
 
-    //TODO
     private String visitCall(JmmNode node, StringBuilder stringBuilder) {
-        String res = "";
         List<JmmNode> children = node.getChildren();
-        if(children.size() != 2) return "";
         JmmNode left = children.get(0);
-        System.out.println(left);
-
         JmmNode right = children.get(1);
-        System.out.println(right);
-        if(left.getKind().contains("FinalTerms") && right.getKind().equals("FinalTerms")){
-            //getfield ou putfield
-        }
-        else if(left.getKind().contains("FinalTerms") && right.getKind().contains("MethodCall")){
-            res = visitMethodCall(left, right); //ver qual o tipo de call pode ser this ou um identifier
-        }
-        else if(left.getKind().equals("FinalTerms") && right.getKind().equals("Length")){
-            res = visitLength(left);
-        }
-        return res.toString();
+
+        if(left.getKind().equals("FinalTerms") && right.getKind().equals("MethodCall")) return visitMethodCall(node, left, right);
+        else if(left.getKind().equals("FinalTerms") && right.getKind().equals("Length")) return visitLength(left);
+        return "";
     }
 
-    //TODO
-    private String visitMethodCall(JmmNode finalterm, JmmNode method ) {
-        String identifier = visit(finalterm);
-        String invokeType = OLLIRTemplates.getInvokeType(identifier, method, symbolTable, currentMethod);
 
-        StringBuilder res = new StringBuilder();
-        return "TODO";
+    private String visitMethodCall(JmmNode call, JmmNode finalterm, JmmNode method ) {
+        String identifier = visit(finalterm);
+        String invokeType = OLLIRTemplates.getInvokeType(identifier, method, symbolTable);
+
+        switch(invokeType){
+            case "virtual":
+                String methodInfo = OLLIRTemplates.getMethodInfo(method);
+                List<String> args = getMethodArgs(method);
+                SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
+                return OLLIRTemplates.invokeStaticVirtual(false, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR());
+            case "static":
+                List<String> arg = getMethodArgs(method);
+                String returnType = getStaticReturnType(call);
+                return OLLIRTemplates.invokeStaticVirtual(true, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), arg, returnType);
+            default:
+                return "";
+        }
+    }
+
+    public List<String> getMethodArgs(JmmNode method){
+        List<JmmNode> children = method.getChildren();
+        List<String> args = new ArrayList<>();
+        for(int i = 1; i < children.size(); i++) args.add(visit(children.get(i)));
+        return args;
+    }
+
+    public String getStaticReturnType(JmmNode method){
+        if(method.getParent().getKind().equals("Assign")) {
+            JmmNode brother = method.getParent().getChildren().get(0);
+            String v = visit(brother);
+            return OLLIRTemplates.getReturnTypeExpression(v);
+        }
+        else return ".V";
     }
 
 
     private String visitLength(JmmNode identifier) {
         String array = visit(identifier);
         return "arraylength(" + array + ").i32";
-
     }
 
     private String visitOperation(JmmNode node, StringBuilder stringBuilder) {
         String resultLeft, resultRight;
-
         switch (node.getKind()){
             // Binary Instructions
             case "Add":
@@ -240,6 +252,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
                 String leftAux = "aux" + var_temp;
                 resultRight = checkReturnTemporary(node.getChildren().get(1));
                 String rightAux = "aux" + var_temp;
+
                 if (resultLeft.equals("") && resultRight.equals(""))
                     return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1));
                 else if (resultLeft.equals(""))

@@ -342,7 +342,7 @@ public class SemanticAnalysisUtils {
         }
 
         String methodName = methodNode.getChildren().get(0).getKind().replaceAll("'", "").replace("Identifier ", "");
-        List<JmmNode> parameters = methodNode.getChildren();
+        List<JmmNode> parameters = new ArrayList<>(methodNode.getChildren());
         parameters.remove(0);
 
         List<String> p = new ArrayList<>();
