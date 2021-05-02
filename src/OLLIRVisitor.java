@@ -110,7 +110,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         if(result.equals(""))
             return OLLIRTemplates.returnTemplate(visit(node.getChildren().get(0)), OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
         else
-            return OLLIRTemplates.returnTemplate("aux" + var_temp + "\n" + result, OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
+            return OLLIRTemplates.returnTemplate("aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + "\n" + result, OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
 
     }
 
