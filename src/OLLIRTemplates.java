@@ -60,7 +60,12 @@ public class OLLIRTemplates {
     }
 
     public static String returnTemplate(String identifier, String type) {
-        return "ret" + type + " " + identifier + ";\n";
+        StringBuilder result = new StringBuilder();
+        String[] reversed = (identifier).split("\\n");
+        for (int i = reversed.length - 1; i >= 1; i--)
+            result.append(reversed[i]).append(";\n");
+        result.append("ret").append(type).append(" ").append(reversed[0]);
+        return result + ";\n";
     }
 
     public static String assign(String left, String type, String right) {

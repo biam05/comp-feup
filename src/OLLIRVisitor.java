@@ -106,14 +106,14 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
     //TODO
     private String visitReturn(JmmNode node, StringBuilder stringBuilder) {
-        StringBuilder res = new StringBuilder();
-        String result = checkReturnTemporary(node.getChildren().get(0));
-        //return OLLIRTemplates.returnTemplate(values.get(0), method.getReturnType().toOLLIR());
-        return "return";
+        String result = checkReturnTemporary(node.getChildren().get(0).getChildren().get(0));
+        if(result.equals(""))
+            return OLLIRTemplates.returnTemplate(visit(node.getChildren().get(0)), OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
+        else
+            return OLLIRTemplates.returnTemplate("aux" + var_temp + "\n" + result, OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
+
     }
 
-
-    // TODO : ou apos receber o retorno dos filhos ele vai ver se necessita de criar variaveis temporarias ou ao correr o visit fazer logo isso (variaveis temporarias)
     private String visitAssign(JmmNode node, StringBuilder stringBuilder) {
         List<JmmNode> children = node.getChildren();
         JmmNode leftchild = children.get(0);
@@ -299,7 +299,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     }
 
     public String checkReturnTemporary(JmmNode expression) {
-        //TODO
         StringBuilder result = new StringBuilder();
         if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression))
         {
