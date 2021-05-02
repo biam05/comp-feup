@@ -35,14 +35,23 @@ public class OLLIRTemplates {
     //invokevirtual(c1.myClass, "put", 2.i32).V; // c1.put(2); ->  chamaria: invokeStaticVirtual(false, "c1.myClass", "put", ["2.i32"], ".V")
     public static String invokeStaticVirtual(boolean isStatic, String identifier, String methodName, List<String> fields, String returnType){
         StringBuilder result = new StringBuilder();
+        List<String> temporary = new ArrayList<>();
+
         if(isStatic) result.append("invokestatic");
         else result.append("invokevirtual");
 
         result.append( "(" + identifier + ", \"" + methodName + "\"");
-        for(String field: fields)
-            result.append(", " + field);
+        for(String field: fields){
+            String[] splitted = field.split("\n");
+            result.append(", " + splitted[0]);
+            for(int i = 1; i < splitted.length; i++){
+                temporary.add(splitted[i]);
+            }
+        }
         result.append( ")" + returnType);
-
+        for(String temp : temporary){
+            result.append("\n" + temp);
+        }
         return result.toString();
     }
 
@@ -56,9 +65,10 @@ public class OLLIRTemplates {
 
     public static String assign(String left, String type, String right) {
         StringBuilder result = new StringBuilder();
-        String[] reversed = (left + " :=" + type + " " + right + ";").split("\\n");
-        for (int i = reversed.length - 1; i >= 0; i--)
-            result.append(reversed[i]).append("\n");
+        String[] reversed = (left + " :=" + type + " " + right).split("\\n");
+        for (int i = reversed.length - 1; i >= 1; i--)
+            result.append(reversed[i]).append(";\n");
+        result.append(reversed[0]);
         return result.toString();
     }
 

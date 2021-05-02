@@ -151,7 +151,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         for(JmmNode child: children){
             if(!(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression"))) res.append(visit(child)); //ifs and whiles are not for this checkpoint
         }
-        return res.toString();
+        return res.toString() + ";\n";
     }
 
     private String visitExpression(JmmNode node, StringBuilder stringBuilder) {
@@ -233,7 +233,13 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     public List<String> getMethodArgs(JmmNode method){
         List<JmmNode> children = method.getChildren();
         List<String> args = new ArrayList<>();
-        for(int i = 1; i < children.size(); i++) args.add(visit(children.get(i)));
+        for(int i = 1; i < children.size(); i++){
+            String result = checkReturnTemporary(children.get(i).getChildren().get(0));
+            if(result.equals(""))
+                args.add(visit(children.get(i)));
+            else
+                args.add("aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(children.get(i).getChildren().get(0))) + "\n" + result);
+        }
         return args;
     }
 
@@ -270,11 +276,11 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
                 if (resultLeft.equals("") && resultRight.equals(""))
                     return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1));
                 else if (resultLeft.equals(""))
-                    return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight;
+                    return visit(node.getChildren().get(0)) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + "\n" + resultRight;
                 else if (resultRight.equals(""))
-                    return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1)) + ";\n" + resultLeft;
+                    return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1)) + "\n" + resultLeft;
                 else
-                    return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + ";\n" + resultRight + ";\n" + resultLeft;
+                    return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + "\n" + resultRight + "\n" + resultLeft;
                 // Unary Instruction
             case "Not":
                 resultRight = checkReturnTemporary(node.getChildren().get(0));
