@@ -146,7 +146,7 @@ void MethodDeclaration() #MethodDeclaration : {Token t1, t2, t3;}
 {
     <PUBLIC> #Public()
     (Type() t1=<IDENTIFIER> {jjtThis.var = t1.image;} #Identifier <LPARENTHESIS> #LParenthesis() (Type() t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier() (<COMMA> Type() t3=<IDENTIFIER> {jjtThis.var=t3.image;} #Identifier())*)? <RPARENTHESIS> #RParenthesis
-    <LBRACE> #LBrace MethodBody() <RETURN> #Return Expression() <SEMICOLON> #Semicolon <RBRACE> #RBrace
+    <LBRACE> #LBrace MethodBody() <RETURN> Expression() #Return() <SEMICOLON> #Semicolon <RBRACE> #RBrace
     | <STATIC> #Static <VOID> #Void <MAIN> #Main <LPARENTHESIS> #LParenthesis <STRING><LBRACKET><RBRACKET> #StringArray t2=<IDENTIFIER> {jjtThis.var=t2.image;} #Identifier <RPARENTHESIS> #RParenthesis <LBRACE> #LBrace
     MethodBody() <RBRACE> #RBrace)
 }
@@ -219,7 +219,12 @@ void Not() #void:{}
 
 void Period() #void:{Token t;}
 {
-    Arrays()(<PERIOD> (<LENGTH> #Length(1) | (t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> (Parameter())? <RPARENTHESIS>) #MethodCall()))*
+    Arrays()(<PERIOD> (<LENGTH> #Length | MethodCall())#Call(2))*
+}
+
+void MethodCall() #MethodCall :{Token t;}
+{
+    t=<IDENTIFIER> {jjtThis.var=t.image;} #Identifier() <LPARENTHESIS> (Parameter())? <RPARENTHESIS>
 }
 
 void Parameter() #void:{}
@@ -242,5 +247,3 @@ void FinalTerms(): {Token t;}
     | <NEW> ((<INT> <LBRACKET>  Expression() <RBRACKET> #NewIntArrayExpression(1)) | (t=<IDENTIFIER>  {jjtThis.var=t.image;} #NewIdentifier  <LPARENTHESIS><RPARENTHESIS> ))
     | <LPARENTHESIS>  Expression() <RPARENTHESIS>
 }
-
-

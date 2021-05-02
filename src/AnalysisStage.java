@@ -40,11 +40,12 @@ public class AnalysisStage implements JmmAnalysis {
         semanticAnalysisVisitor.visit(node);
         reports.addAll(semanticAnalysisVisitor.getReports());
 
-        System.out.println("\n\n------------ REPORTS ------------");
-        for (Report report : reports)
-            System.out.println(report);
-        System.out.println("---------------------------------");
-
+        if(reports.size() > 0) {
+            System.out.println("\n\n------------ REPORTS (Semantic Analysis) ------------");
+            for (Report report : reports)
+                System.out.println(report);
+            System.out.println("-----------------------------------------------------");
+        }
         return new JmmSemanticsResult(parserResult, visitor.getSymbolTable(), reports);
     }
 

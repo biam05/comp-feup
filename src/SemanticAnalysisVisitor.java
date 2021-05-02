@@ -100,7 +100,6 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         SemanticAnalysisUtils.evaluatesToBoolean(symbolTable, method, children.get(0), this.reports);
     }
 
-    //if it finds an expression in the while it call it goes to visit expression
     public void visitAssign(SymbolMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
         if (children.size() != 2) return; // ver isto

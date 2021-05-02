@@ -65,7 +65,6 @@ public class TestUtils {
 
             // It is expected that the Analysis class can be instantiated without arguments
             JmmAnalysis analysis = (JmmAnalysis) analysisClass.getConstructor().newInstance();
-
             return analysis.semanticAnalysis(parserResult);
 
         } catch (Exception e) {
