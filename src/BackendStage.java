@@ -54,6 +54,7 @@ public class BackendStage implements JasminBackend {
             jasminCode.append("\n.super java/lang/Object");
 
             for (var method : ollirClass.getMethods()){
+                System.out.println("METHOD " + method.getMethodName());
                 MethodJasmin methodJasmin = new MethodJasmin(method);
                 methodJasmin.generateJasminCode();
                 jasminCode.append(methodJasmin.getJasminCode());

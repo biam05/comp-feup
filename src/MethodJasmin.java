@@ -72,8 +72,6 @@ public class MethodJasmin {
     }
 
     public void generateJasminCode(){
-        System.out.println("------------------------------------------");
-        System.out.println("Method Name: " + method.getMethodName());
 
         jasminCode.append("\n\n.method public");
         //jasminCode.append(method.getMethodAccessModifier().toString().toLowerCase());
@@ -123,8 +121,8 @@ public class MethodJasmin {
             this.reports.addAll(instructionJasmin.getReports());
         }
         if(!this.method.isConstructMethod()){
-            this.jasminCode.append("\n\t\t.limit locals 99");
-            this.jasminCode.append("\n\t\t.limit stack 99\n");
+            this.jasminCode.append("\n\t\t.limit locals ").append(n_locals);
+            this.jasminCode.append("\n\t\t.limit stack ").append(n_stack).append("\n");
         }
         this.jasminCode.append(auxiliaryJasmin);
         jasminCode.append("\n.end method");

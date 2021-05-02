@@ -27,7 +27,6 @@ public class InstructionJasmin {
     }
 
     public void generateJasminCode(){
-        System.out.println("Instruction Name: " + instruction.getInstType());
         instruction.show();
         switch(instruction.getInstType()){
             case ASSIGN:
@@ -48,8 +47,6 @@ public class InstructionJasmin {
             default:
                 break;
         }
-
-        System.out.println("------------------------------------------");
     }
 
     private void generateAssign(AssignInstruction instruction) {
@@ -110,32 +107,54 @@ public class InstructionJasmin {
         }
     }
 
+    // invokestatic, invokevirtual, invokespecial
     private void generateCall(CallInstruction instruction) {
-        System.out.println("\t* Num Operands: " + instruction.getNumOperands());
-        System.out.println("\t* Return Type: " + instruction.getReturnType().getTypeOfElement());
-        System.out.println("\t* First Arg: " + instruction.getFirstArg());
-        System.out.println("\t* Second Arg: " + instruction.getSecondArg());
-
         if(method.getMethod().isConstructMethod()){
-            jasminCode.append("\n\taload_0");
-            jasminCode.append("\n\tinvokespecial java/lang/Object.<init>()V;");
+            jasminCode.append("\n\taload0");
+            jasminCode.append("\n\tinvokespecial java/lang/Object.<init>()V");
+            jasminCode.append("\n\treturn");
         }
-        switch (instruction.getReturnType().getTypeOfElement()){
-            default:
-                jasminCode.append("\n\treturn");
-                break;
+        else{
+            Element firstArg = instruction.getFirstArg();
+            if(firstArg.isLiteral()){
+
+            } else{ // not literal -> it is a variable (CallInstruction)
+                Operand operand = (Operand) firstArg;
+                // invokestatic(ioPlus, "printHelloWorld").V;
+                if(operand.getType().getTypeOfElement() == ElementType.CLASS){
+                    jasminCode.append("\n\t\tinvokestatic(");
+                    jasminCode.append(operand.getName());
+                    if(instruction.getNumOperands() > 1){
+                        if(instruction.getInvocationType() != CallType.NEW){
+                            Element secondArg = instruction.getSecondArg();
+                            if(secondArg.isLiteral()){
+                                jasminCode.append(", ");
+                                jasminCode.append(((LiteralElement) secondArg).getLiteral());
+
+                            }
+                        }
+                    }
+                    jasminCode.append(").");
+                    jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
+                }
+            }
         }
     }
 
     private void generateReturn(ReturnInstruction instruction) {
-        decideType(instruction.getOperand());
-        jasminCode.append("load_");
-        String returnedVariable = ((Operand) instruction.getOperand()).getName();
-        String value = method.getLocalVariables().get(returnedVariable).toString();
-        jasminCode.append(value);
+        if(instruction.getOperand() != null){
+            decideType(instruction.getOperand());
+            jasminCode.append("load_");
+            String returnedVariable = ((Operand) instruction.getOperand()).getName();
+            String value = method.getLocalVariables().get(returnedVariable).toString();
+            jasminCode.append(value);
 
-        decideType(instruction.getOperand());
-        jasminCode.append("return");
+            decideType(instruction.getOperand());
+            jasminCode.append("return");
+        }
+        else{
+            jasminCode.append("\n\t\treturn");
+        }
     }
 
     private void generatePutField(PutFieldInstruction instruction) {
@@ -154,5 +173,30 @@ public class InstructionJasmin {
             default -> jasminCode.append("\n\t\t");
         }
         // other types of variables
+    }
+
+    private String decideInvokeReturns(Type type){
+        String returnType = null;
+        switch(type.getTypeOfElement()){
+            // todo: verificar com o ollir como é o tipo quando retorna uma classe
+            case INT32:
+                returnType = "I";
+                break;
+            case BOOLEAN:
+                returnType = "Z";
+                break;
+            case ARRAYREF:
+                returnType = "[I";
+                break;
+            case OBJECTREF:
+                returnType = method.getClass().getName(); //Todo: probably wrong
+                break;
+            case VOID:
+                returnType = "V";
+                break;
+            default:
+                break;
+        }
+         return returnType;
     }
 }
