@@ -303,7 +303,11 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression))
         {
             String aux = visit(expression);
-            String type = OLLIRTemplates.getReturnTypeExpression(visit(expression.getChildren().get(0)));
+            String type;
+            if(expression.getKind().equals("Call"))
+                type = OLLIRTemplates.getReturnTypeExpression(visit(expression));
+            else
+                type = OLLIRTemplates.getReturnTypeExpression(visit(expression.getChildren().get(0)));
             var_temp++;
             result.append("aux").append(var_temp).append(type).append(" :=").append(type).append(" ").append(aux);
         }

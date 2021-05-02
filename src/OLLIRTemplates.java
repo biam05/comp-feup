@@ -64,7 +64,7 @@ public class OLLIRTemplates {
         String[] reversed = (identifier).split("\\n");
         for (int i = reversed.length - 1; i >= 1; i--)
             result.append(reversed[i]).append(";\n");
-        result.append("ret").append(type).append(" ").append(reversed[0]);
+        result.append("ret").append(type).append(" ").append(reversed[0]).append(type);
         return result + ";\n";
     }
 
@@ -141,11 +141,6 @@ public class OLLIRTemplates {
                 return "putfield = " + ret + getIdentifierType(node, symbolTable, method);
             }
             return getField(ret, node, symbolTable, method);
-        }
-        else if(method.returnTypeIfExists(ret) != null){
-            int  param = method.getParameterOrder(ret);
-            if(param > 0) return "$" + method.getParameterOrder(ret) + "." + ret;
-            return  ret;
         }
         return ret;
     }
