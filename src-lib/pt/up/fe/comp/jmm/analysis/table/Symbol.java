@@ -29,6 +29,10 @@ public class Symbol {
         return "Symbol [type=" + type + ", name=" + name + "]";
     }
 
+    public String toOLLIR(){
+        return name + type.toOLLIR();
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */

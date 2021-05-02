@@ -51,7 +51,8 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     JmmNode aux = children.get(i);
                     if (aux.getKind().equals("RBrace")) break;
                     else if (aux.getKind().equals("MethodDeclaration")) continue;
-                    symbolTable.addClassField(parseVarDeclaration(aux));
+                    Symbol localVariable = parseVarDeclaration(aux);
+                    if (localVariable != null) symbolTable.addClassField(localVariable);
                 }
             }
         }
@@ -171,11 +172,10 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         if (type.equals("String") || type.equals("Int") || type.equals("Boolean") || type.equals(symbolTable.getClassName()) || type.equals(symbolTable.getSuper()))
             return symbol;
 
-        for (String importName : symbolTable.getImports()) {
-            String[] imports = importName.split("\\.");
-            if (imports[imports.length - 1].equals(type)) return symbol;
-        }
+        Type res = symbolTable.hasImport(type);
+        if(res != null) return symbol;
 
         return null;
     }
+
 }

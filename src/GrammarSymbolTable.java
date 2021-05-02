@@ -66,14 +66,23 @@ public class GrammarSymbolTable implements SymbolTable {
         return methodsNames;
     }
 
+    public List<SymbolMethod> methods() {
+        return methods;
+    }
+
     private List<String> parseMethodInfo(String info) {
         List<String> list = new ArrayList<>();
 
-        String[] firstParse = info.split("\\(");
-        list.add(firstParse[0]); //method name
+        int indexBeg = info.indexOf('(');
+        list.add(info.substring(0, indexBeg));
 
-        String[] types = firstParse[1].replace(")", "").split(","); //parameters type
-        list.addAll(Arrays.asList(types));
+        int indexEnd = info.indexOf(')');
+        String param = info.substring(indexBeg+1, indexEnd).trim();
+
+        if(!param.equals("")) {
+            String[] paramm = param.split(",");
+            list.addAll(Arrays.asList(paramm));
+        }
 
         return list;
     }
@@ -81,9 +90,8 @@ public class GrammarSymbolTable implements SymbolTable {
     public SymbolMethod getMethodByInfo(String methodInfo) {
         List<String> info = parseMethodInfo(methodInfo);
 
-        for (SymbolMethod method : this.methods) {
+        for (SymbolMethod method : this.methods)
             if (method.equalsMethod(info)) return method;
-        }
 
         return null;
     }
@@ -110,9 +118,24 @@ public class GrammarSymbolTable implements SymbolTable {
     }
 
     public Type returnFieldTypeIfExists(String field) {
-        for (Symbol symbol : classFields) {
+        for (Symbol symbol : classFields)
             if (symbol.getName().equals(field)) return symbol.getType();
+        return null;
+    }
+
+    public Type hasImport(String identifierName){
+        System.out.println("here " +identifierName);
+        for (String importName : getImports()) {
+            String[] imports = importName.split("\\.");
+            if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);
         }
         return null;
+    }
+
+    public Boolean hasMethod(String methodName){
+        for(SymbolMethod method: methods){
+            if(method.getName().equals(methodName)) return true;
+        }
+        return false;
     }
 }

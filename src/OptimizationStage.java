@@ -28,11 +28,22 @@ public class OptimizationStage implements JmmOptimization {
         JmmNode node = semanticsResult.getRootNode();
 
         // Convert the AST to a String containing the equivalent OLLIR code
-        String ollirCode = ""; // Convert node ...
+        OLLIRVisitor ollirVisitor = new OLLIRVisitor((GrammarSymbolTable) semanticsResult.getSymbolTable());
+        ollirVisitor.visit(node);
+        String ollirCode = ollirVisitor.getCode()  + "\n}";
+
+        System.out.println("\n------------ OLLIR CODE ------------");
+        System.out.println(ollirCode);
+        System.out.println("------------------------------------");
 
         // More reports from this stage
-        List<Report> reports = new ArrayList<>();
-
+        List<Report> reports = ollirVisitor.getReports();
+        if(reports.size() > 0) {
+            System.out.println("\n\n------------ REPORTS (Ollir) ------------");
+            for (Report report : reports)
+                System.out.println(report);
+            System.out.println("-----------------------------------------");
+        }
         return new OllirResult(semanticsResult, ollirCode, reports);
     }
 
