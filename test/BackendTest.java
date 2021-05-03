@@ -17,7 +17,11 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import pt.up.fe.comp.TestUtils;
+import pt.up.fe.comp.jmm.ollir.OllirResult;
+import pt.up.fe.comp.jmm.ollir.OllirUtils;
 import pt.up.fe.specs.util.SpecsIo;
+
+import java.util.ArrayList;
 
 public class BackendTest {
 
@@ -25,7 +29,30 @@ public class BackendTest {
     public void testHelloWorld() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = result.run();
+        assertEquals("Hello, World!", output.trim());
+    }
 
+    @Test
+    public void testHelloWorldAdd() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+        assertEquals("Hello, World!", output.trim());
+    }
+
+    @Test
+    public void testSimple() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+        //assertEquals("Hello, World!", output.trim());
+    }
+
+    @Test
+    public void testHelloWorldFromOllir() {
+        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/HelloWorld.ollir")),
+                null, new ArrayList<>()));
         var output = result.run();
         assertEquals("Hello, World!", output.trim());
     }

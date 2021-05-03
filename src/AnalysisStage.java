@@ -29,7 +29,7 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         JmmNode node = parserResult.getRootNode();
-        System.out.println(node.toJson());
+        //System.out.println(node.toJson());
 
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(node);
