@@ -174,7 +174,7 @@ public class OLLIRTemplates {
         String[] values = expression.split("\\.");
         if(values.length < 2) return "";
         if(values.length == 2) return "." + values[1].trim();
-        return "." + values[1].trim().replaceAll("\\(", "").replaceAll("\\)", "");
+        return "." + values[1].trim().replaceAll("[() +<*/&\\-]", "");
     }
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a

@@ -1,14 +1,11 @@
-import org.specs.comp.ollir.Ollir;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private final GrammarSymbolTable symbolTable;
@@ -117,7 +114,36 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     }
 
     private String visitAssign(JmmNode node, StringBuilder stringBuilder) {
-        rightchild
+        List<JmmNode> children = node.getChildren();
+        JmmNode leftchild = children.get(0);
+        JmmNode rightchild = children.get(1);
+
+        String left = visit(leftchild);
+        String right = visit(rightchild);
+        if(left.contains("putfield")){
+            String[] args = left.split(" ");
+            String var = args[2];
+
+            StringBuilder aux = new StringBuilder();
+            String result = checkReturnTemporary(rightchild.getChildren().get(0));
+            if(result.equals(""))
+                aux.append(visit(rightchild));
+            else
+                aux.append("aux").append(var_temp).append(OLLIRTemplates.getReturnTypeExpression(visit(rightchild))).append("\n").append(result);
+
+            System.out.println(aux);
+            String[] temporary = aux.toString().split("\\n");
+
+            StringBuilder res = new StringBuilder();
+            for (int i = temporary.length - 1; i >= 1; i--) {
+                res.append(temporary[i]).append(";\n");
+            }
+            return res + OLLIRTemplates.putField(var, temporary[0]);
+        }
+        else{
+            String type = OLLIRTemplates.getReturnTypeExpression(left);
+            return OLLIRTemplates.assign(left, type, right);
+        }
     }
 
 
