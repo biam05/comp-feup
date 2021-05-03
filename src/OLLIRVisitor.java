@@ -1,3 +1,4 @@
+import org.specs.comp.ollir.Ollir;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
@@ -5,6 +6,7 @@ import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,7 +80,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
                 }
             } else if (child.getKind().equals("Main")) {
-                methodInfo.append("Main(");
+                methodInfo.append("main(");
             } else if (child.getKind().contains("Identifier")) {
                 String methodName = child.getKind().replaceAll("'", "").replace("Identifier ", "");
                 methodInfo.append(methodName).append("(");
@@ -115,23 +117,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     }
 
     private String visitAssign(JmmNode node, StringBuilder stringBuilder) {
-        List<JmmNode> children = node.getChildren();
-        JmmNode leftchild = children.get(0);
-        JmmNode rightchild = children.get(1);
-
-        String left = visit(children.get(0));
-        String right = visit(children.get(1));
-        if(left.contains("putfield")){
-            String[] args = left.split(" ");
-            String var = args[2];
-            return OLLIRTemplates.putField(var, right);
-        }
-        else{
-            String type = OLLIRTemplates.getReturnTypeExpression(left);
-            return OLLIRTemplates.assign(left, type, right);
-        }
-        //verificar variaveis temporrias
-
+        rightchild
     }
 
 
@@ -151,7 +137,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         for(JmmNode child: children){
             if(!(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression"))) res.append(visit(child)); //ifs and whiles are not for this checkpoint
         }
-        return res.toString() + ";\n";
+        return res + ";\n";
     }
 
     private String visitExpression(JmmNode node, StringBuilder stringBuilder) {
@@ -181,10 +167,10 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
             res = "new(" + value + ")." + value; // new(myClass).myClass
-        } else if (child.getKind().contains("Identifier")){
+        } else if (child.getKind().contains("Identifier")) {
             value = OLLIRTemplates.getIdentifier(child, symbolTable, currentMethod);
-            if(!value.equals("putfield"))res  =  value + OLLIRTemplates.getIdentifierType(child, symbolTable, currentMethod);
-            else res = value;
+            res = value;
+            if(!value.contains("putfield") && !value.contains("getfield")) res += OLLIRTemplates.getIdentifierType(child, symbolTable, currentMethod);
         } else if (child.getKind().equals("True") || child.getKind().equals("False")) {
             ret = ".bool";
             int bool = child.getKind().equals("True") ? 1 : 0;
@@ -217,10 +203,20 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
         switch(invokeType){
             case "virtual":
+                List<String> temporary = new ArrayList<>();
                 List<String> args = getMethodArgs(method);
+                for (int i = 0; i < args.size(); i++) {
+                    String[] splitted = args.get(i).split("\\n");
+                    args.set(i, splitted[0]);
+                    temporary.addAll(Arrays.asList(splitted).subList(1, splitted.length));
+                }
                 String methodInfo = OLLIRTemplates.getMethodInfo(method, args);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
-                return OLLIRTemplates.invokeStaticVirtual(false, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR());
+                StringBuilder res = new StringBuilder();
+                for (String temp: temporary) {
+                    res.append(temp).append(";\n");
+                }
+                return res + OLLIRTemplates.invokeStaticVirtual(false, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR());
             case "static":
                 List<String> arg = getMethodArgs(method);
                 String returnType = getStaticReturnType(call);
@@ -233,7 +229,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     public List<String> getMethodArgs(JmmNode method){
         List<JmmNode> children = method.getChildren();
         List<String> args = new ArrayList<>();
-        for(int i = 1; i < children.size(); i++){
+        for(int i = 1; i < children.size(); i++) {
             String result = checkReturnTemporary(children.get(i).getChildren().get(0));
             if(result.equals(""))
                 args.add(visit(children.get(i)));
@@ -251,7 +247,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         }
         else return ".V";
     }
-
 
     private String visitLength(JmmNode identifier) {
         String array = visit(identifier);
@@ -300,11 +295,11 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
     public String checkReturnTemporary(JmmNode expression) {
         StringBuilder result = new StringBuilder();
-        if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression))
+        if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression) || OLLIRTemplates.hasField(expression, symbolTable, currentMethod))
         {
             String aux = visit(expression);
             String type;
-            if(expression.getKind().equals("Call"))
+            if(expression.getKind().equals("Call") || expression.getKind().contains("FinalTerms"))
                 type = OLLIRTemplates.getReturnTypeExpression(visit(expression));
             else
                 type = OLLIRTemplates.getReturnTypeExpression(visit(expression.getChildren().get(0)));

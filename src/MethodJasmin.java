@@ -18,8 +18,8 @@ public class MethodJasmin {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
-        this.n_locals = 0;
-        this.n_stack = 0;
+        this.n_locals = 0; // change
+        this.n_stack = 0; //change
         this.localVariables = new HashMap<String, Integer>();
     }
 
@@ -61,6 +61,10 @@ public class MethodJasmin {
 
     public Map<String, Integer> getLocalVariables() {
         return localVariables;
+    }
+
+    public Integer getLocalVariableByKey(String key) {
+        return localVariables.get(key);
     }
 
     public Boolean addLocalVariable(String variable, int id){
@@ -129,29 +133,34 @@ public class MethodJasmin {
     }
 
     private void analyseParameters(){
-        for(Element param : method.getParams()){
-            if(param.isLiteral()) jasminCode.append("L");
-            switch (param.getType().getTypeOfElement()){
-                case INT32:
-                    jasminCode.append("I");
-                    break;
-                case BOOLEAN:
-                    jasminCode.append("Z");
-                    break;
-                case ARRAYREF:
-                    jasminCode.append("[I");
-                    break;
-                case OBJECTREF:
-                    jasminCode.append("OBJECTREF"); // Todo: Check with OLLIR
-                    break;
-                case STRING:
-                    jasminCode.append("java/lang/String");
-                    break;
-                default:
-                    break;
+        if(method.getMethodName().equals("main")){
+            jasminCode.append("[Ljava/lang/String;");
+        }
+        else{
+            for(Element param : method.getParams()){
+                if(param.isLiteral()) jasminCode.append("L");
+                switch (param.getType().getTypeOfElement()){
+                    case INT32:
+                        jasminCode.append("I");
+                        break;
+                    case BOOLEAN:
+                        jasminCode.append("Z");
+                        break;
+                    case ARRAYREF:
+                        jasminCode.append("[I");
+                        break;
+                    case OBJECTREF:
+                        jasminCode.append("OBJECTREF"); // Todo: Check with OLLIR
+                        break;
+                    case STRING:
+                        jasminCode.append("java/lang/String");
+                        break;
+                    default:
+                        break;
+                }
+                addLocalVariable(((Operand)param).getName(), n_locals);
+                incNLocals();
             }
-            addLocalVariable(((Operand)param).getName(), n_locals);
-            incNLocals();
         }
     }
 }

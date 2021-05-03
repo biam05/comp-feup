@@ -118,10 +118,12 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             } else if (childKind.equals("MethodBody")) {
                 visitMethodBody(method, child);
                 alreadyInBody = true;
-            } else if (childKind.contains("Identifier") || childKind.equals("Main")) {
+            } else if (childKind.contains("Identifier")) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 method.setName(name);
             }
+            else if(childKind.contains("Main"))
+                method.setName("main");
         }
         this.symbolTable.addMethod(method);
 

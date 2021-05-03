@@ -4,6 +4,7 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class OLLIRTemplates {
@@ -79,7 +80,9 @@ public class OLLIRTemplates {
 
     public static String methodDeclaration(SymbolMethod method) {
         StringBuilder res = new StringBuilder();
-        res.append(".method public ").append(method.getName()).append("(").append(parameters(method.getParameters())).append(")").append(method.getReturnType().toOLLIR());
+        res.append(".method public ");
+        if(method.getName().equals("main")) res.append("static ");
+        res.append(method.getName()).append("(").append(parameters(method.getParameters())).append(")").append(method.getReturnType().toOLLIR()).append(" ");
         return res.toString();
     }
 
@@ -136,10 +139,12 @@ public class OLLIRTemplates {
 
     public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
-        if(symbolTable.returnFieldTypeIfExists(ret) != null){ //é field da classe, get field e put field
-            if(node.getParent().getKind().equals("Assign") && node.getParent().getChildren().get(0).getChildren().get(0).equals(node.getParent())){
+
+        if(symbolTable.returnFieldTypeIfExists(ret) != null){ //é field da classe, get field
+            JmmNode parent = node.getParent().getParent().getParent();
+            if(parent.getKind().equals("Assign") && parent.getChildren().get(0).getChildren().get(0).equals(node.getParent()))
                 return "putfield = " + ret + getIdentifierType(node, symbolTable, method);
-            }
+
             return getField(ret, node, symbolTable, method);
         }
         return ret;
@@ -156,12 +161,12 @@ public class OLLIRTemplates {
     public static String getField(String obj, JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
         String var = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         String type = getIdentifierType(node, symbolTable, method);
-        return "getfield(this" + "," + var + ")" + type; //getfield(obj, variable).returnType
+        return "getfield(this" + ", " + var + type + ")" + type; //getfield(obj, variable).returnType
     }
 
 
     public static String putField(String assigned, String assignee){
-        return "putfield(this" +  "," + assigned + "," + assignee + ").V;"; // putfield(obj, variable, value).V
+        return "putfield(this" +  ", " + assigned + ", " + assignee + ").V"; // putfield(obj, variable, value).V
     }
 
     public static String getReturnTypeExpression(String expression) { //for example, parse a.i32: return .i32
@@ -169,7 +174,7 @@ public class OLLIRTemplates {
         String[] values = expression.split("\\.");
         if(values.length < 2) return "";
         if(values.length == 2) return "." + values[1].trim();
-        return "." + values[1].split(" ")[0];
+        return "." + values[1].trim().replaceAll("\\(", "").replaceAll("\\)", "");
     }
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a
@@ -193,6 +198,17 @@ public class OLLIRTemplates {
                 expression.getChildren().get(1).getKind().equals("MethodCall");
     }
 
+    public static boolean hasField(JmmNode expression, GrammarSymbolTable symbolTable, SymbolMethod currentMethod) {
+        if (expression.getKind().equals("FinalTerms")) {
+            JmmNode child = expression.getChildren().get(0);
+            if (child.getKind().contains("Identifier")) {
+                String value = OLLIRTemplates.getIdentifier(child, symbolTable, currentMethod);
+                return value.contains("putfield") || value.contains("getfield");
+            }
+        }
+        return false;
+    }
+
 
     public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable){
         String methodName = getMethodName(method);
@@ -205,6 +221,7 @@ public class OLLIRTemplates {
     }
 
     public static String getMethodInfo(JmmNode method, List<String> p){
+        StringBuilder res = new StringBuilder();
         List<JmmNode> children = method.getChildren();
         String methodName = OLLIRTemplates.getMethodName(children.get(0));
         if(children.size() == 1) return methodName + "()";
@@ -212,9 +229,8 @@ public class OLLIRTemplates {
         for(String s: p){
             param.add(OLLIRTemplates.getReturnTypeExpression(s));
         }
-
-        String res =  methodName + "(" + ollirListToJavaType(param) + ")";
-        return res;
+        res.append(methodName).append("(").append(ollirListToJavaType(param)).append(")");
+        return res.toString();
     }
 
     public static String ollirListToJavaType(List<String> ollir){

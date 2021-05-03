@@ -82,7 +82,6 @@ public class Type {
 
     public String toOLLIR(){
         StringBuilder res = new StringBuilder();
-
         if(isArray()) res.append(".array");
 
         switch (getName()) {

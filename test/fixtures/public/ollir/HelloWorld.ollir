@@ -3,7 +3,7 @@ HelloWorld {
         invokespecial(this, "<init>").V;
     }
 
-    .method public Main(args.array.String).V{
+    .method public main(args.array.String).V{
         invokestatic(ioPlus, "printHelloWorld").V;
         ret.V;
     }

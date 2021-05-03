@@ -124,7 +124,6 @@ public class GrammarSymbolTable implements SymbolTable {
     }
 
     public Type hasImport(String identifierName){
-        System.out.println("here " +identifierName);
         for (String importName : getImports()) {
             String[] imports = importName.split("\\.");
             if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);

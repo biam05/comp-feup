@@ -47,10 +47,13 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
                     parameters.add(children.get(i));
                 }
                 methodInfo.append(SemanticAnalysisUtils.getTypeParameters(parameters));
-            } else if (childKind.contains("Identifier") || childKind.equals("Main")) {
+            } else if (childKind.contains("Identifier")) {
                 String methodName = childKind.replaceAll("'", "").replace("Identifier ", "");
                 methodInfo.append(methodName).append("(");
-            } else if (childKind.equals("MethodBody")) { //method body (local variables)
+            } else if (childKind.equals("Main")) {
+                methodInfo.append("main(");
+            }
+            else if (childKind.equals("MethodBody")) { //method body (local variables)
                 methodInfo.append(")");
                 method = symbolTable.getMethodByInfo(methodInfo.toString());
 

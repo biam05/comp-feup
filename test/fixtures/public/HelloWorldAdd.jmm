@@ -6,8 +6,15 @@ class HelloWorld {
 	public static void main(String[] args) {
 	    int b;
 		ioPlus.printHelloWorld();
-		a = 2 + 1;
+		a = 2;
 		b = a;
+		this.add(a,b);
 	}
+
+	public int add(int aux, int baux) {
+        int res;
+        res = aux + baux;
+        return res;
+    }
 
 }
