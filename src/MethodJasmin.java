@@ -10,17 +10,19 @@ public class MethodJasmin {
     private final Method method;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
+    private final String className;
     private int n_locals;
     private int n_stack;
     private Map<String, Integer> localVariables;
 
-    public MethodJasmin(Method method) {
+    public MethodJasmin(Method method, String className) {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
         this.n_locals = 0; // change
         this.n_stack = 99; //change
         this.localVariables = new HashMap<String, Integer>();
+        this.className = className;
         addLocalVariable("this", n_locals);
     }
 
@@ -36,19 +38,18 @@ public class MethodJasmin {
         return method;
     }
 
-    public void incNLocals(){
-        this.n_locals++;
-    }
-
     public int getN_locals() {
         return n_locals;
     }
 
-    public Map<String, Integer> getLocalVariables() {
-        return localVariables;
+    public String getClassName() {
+        return className;
     }
 
     public Integer getLocalVariableByKey(String key) {
+        if(localVariables.get(key) == null){
+            addLocalVariable(key, n_locals);
+        }
         return localVariables.get(key);
     }
 
@@ -58,13 +59,13 @@ public class MethodJasmin {
             n_locals++;
             return true;
         }
+
         return false;
     }
 
     public void generateJasminCode(){
 
         jasminCode.append("\n\n.method public");
-        //jasminCode.append(method.getMethodAccessModifier().toString().toLowerCase());
 
         if(method.isConstructMethod())
             jasminCode.append(" <init>");

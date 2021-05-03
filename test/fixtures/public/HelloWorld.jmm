@@ -1,19 +1,6 @@
 import ioPlus;
 class HelloWorld {
-
-    int a;
-
-	public static void main(String[] args) {
-	    int b;
-		a = 1 + 2;
-		b = a;
-		ioPlus.printHelloWorld();
-	}
-
-	public int add(int aux, int baux){
-	    int res;
-	    res = aux + baux;
-	    return res;
-	}
-
+    public static void main(String[] args) {
+          ioPlus.printHelloWorld();
+    }
 }

@@ -42,20 +42,12 @@ public class BackendStage implements JasminBackend {
             List<Report> reports = new ArrayList<>();
 
             jasminCode.append(".class public ").append(ollirClass.getClassName());
-            /*
-            TODO: SymbolTable is NULL. Why? Because we are generating directly from OLLIR file. Verify after OLLIR implementation
-            jasminCode.append("\n.super ");
-            if(ollirResult.getSymbolTable().getSuper() == null)
-                jasminCode.append("java/lang/Object");
-            else
-                jasminCode.append(ollirResult.getSymbolTable().getSuper());
-            */
 
             jasminCode.append("\n.super java/lang/Object");
 
             for (var method : ollirClass.getMethods()){
                 System.out.println("METHOD " + method.getMethodName());
-                MethodJasmin methodJasmin = new MethodJasmin(method);
+                MethodJasmin methodJasmin = new MethodJasmin(method, ollirClass.getClassName());
                 methodJasmin.generateJasminCode();
                 jasminCode.append(methodJasmin.getJasminCode());
                 reports.addAll(methodJasmin.getReports());
