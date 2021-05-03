@@ -61,7 +61,9 @@ public class BackendStage implements JasminBackend {
                 reports.addAll(methodJasmin.getReports());
             }
 
+            System.out.println("\n------------------- JASMIN CODE -------------------");
             System.out.println(jasminCode);
+            System.out.println("---------------------------------------------------");
 
             return new JasminResult(ollirResult, jasminCode.toString(), reports);
 

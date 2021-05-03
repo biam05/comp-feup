@@ -19,8 +19,9 @@ public class MethodJasmin {
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
         this.n_locals = 0; // change
-        this.n_stack = 0; //change
+        this.n_stack = 99; //change
         this.localVariables = new HashMap<String, Integer>();
+        addLocalVariable("this", n_locals);
     }
 
     public StringBuilder getJasminCode() {
@@ -39,24 +40,8 @@ public class MethodJasmin {
         this.n_locals++;
     }
 
-    public void incNStack(){
-        this.n_stack++;
-    }
-
-    public void decNLocals(){
-        this.n_locals--;
-    }
-
-    public void decNStack(){
-        this.n_stack--;
-    }
-
     public int getN_locals() {
         return n_locals;
-    }
-
-    public int getN_stack() {
-        return n_stack;
     }
 
     public Map<String, Integer> getLocalVariables() {
@@ -70,6 +55,7 @@ public class MethodJasmin {
     public Boolean addLocalVariable(String variable, int id){
         if(!localVariables.containsKey(variable)){
             localVariables.put(variable, id);
+            n_locals++;
             return true;
         }
         return false;
@@ -135,6 +121,7 @@ public class MethodJasmin {
     private void analyseParameters(){
         if(method.getMethodName().equals("main")){
             jasminCode.append("[Ljava/lang/String;");
+            addLocalVariable("args", n_locals);
         }
         else{
             for(Element param : method.getParams()){
@@ -159,7 +146,6 @@ public class MethodJasmin {
                         break;
                 }
                 addLocalVariable(((Operand)param).getName(), n_locals);
-                incNLocals();
             }
         }
     }

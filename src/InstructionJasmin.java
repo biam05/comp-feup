@@ -70,7 +70,6 @@ public class InstructionJasmin {
                 jasminCode.append("store_");
                 if (method.addLocalVariable(variable,method.getN_locals())){
                     jasminCode.append(method.getN_locals());
-                    method.incNLocals();
                 }
                 else{
                     jasminCode.append(method.getLocalVariableByKey(variable));
@@ -80,11 +79,8 @@ public class InstructionJasmin {
 
             case BINARYOPER:
                 variable = ((Operand)instruction.getDest()).getName();
-                System.out.println(variable);
-                System.out.println(method.getLocalVariables());
                 if(method.getLocalVariableByKey(variable) == null){
                     method.addLocalVariable(variable, method.getN_locals());
-                    method.incNLocals();
                 }
                 value = method.getLocalVariableByKey(variable).toString();
 
@@ -92,16 +88,33 @@ public class InstructionJasmin {
                 Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
                 Element rightElement = ((BinaryOpInstruction) rhs).getRightOperand();
 
-                decideType(leftElement);
-                jasminCode.append("load_");
-                jasminCode.append(method.getLocalVariableByKey(((Operand)leftElement).getName()));
+                System.out.println("Left: " + leftElement.getClass().getName());
+                System.out.println("Right: " + rightElement.getType());
+
+                if (leftElement.isLiteral()){
+                    value = ((LiteralElement)leftElement).getLiteral();
+                    decideType(leftElement);
+                    jasminCode.append("const_" + value);
+                }
+                else{
+                    decideType(leftElement);
+                    jasminCode.append("load_");
+                    jasminCode.append(method.getLocalVariableByKey(((Operand)leftElement).getName()));
+                }
 
                 decideType(instruction.getDest());
                 jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
 
-                decideType(rightElement);
-                jasminCode.append("load_");
-                jasminCode.append(method.getLocalVariableByKey(((Operand)rightElement).getName()));
+                if (rightElement.isLiteral()){
+                    value = ((LiteralElement)rightElement).getLiteral();
+                    decideType(rightElement);
+                    jasminCode.append("const_" + value);
+                }
+                else{
+                    decideType(rightElement);
+                    jasminCode.append("load_");
+                    jasminCode.append(method.getLocalVariableByKey(((Operand)rightElement).getName()));
+                }
 
                 decideType(instruction.getDest());
                 jasminCode.append("store_");
@@ -111,10 +124,14 @@ public class InstructionJasmin {
                 break;
             case GETFIELD:
                 variable = ((Operand)instruction.getDest()).getName();
-                System.out.println("left = " + variable);
                 generateGetField((GetFieldInstruction)rhs);
                 decideType(instruction.getDest());
-                jasminCode.append("store_").append(method.getLocalVariableByKey(variable));
+                jasminCode.append("store_");
+
+                if(method.getLocalVariableByKey(variable) == null)
+                    method.addLocalVariable(variable, method.getN_locals());
+
+                jasminCode.append(method.getLocalVariableByKey(variable));
                 break;
         }
     }
@@ -178,29 +195,16 @@ public class InstructionJasmin {
     }
 
     private void generateGetField(GetFieldInstruction instruction) {
-        System.out.println("-> GET FIELD");
-        instruction.show();
-        System.out.println("-------");
-        // append -> aload_0 -> primeiro argumento do metodo getfield
-        // append -> getfield I a -> o a é um inteiro que é um class field
-        // append -> istore_2 -> está a ser guardado no segunda variavel local
-        // t1.i32 :=.i32 getfield(this, a.i32).i32;
 
         Element e1 = instruction.getFirstOperand();
-        if(e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
-            //System.out.print("Literal: "+((LiteralElement) e1).getLiteral());
-        } else {
+        if(!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
             Operand o1 = (Operand) e1;
-            if(o1.getName() == "this") jasminCode.append("\n\t\taload_0");
-            else
-                jasminCode.append("\n\t\taload_" + method.getLocalVariableByKey(o1.getName()));
+            jasminCode.append("\n\t\taload_" + method.getLocalVariableByKey(o1.getName()));
         }
 
         jasminCode.append("\n\t\tgetfield ");
         e1 = instruction.getSecondOperand();
-        if(e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
-            //System.out.print("Literal: "+((LiteralElement) e1).getLiteral());
-        } else {
+        if(!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
             Operand o1 = (Operand) e1;
             jasminCode.append(decideInvokeReturns(o1.getType())).append(" ").append(o1.getName());
         }
