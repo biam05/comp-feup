@@ -9,7 +9,7 @@ public class InstructionJasmin {
     private final Instruction instruction;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
-    private MethodJasmin method;
+    private final MethodJasmin method;
 
     public InstructionJasmin(Instruction instruction, MethodJasmin method) {
         this.instruction = instruction;
@@ -124,7 +124,7 @@ public class InstructionJasmin {
                 generateCall((CallInstruction)rhs);
                 decideType(instruction.getDest());
                 jasminCode.append("store_");
-                jasminCode.append(method.getLocalVariableByKey(variable));
+                jasminCode.append(method.getLocalVariableByKey(variable)).append("\n");
 
                 break;
         }
@@ -138,7 +138,6 @@ public class InstructionJasmin {
             jasminCode.append("\n\treturn");
         }
         else{
-            instruction.show();
             Element firstArg = instruction.getFirstArg();
             if(firstArg.isLiteral()){
 
@@ -164,13 +163,14 @@ public class InstructionJasmin {
                         }
                     }
                 }
-                else if(operand.getType().getTypeOfElement() == ElementType.THIS ||
-                        operand.getType().getTypeOfElement() == ElementType.OBJECTREF){
+                else if ((operand.getType().getTypeOfElement() == ElementType.THIS ||
+                        operand.getType().getTypeOfElement() == ElementType.OBJECTREF)) {
                     if(instruction.getNumOperands() > 1){
-                        if(instruction.getInvocationType() != CallType.NEW){
+                        if(instruction.getInvocationType() == CallType.invokevirtual){
                             jasminCode.append("\n\t\tinvokevirtual ");
                             Element secondArg = instruction.getSecondArg();
                             if(secondArg.isLiteral()){
+                                jasminCode.append(method.getClassName());
                                 jasminCode.append(".");
                                 jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
                                 jasminCode.append("(");
@@ -182,22 +182,12 @@ public class InstructionJasmin {
                             }
                         }
                         else{
-                            jasminCode.append("\n\t\tinvokespecial ");
-                            Element secondArg = instruction.getSecondArg();
-                            if(!secondArg.isLiteral() && secondArg.getType().getTypeOfElement() == ElementType.OBJECTREF){
-                                jasminCode.append(".");
-                                jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
-                                jasminCode.append("(");
-                                for (Element parameter : instruction.getListOfOperands()){
-                                    jasminCode.append(decideInvokeReturns(parameter.getType()));
-                                }
-                                jasminCode.append(")");
-                                jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
-                            }
+                            jasminCode.append("\n\t\tnew ").append(method.getClassName());
+                            jasminCode.append("\n\t\tdup");
+                            jasminCode.append("\n\t\tinvokespecial <init>()V");
                         }
                     }
                 }
-
             }
         }
     }
@@ -277,15 +267,15 @@ public class InstructionJasmin {
             case BOOLEAN -> jasminCode.append("\n\t\ti"); // weird... == int? confirm
             case ARRAYREF -> jasminCode.append("\n\t\ta");
             case THIS -> jasminCode.append("\n\t\ta");
+            case OBJECTREF -> jasminCode.append("\n\t\ta");
             default -> jasminCode.append("\n\t\t");
         }
         // other types of variables
     }
 
-    private String decideInvokeReturns(Type type){
+    public String decideInvokeReturns(Type type){
         String returnType = null;
         switch(type.getTypeOfElement()){
-            // todo: verificar com o ollir como é o tipo quando retorna uma classe
             case INT32:
                 returnType = "I";
                 break;
@@ -296,7 +286,7 @@ public class InstructionJasmin {
                 returnType = "[I";
                 break;
             case OBJECTREF:
-                returnType = method.getClass().getName(); //Todo: probably wrong
+                returnType = method.getClass().getName();
                 break;
             case VOID:
                 returnType = "V";

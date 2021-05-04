@@ -13,7 +13,7 @@ public class OLLIRTemplates {
         StringBuilder res = new StringBuilder();
 
         for (Symbol field : fields) {
-            res.append(".field private ").append(field.toOLLIR()).append(";\n");
+            res.append(".field ").append(field.toOLLIR()).append(";\n");
         }
 
         return res.toString();
@@ -71,10 +71,16 @@ public class OLLIRTemplates {
 
     public static String assign(String left, String type, String right) {
         StringBuilder result = new StringBuilder();
+        List<String> last = new ArrayList<>();
         String[] reversed = (left + " :=" + type + " " + right).split("\\n");
         for (int i = reversed.length - 1; i >= 1; i--)
-            result.append(reversed[i]).append(";\n");
+            if (reversed[i].contains("invokespecial"))
+                last.add(reversed[i]);
+            else
+                result.append(reversed[i]).append(";\n");
         result.append(reversed[0]);
+        for (String invoke: last)
+            result.append(";\n").append(invoke);
         return result.toString();
     }
 
