@@ -4,7 +4,6 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class OLLIRTemplates {
@@ -123,30 +122,10 @@ public class OLLIRTemplates {
         }
     }
 
-    public static String getOperationReturn(JmmNode node){
-        switch(node.getKind()){
-            case "And":
-            case "Not":
-                return ".bool";
-            case "Add":
-            case "Sub":
-            case "Mult":
-            case "Div":
-            case "Less":
-                return ".i32";
-            default:
-                return "";
-        }
-    }
-
-    public static boolean isOperator(JmmNode node){
-        return node.getKind().equals("Add") || node.getKind().equals("Sub") || node.getKind().equals("Mul") || node.getKind().equals("Div") || node.getKind().equals("And") || node.getKind().equals("Not") || node.getKind().equals("Less");
-    }
-
     public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
 
-        if(symbolTable.returnFieldTypeIfExists(ret) != null){ //é field da classe, get field
+        if(symbolTable.returnFieldTypeIfExists(ret) != null){ //its a class field
             JmmNode parent = node.getParent().getParent().getParent();
             if(parent.getKind().equals("Assign") && parent.getChildren().get(0).getChildren().get(0).equals(node.getParent()))
                 return "putfield = " + ret + getIdentifierType(node, symbolTable, method);
@@ -176,11 +155,15 @@ public class OLLIRTemplates {
     }
 
     public static String getReturnTypeExpression(String expression) { //for example, parse a.i32: return .i32
+        String res = "";
         if(expression.equals("")) return "";
-        String[] values = expression.split("\\.");
-        if(values.length < 2) return "";
-        if(values.length == 2) return "." + values[1].trim();
-        return "." + values[1].trim().replaceAll("[() +<*/&\\-]", "");
+        int index = expression.lastIndexOf('.');
+        if(expression.length()>6 && index > 5f)
+            if(expression.startsWith("array", index-5)) res += ".array";
+
+        if(expression.endsWith(";"))
+            return res + "." + expression.substring(index+1, expression.length()-1).trim().replaceAll("[() +<*/&\\-]", "");
+        return res + "." + expression.substring(index+1).trim().replaceAll("[() +<*/&\\-]", "");
     }
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a

@@ -13,6 +13,8 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private String code = "";
     private int var_temp = 0;
     private SymbolMethod currentMethod;
+    private int loop_counter = 1;
+    private int if_counter = 1;
 
     public OLLIRVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -35,8 +37,11 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         addVisit("And", this::visitOperation);
         addVisit("Less", this::visitOperation);
         addVisit("ArrayAccess", this::visitArrayAccess);
+        addVisit("WhileStatement", this::visitWhile);
         setDefaultVisit(this::defaultVisit);
     }
+
+
 
     public List<Report> getReports() { return reports; }
 
@@ -45,10 +50,9 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private String defaultVisit(JmmNode node, StringBuilder stringBuilder) {
         List<JmmNode> nodes = node.getChildren();
         StringBuilder res = new StringBuilder();
-        for(JmmNode child: nodes){
-            String re = visit(child);
-            res.append(re);
-        }
+        for(JmmNode child: nodes)
+            res.append(visit(child));
+
         this.code += res.toString();
         return res.toString();
     }
@@ -103,14 +107,12 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         return res.toString();
     }
 
-    //TODO
     private String visitReturn(JmmNode node, StringBuilder stringBuilder) {
         String result = checkReturnTemporary(node.getChildren().get(0).getChildren().get(0));
         if(result.equals(""))
             return OLLIRTemplates.returnTemplate(visit(node.getChildren().get(0)), OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
         else
             return OLLIRTemplates.returnTemplate("aux" + var_temp + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + "\n" + result, OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))));
-
     }
 
     private String visitAssign(JmmNode node, StringBuilder stringBuilder) {
@@ -120,6 +122,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
 
         String left = visit(leftchild);
         String right = visit(rightchild);
+
         if(left.contains("putfield")){
             String[] args = left.split(" ");
             String var = args[2];
@@ -150,7 +153,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
 
-        for (JmmNode child : children) res.append(visit(child));//only the statements matter
+        for (JmmNode child : children) res.append(visit(child));
 
         return res.toString();
     }
@@ -159,10 +162,34 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
 
-        for(JmmNode child: children){
-            if(!(child.getKind().equals("WhileStatement") || child.getKind().equals("IfExpression"))) res.append(visit(child)); //ifs and whiles are not for this checkpoint
+        for(JmmNode child: children) res.append(visit(child));
+
+        return res.append(";\n").toString();
+    }
+
+    //TODO: test
+    private String visitWhile(JmmNode node, StringBuilder stringBuilder) {
+        StringBuilder res = new StringBuilder();
+        List<JmmNode> children = node.getChildren();
+        JmmNode condition = children.get(0);
+        JmmNode body = children.get(1);
+
+        res.append("\nLoop").append(loop_counter).append(":\n");
+        String cond = visit(condition);
+
+        if(cond.contains("\n")){ //TODO: rever isto
+            String[] args = cond.split("\n");
+            res.append(args[1]).append("\n");
+            res.append("if(").append(args[0]).append(") goto Body").append(loop_counter).append(";\n");
         }
-        return res + ";\n";
+        else res.append("if(").append(cond).append(")").append("goto Body").append(loop_counter).append(";\n");
+
+        res.append("goto EndLoop").append(loop_counter).append(";");
+        res.append("\nBody").append(loop_counter).append(":\n").append(visit(body));
+        res.append("\nEndLoop").append(loop_counter).append(":\n");
+
+        loop_counter++;
+        return res.toString();
     }
 
     private String visitExpression(JmmNode node, StringBuilder stringBuilder) {
@@ -170,13 +197,13 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     }
     private String visitClassDeclaration(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
-        for(JmmNode child : node.getChildren()){
-            res.append(visit(child));
-        }
+        for(JmmNode child : node.getChildren()) res.append(visit(child));
+
         return res.toString();
     }
 
 
+    //TODO : newintarrayexpression and its temporary variables
     private String visitFinalTerms(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder result = new StringBuilder();
         List<JmmNode> children = node.getChildren();
@@ -186,9 +213,10 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             ret = ".i32";
             value = child.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "");
             res = value + ret;
-        } else if (child.getKind().equals("NewIntArrayExpression")) { //not for this checkpoint
-            ret = "";
-            res = "";
+        } else if (child.getKind().equals("NewIntArrayExpression")) {
+            String var = visit(child.getChildren().get(0));
+            //TODO: check if var needs temporary variable
+            res = "new(array," + var + ").array.i32";
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
             res = "new(" + value + ")." + value; // new(myClass).myClass
@@ -201,7 +229,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             ret = ".bool";
             int bool = child.getKind().equals("True") ? 1 : 0;
             res = bool + ret;
-        } else if(child.getKind().equals("Expression")){ // new int[EXPRESSION] -> nao é necessário nesta entrega
+        } else if(child.getKind().equals("Expression")){
             res = visit(child);
         }else if(child.getKind().equals("This")){
             res = "this";
@@ -267,21 +295,20 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     public String getStaticReturnType(JmmNode method){
         if(method.getParent().getKind().equals("Assign")) {
             JmmNode brother = method.getParent().getChildren().get(0);
-            String v = visit(brother);
-            return OLLIRTemplates.getReturnTypeExpression(v);
+            return OLLIRTemplates.getReturnTypeExpression(visit(brother));
         }
         else return ".V";
     }
 
+    //TODO: ver quando sao necessarias variaveis temporarias para o array
     private String visitLength(JmmNode identifier) {
         String array = visit(identifier);
-        return "arraylength(" + array + ").i32";
+        return "arraylength(" + array + ").i32;";
     }
 
     private String visitOperation(JmmNode node, StringBuilder stringBuilder) {
         String resultLeft, resultRight;
         switch (node.getKind()){
-            // Binary Instructions
             case "Add":
             case "Sub":
             case "Mult":
@@ -301,7 +328,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
                     return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + visit(node.getChildren().get(1)) + "\n" + resultLeft;
                 else
                     return leftAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + " " + OLLIRTemplates.getOperationType(node) + " " + rightAux + OLLIRTemplates.getReturnTypeExpression(visit(node.getChildren().get(0))) + "\n" + resultRight + "\n" + resultLeft;
-                // Unary Instruction
             case "Not":
                 resultRight = checkReturnTemporary(node.getChildren().get(0));
                 if (resultRight.equals(""))
@@ -313,15 +339,24 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         }
     }
 
-    private String visitArrayAccess(JmmNode node, StringBuilder stringBuilder) { //not for this checkpoint
+    //TODO: check for the need of temporary variables --> A[i.i32].i32
+    private String visitArrayAccess(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
+        JmmNode identifier = node.getChildren().get(0);
+        JmmNode access = node.getChildren().get(1);
+        String i = visit(identifier);
+        String a = visit(access);
+        //TODO check for temporary variables -->  a can only be a variable
+        String type = OLLIRTemplates.getReturnTypeExpression(a);
+        if(type.length() - type.replaceAll(".", "").length() > 1) type = type.substring(type.lastIndexOf("."));
+
+        res.append(OLLIRTemplates.getIdentifierExpression(i)).append("[").append(a).append("]").append(type);
         return res.toString();
     }
 
     public String checkReturnTemporary(JmmNode expression) {
         StringBuilder result = new StringBuilder();
-        if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression) || OLLIRTemplates.hasField(expression, symbolTable, currentMethod))
-        {
+        if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression) || OLLIRTemplates.hasField(expression, symbolTable, currentMethod)) {
             String aux = visit(expression);
             String type;
             if(expression.getKind().equals("Call") || expression.getKind().contains("FinalTerms"))

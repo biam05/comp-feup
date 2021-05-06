@@ -31,4 +31,52 @@ public class OptimizeTest {
         TestUtils.noErrors(result.getReports());
     }
 
+    @Test
+    public void testFindMaximum() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testHelloWorldAdd() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testLazySort() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testLife() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Life.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testMonteCarloPi() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testQuickSort() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testTicTacToe() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testWhileAndIF() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
 }
