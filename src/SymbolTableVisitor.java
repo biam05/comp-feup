@@ -121,8 +121,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             } else if (childKind.contains("Identifier")) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 method.setName(name);
-            }
-            else if(childKind.contains("Main"))
+            } else if (childKind.contains("Main"))
                 method.setName("main");
         }
         this.symbolTable.addMethod(method);
@@ -175,7 +174,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             return symbol;
 
         Type res = symbolTable.hasImport(type);
-        if(res != null) return symbol;
+        if (res != null) return symbol;
 
         return null;
     }

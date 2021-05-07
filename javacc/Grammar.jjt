@@ -166,7 +166,7 @@ void Type() #Type : {Token t;}
 void Statement() #Statement : {}
 {
     <LBRACE> #LBrace() (Statement())* <RBRACE> #RBrace()
-    | (<IF>  <LPARENTHESIS> Expression() <RPARENTHESIS>) #IfExpression Statement() <ELSE> #Else Statement()
+    | ((<IF>  <LPARENTHESIS> Expression() <RPARENTHESIS>) #IfExpression Statement() <ELSE> #Else Statement()) #IfElse
     | <WHILE> WhileStatement()
      | Expression()[<ASSIGN> Expression() #Assign(2)]  <SEMICOLON> #Semicolon
 }

@@ -52,8 +52,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
                 methodInfo.append(methodName).append("(");
             } else if (childKind.equals("Main")) {
                 methodInfo.append("main(");
-            }
-            else if (childKind.equals("MethodBody")) { //method body (local variables)
+            } else if (childKind.equals("MethodBody")) { //method body (local variables)
                 methodInfo.append(")");
                 method = symbolTable.getMethodByInfo(methodInfo.toString());
 
@@ -82,9 +81,10 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         for (JmmNode child : children) {
             switch (child.getKind()) {
                 case "WhileStatement":
-                case "IfExpression":
-                    visitConditionalStatement(method, child);
+                    visitWhileStatement(method, child);
                     break;
+                case "IfElse":
+                    visitIfStatement(method, child);
                 case "Expression":
                     SemanticAnalysisUtils.evaluateExpression(symbolTable, method, child, reports, true);
                     break;
@@ -98,14 +98,24 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         }
     }
 
-    public void visitConditionalStatement(SymbolMethod method, JmmNode node) {
+    public void visitWhileStatement(SymbolMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
         SemanticAnalysisUtils.evaluatesToBoolean(symbolTable, method, children.get(0), this.reports);
+        if (children.size() == 2) visitStatement(method, node);
+    }
+
+    public void visitIfStatement(SymbolMethod method, JmmNode node) {
+        List<JmmNode> children = node.getChildren();
+        for (JmmNode child : children) {
+            if (child.getKind().equals("IfExpression"))
+                SemanticAnalysisUtils.evaluatesToBoolean(symbolTable, method, child, this.reports);
+            else if (child.getKind().equals("Statement")) visitStatement(method, child);
+        }
     }
 
     public void visitAssign(SymbolMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
-        if (children.size() != 2) return; // ver isto
+        if (children.size() != 2) return;
         if (!children.get(0).getKind().equals("Expression") || !children.get(1).getKind().equals("Expression"))
             return; //ver isto
 

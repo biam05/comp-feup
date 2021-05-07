@@ -11,88 +11,52 @@ import java.util.List;
 public class SemanticAnalysisUtils {
 
     public static boolean evaluatesToBoolean(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
+        Type type = new Type("Boolean", false);
 
-        Type type = new Type("Boolean ", false);
-        if (node.getKind().equals("Call"))
-            return type.equals(evaluateCall(symbolTable, method, node, reports));
-        else if(node.getKind().equals("Expression"))
-            return type.equals(evaluateExpression(symbolTable, method, node, reports, true));
-
-
-        List<JmmNode> children = node.getChildren();
-        for (JmmNode child : children) {
-            List<Report> allReports;
-
-            if (child.getKind().contains("Identifier")) {
-                Report report = isIdentifier(symbolTable, method, child, false, false);
-                if (report != null) {
-                    reports.add(report);
-                    return false;
-                }
-                return true;
-            }
-            switch (child.getKind()) {
-                case "And":
-                    allReports = SemanticAnalysisUtils.evaluateOperationWithBooleans(symbolTable, child, method);
-                    break;
-
-                case "Less":
-                    allReports = SemanticAnalysisUtils.evaluateOperationWithIntegers(symbolTable, child, method);
-                    break;
-
-                case "Not":
-                    allReports = SemanticAnalysisUtils.evaluateNotOperation(symbolTable, child, method);
-                    break;
-
-                case "FinalTerms":
-                    return evaluatesToBoolean(symbolTable, method, child, reports);
-                case "True":
-                case "False":
-                    return true;
-
-                default:
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "Expression should return boolean"));
-                    return false;
-            }
-            reports.addAll(allReports);
-            if (!allReports.isEmpty())
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "Expression should return boolean"));
-            else return true;
+        switch (node.getKind()) {
+            case "Call":
+                if (type.equals(evaluateCall(symbolTable, method, node, reports))) return true;
+            case "Expression":
+            case "IfExpression":
+                if (type.equals(evaluateExpression(symbolTable, method, node, reports, true))) return true;
+            case "Not":
+                if (evaluateNotOperation(symbolTable, method, node, reports)) return true;
+            case "And":
+                if (evaluateOperationWithBooleans(symbolTable, method, node, reports)) return true;
+            case "Less":
+                if (evaluateOperationWithIntegers(symbolTable, method, node, reports)) return true;
+            case "FinalTerms":
+                if (type.equals(evaluateFinalTerms(symbolTable, method, node, reports, true))) return true;
+            default:
+                break;
         }
 
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Expression should return boolean"));
         return false;
     }
 
     public static boolean evaluatesToInteger(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
 
-        Type type = new Type("Int ", false);
-        if (node.getKind().equals("Call"))
-            return type.equals(evaluateCall(symbolTable, method, node, reports));
-        else if (node.getKind().equals("Expression"))
-            return type.equals(evaluateExpression(symbolTable, method, node, reports, true));
-
-        List<JmmNode> children = node.getChildren();
-        if (children.size() == 1) {
-            JmmNode child = children.get(0);
-
-            if (child.getKind().contains("Number")) return true;
-            else if (child.getKind().contains("Identifier")) {
-                Report report = isIdentifier(symbolTable, method, child, true, false);
-                if (report != null) reports.add(report);
-                else return true;
-            } else if (child.getKind().equals("ArrayAccess")) {
-                return evaluateArrayAccess(symbolTable, method, child, reports);
-            } else if (child.getKind().equals("FinalTerms"))
-                return evaluatesToInteger(symbolTable, method, child, reports);
-            else if (child.getKind().equals("Expression"))
-                return type.equals(evaluateExpression(symbolTable, method, child, reports, true));
-
-        } else if (children.size() == 2) {
-            List<Report> allReports = evaluateOperationWithIntegers(symbolTable, node, method);
-            if (allReports.size() == 0) return true;
-            reports.addAll(allReports);
+        Type type = new Type("Int", false);
+        switch (node.getKind()) {
+            case "Call":
+                if (type.equals(evaluateCall(symbolTable, method, node, reports))) return true;
+            case "Expression":
+                if (type.equals(evaluateExpression(symbolTable, method, node, reports, true))) return true;
+            case "ArrayAccess":
+                if (evaluateArrayAccess(symbolTable, method, node, reports)) return true;
+            case "FinalTerms":
+                if (type.equals(evaluateFinalTerms(symbolTable, method, node, reports, true))) return true;
+            case "Add":
+            case "Sub":
+            case "Mult":
+            case "Div":
+                if (evaluateOperationWithIntegers(symbolTable, method, node, reports)) return true;
+            default:
+                break;
         }
 
+        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("line")), Integer.parseInt(node.get("col")), "Expression should return int"));
         return false;
     }
 
@@ -116,22 +80,29 @@ public class SemanticAnalysisUtils {
         return true;
     }
 
-    public static List<Report> evaluateOperationWithBooleans(GrammarSymbolTable symbolTable, JmmNode node, SymbolMethod method) {
+    public static boolean evaluateOperationWithBooleans(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
         List<JmmNode> children = node.getChildren();
-        List<Report> reports = new ArrayList<>();
 
-        if (!evaluatesToBoolean(symbolTable, method, children.get(0), null))
+        if (children.size() != 2) return false;
+
+        boolean hasReport = false;
+
+        if (!evaluatesToBoolean(symbolTable, method, children.get(0), reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "left operand for binary operator '&&' is not a boolean"));
-        if (!evaluatesToBoolean(symbolTable, method, children.get(1), null))
+            hasReport = true;
+        }
+
+        if (!evaluatesToBoolean(symbolTable, method, children.get(1), reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "right operand for binary operator '&&' is not a boolean"));
-
-
-        return reports;
+            hasReport = true;
+        }
+        return !hasReport;
     }
 
-    public static List<Report> evaluateOperationWithIntegers(GrammarSymbolTable symbolTable, JmmNode node, SymbolMethod method) {
+    public static boolean evaluateOperationWithIntegers(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
         List<JmmNode> children = node.getChildren();
-        List<Report> reports = new ArrayList<>();
+
+        if (children.size() != 2) return false;
 
         char operation = ' ';
 
@@ -139,15 +110,12 @@ public class SemanticAnalysisUtils {
             case "Add":
                 operation = '+';
                 break;
-
             case "Sub":
                 operation = '-';
                 break;
-
             case "Mult":
                 operation = '*';
                 break;
-
             case "Div":
                 operation = '/';
                 break;
@@ -156,24 +124,27 @@ public class SemanticAnalysisUtils {
                 break;
         }
 
+        boolean hasReport = false;
         if (!evaluatesToInteger(symbolTable, method, children.get(0), reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "left operand type for binary operator '" + operation + "' is not an integer"));
+            hasReport = true;
         }
         if (!evaluatesToInteger(symbolTable, method, children.get(1), reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "right operand type for binary operator '" + operation + "' is not an integer"));
+            hasReport = true;
         }
 
-        return reports;
+        return !hasReport;
     }
 
-    public static List<Report> evaluateNotOperation(GrammarSymbolTable symbolTable, JmmNode node, SymbolMethod method) {
+    public static boolean evaluateNotOperation(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
         List<JmmNode> children = node.getChildren();
-        List<Report> reports = new ArrayList<>();
 
-        if (!evaluatesToBoolean(symbolTable, method, children.get(0), reports))
+        if (!evaluatesToBoolean(symbolTable, method, children.get(0), reports)) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "bad operand type for binary operator '!': boolean expected"));
-
-        return reports;
+            return false;
+        }
+        return true;
     }
 
     private static Report checkTypeIdentifier(boolean isInt, boolean isArray, Type type, String line, String col) {
@@ -211,8 +182,8 @@ public class SemanticAnalysisUtils {
     }
 
     private static Type evaluateFinalTerms(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
-        List<JmmNode> children = node.getChildren();
 
+        List<JmmNode> children = node.getChildren();
         JmmNode firstChild = children.get(0);
 
         if (firstChild.getKind().contains("Number")) return new Type("Int", false);
@@ -231,7 +202,8 @@ public class SemanticAnalysisUtils {
             return type;
         } else if (rightOperand && (firstChild.getKind().equals("True") || firstChild.getKind().equals("False")))
             return new Type("Boolean", false);
-
+        else if (rightOperand && firstChild.getKind().equals("Expression"))
+            return evaluateExpression(symbolTable, method, firstChild, reports, rightOperand);
 
         return null;
     }
@@ -262,21 +234,16 @@ public class SemanticAnalysisUtils {
         if (children.size() == 1) {
             JmmNode child = children.get(0);
             if (child.getKind().equals("And") && rightOperand) {
-                List<Report> r = evaluateOperationWithBooleans(symbolTable, child, method);
-                if (r.size() == 0) return new Type("Boolean", false);
-                reports.addAll(r);
+                if (evaluateOperationWithBooleans(symbolTable, method, child, reports))
+                    return new Type("Boolean", false);
             } else if (child.getKind().equals("Less") && rightOperand) {
-                List<Report> r = evaluateOperationWithIntegers(symbolTable, child, method);
-                if (r.size() == 0) return new Type("Boolean", false);
-                reports.addAll(r);
+                if (evaluateOperationWithIntegers(symbolTable, method, child, reports))
+                    return new Type("Boolean", false);
             } else if ((child.getKind().equals("Add") || child.getKind().equals("Sub") || child.getKind().equals("Div") || child.getKind().equals("Mult")) && rightOperand) {
-                List<Report> r = evaluateOperationWithIntegers(symbolTable, child, method);
-                if (r.size() == 0) return new Type("Int", false);
-                reports.addAll(r);
+                if (evaluateOperationWithIntegers(symbolTable, method, child, reports)) return new Type("Int", false);
             } else if (child.getKind().equals("Not") && rightOperand) {
-                List<Report> r = evaluateNotOperation(symbolTable, child, method);
-                if (r.size() == 0) return new Type("Boolean", false);
-                reports.addAll(r);
+                if (evaluateNotOperation(symbolTable, method, child, reports)) return new Type("Boolean", false);
+
             } else if (child.getKind().equals("FinalTerms")) {
                 return evaluateFinalTerms(symbolTable, method, child, reports, rightOperand);
             } else if (child.getKind().equals("ArrayAccess")) {
@@ -296,7 +263,6 @@ public class SemanticAnalysisUtils {
     private static Type evaluateCall(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
         List<JmmNode> children = node.getChildren();
         if (children.size() != 2) return null;
-
         if (children.get(0).getKind().equals("FinalTerms") || children.get(0).getKind().equals("Call")) {
             if (children.get(1).getKind().equals("MethodCall"))
                 return evaluateMethodCall(symbolTable, method, children, reports);
@@ -320,20 +286,25 @@ public class SemanticAnalysisUtils {
         }
 
         String identifierN = "this";
-        if (!identifierKind.equals("This")) {
-            String identifierName = identifierKind.replaceAll("'", "").replace("Identifier ", "");
+        Boolean isNew = false;
 
+        if (!identifierKind.equals("This")) {
+            if (identifierKind.contains("NewIdentifier")) isNew = true;
+            String identifierName = identifierKind.replaceAll("'", "").replace("Identifier ", "").replace("NewIdentifier ", "");
             Type res = symbolTable.hasImport(identifierName);
             if (res != null) return res;
 
-            Type identifierType = checkIfIdentifierExists(symbolTable, method, identifierName);
+            if (!isNew) {
+                Type identifierType = checkIfIdentifierExists(symbolTable, method, identifierName);
 
-            if (identifierType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier '" + identifierName + "' is not declared"));
-                return null;
-            }
+                if (identifierType == null) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier '" + identifierName + "' is not declared"));
+                    return null;
+                }
 
-            identifierN = identifierType.getName();
+                identifierN = identifierType.getName();
+            } else identifierN = identifierName;
+
             if (identifierN.equals(symbolTable.getSuper())) return new Type("Accepted", false);
             if (identifierN.equals("Int") || identifierN.equals("Boolean") || identifierN.equals("String")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier cannot be string, int or boolean"));
@@ -342,6 +313,7 @@ public class SemanticAnalysisUtils {
         }
 
         String methodName = methodNode.getChildren().get(0).getKind().replaceAll("'", "").replace("Identifier ", "");
+
         List<JmmNode> parameters = new ArrayList<>(methodNode.getChildren());
         parameters.remove(0);
 
