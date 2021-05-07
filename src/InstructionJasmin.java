@@ -58,15 +58,14 @@ public class InstructionJasmin {
                 Element rhsElement = ((SingleOpInstruction) rhs).getSingleOperand();
                 if (rhsElement.isLiteral()){
                     value = ((LiteralElement)rhsElement).getLiteral();
-                    decideType(rhsElement);
-                    jasminCode.append("const_");
+                    decideInstructionConstSize(value);
                 }
                 else {
                     value = method.getLocalVariableByKey(((Operand)rhsElement).getName()).toString();
                     decideType(rhsElement);
                     jasminCode.append("load_");
+                    jasminCode.append(value);
                 }
-                jasminCode.append(value);
                 decideType(rhsElement);
                 jasminCode.append("store_").append(method.getLocalVariableByKey(variable)).append("\n");
 
@@ -82,8 +81,7 @@ public class InstructionJasmin {
 
                 if (leftElement.isLiteral()){
                     value = ((LiteralElement)leftElement).getLiteral();
-                    decideType(leftElement);
-                    jasminCode.append("const_" + value);
+                    decideInstructionConstSize(value);
                 }
                 else {
                     decideType(leftElement);
@@ -93,8 +91,7 @@ public class InstructionJasmin {
 
                 if (rightElement.isLiteral()){
                     value = ((LiteralElement)rightElement).getLiteral();
-                    decideType(rightElement);
-                    jasminCode.append("const_" + value);
+                    decideInstructionConstSize(value);
                 }
                 else{
                     decideType(rightElement);
@@ -103,7 +100,10 @@ public class InstructionJasmin {
                 }
 
                 decideType(instruction.getDest());
-                jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
+                if (operation.toString().equals("LTH"))
+                    jasminCode.append("cmpl");
+                else
+                    jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
 
                 decideType(instruction.getDest());
                 jasminCode.append("store_");
@@ -227,8 +227,7 @@ public class InstructionJasmin {
         Operand o2 = (Operand) e2;
 
         if(e3.isLiteral()) { // if the e1 is not a literal, then it is a variable
-            decideType(e3);
-            jasminCode.append("const_").append(((LiteralElement) e3).getLiteral());
+            decideInstructionConstSize(((LiteralElement) e3).getLiteral());
         } else {
             Operand o3 = (Operand) e3;
             decideType(e3);
@@ -269,6 +268,16 @@ public class InstructionJasmin {
             jasminCode.append(o1.getName()).append(" ").append(decideInvokeReturns(o1.getType()));
         }
 
+    }
+
+    private void decideInstructionConstSize(String value){
+        int val = Integer.parseInt(value);
+        String res;
+        if (val >= 0 && val <= 5) res = "iconst_";
+        else if (val > 5 && val <= 128) res = "bipush ";
+        else if (val > 128 && val <= 32768) res = "sipush ";
+        else res = "ldc ";
+        jasminCode.append("\n\t\t").append(res).append(val);
     }
 
     private void decideType(Element element){
