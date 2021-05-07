@@ -30,7 +30,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
-        //assertEquals("Hello, World!", output.trim());
+        assertEquals("Hello, World!", output.trim());
     }
 
     @Test
@@ -46,7 +46,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
-        //assertEquals("Hello, World!", output.trim());
+        assertEquals("30", output.trim());
     }
 
     @Test

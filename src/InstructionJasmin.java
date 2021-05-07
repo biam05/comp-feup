@@ -63,11 +63,11 @@ public class InstructionJasmin {
                 else {
                     value = method.getLocalVariableByKey(((Operand)rhsElement).getName()).toString();
                     decideType(rhsElement);
-                    jasminCode.append("load_");
+                    jasminCode.append("load ");
                     jasminCode.append(value);
                 }
                 decideType(rhsElement);
-                jasminCode.append("store_").append(method.getLocalVariableByKey(variable)).append("\n");
+                jasminCode.append("store ").append(method.getLocalVariableByKey(variable)).append("\n");
 
                 break;
 
@@ -85,7 +85,7 @@ public class InstructionJasmin {
                 }
                 else {
                     decideType(leftElement);
-                    jasminCode.append("load_");
+                    jasminCode.append("load ");
                     jasminCode.append(method.getLocalVariableByKey(((Operand)leftElement).getName()));
                 }
 
@@ -95,18 +95,19 @@ public class InstructionJasmin {
                 }
                 else{
                     decideType(rightElement);
-                    jasminCode.append("load_");
+                    jasminCode.append("load ");
                     jasminCode.append(method.getLocalVariableByKey(((Operand)rightElement).getName()));
                 }
 
                 decideType(instruction.getDest());
                 if (operation.toString().equals("LTH"))
+                    //TODO
                     jasminCode.append("cmpl");
                 else
                     jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
 
                 decideType(instruction.getDest());
-                jasminCode.append("store_");
+                jasminCode.append("store ");
                 jasminCode.append(value);
 
                 jasminCode.append("\n");
@@ -115,17 +116,23 @@ public class InstructionJasmin {
                 variable = ((Operand)instruction.getDest()).getName();
                 generateGetField((GetFieldInstruction)rhs);
                 decideType(instruction.getDest());
-                jasminCode.append("store_");
+                jasminCode.append("store ");
 
                 jasminCode.append(method.getLocalVariableByKey(variable));
                 break;
             case CALL:
-                variable = ((Operand)instruction.getDest()).getName();
-                generateCall((CallInstruction)rhs);
+                variable = ((Operand) instruction.getDest()).getName();
+                generateCall((CallInstruction) rhs);
                 decideType(instruction.getDest());
-                jasminCode.append("store_");
-                jasminCode.append(method.getLocalVariableByKey(variable));
-
+                jasminCode.append("store ").append(method.getLocalVariableByKey(variable)).append("\n");
+                Element firstArg = ((CallInstruction) rhs).getFirstArg();
+                Operand opFirstArg = (Operand) firstArg;
+                if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
+                opFirstArg.getName().equals(method.getClassName())) {
+                    decideType(opFirstArg);
+                    jasminCode.append("load ").append(method.getLocalVariableByKey(variable));
+                    jasminCode.append("\n\t\tinvokespecial ").append(method.getClassName()).append(".<init>()V\n");
+                }
                 break;
         }
     }
@@ -133,71 +140,87 @@ public class InstructionJasmin {
     // invokestatic, invokevirtual, invokespecial
     private void generateCall(CallInstruction instruction) {
         if(method.getMethod().isConstructMethod()){
-            jasminCode.append("\n\taload_0");
+            jasminCode.append("\n\taload 0");
             jasminCode.append("\n\tinvokespecial java/lang/Object.<init>()V");
             jasminCode.append("\n\treturn");
         }
         else{
-            instruction.show();
             Element firstArg = instruction.getFirstArg();
-            if(firstArg.isLiteral()){
+            Operand opFirstArg = (Operand)firstArg;
 
-            } else{ // not literal -> it is a variable (CallInstruction)
-                Operand operand = (Operand) firstArg;
-                // invokestatic(ioPlus, "printHelloWorld").V;
-                if(operand.getType().getTypeOfElement() == ElementType.CLASS){
-                    jasminCode.append("\n\t\tinvokestatic ");
-                    jasminCode.append(operand.getName());
+            if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF){
+                // Case operand is class name
+                if (opFirstArg.getName().equals(method.getClassName())) {
+                    jasminCode.append("\n\t\tnew ").append(method.getClassName());
+                    jasminCode.append("\n\t\tdup");
+                }
+                else{
+                    decideType(opFirstArg);
+                    jasminCode.append("load ").append(method.getLocalVariableByKey(opFirstArg.getName()));
+                    for (Element parameter : instruction.getListOfOperands()){
+                        decideType(parameter);
+                        jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) parameter).getName()));
+                    }
+                    jasminCode.append("\n\t\tinvokevirtual ");
+                    jasminCode.append(method.getClassName());
                     if(instruction.getNumOperands() > 1){
-                        if(instruction.getInvocationType() != CallType.NEW){
-                            Element secondArg = instruction.getSecondArg();
-                            if(secondArg.isLiteral()){
-                                jasminCode.append(".");
-                                jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
-                                jasminCode.append("(");
-                                for (Element parameter : instruction.getListOfOperands()){
-                                    jasminCode.append(decideInvokeReturns(parameter.getType()));
-                                }
-                                jasminCode.append(")");
-                                jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
+                        Element secondArg = instruction.getSecondArg();
+                        if(secondArg.isLiteral()){
+                            jasminCode.append(".");
+                            jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
+                            jasminCode.append("(");
+                            for (Element parameter : instruction.getListOfOperands()){
+                                jasminCode.append(decideInvokeReturns(parameter.getType()));
                             }
+                            jasminCode.append(")");
+                            jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
                         }
                     }
                 }
-                else if(operand.getType().getTypeOfElement() == ElementType.THIS ||
-                        operand.getType().getTypeOfElement() == ElementType.OBJECTREF){
-                    if(instruction.getNumOperands() > 1){
-                        if(instruction.getInvocationType() != CallType.NEW){
-                            jasminCode.append("\n\t\tinvokevirtual ");
-                            Element secondArg = instruction.getSecondArg();
-                            if(secondArg.isLiteral()){
-                                jasminCode.append(".");
-                                jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
-                                jasminCode.append("(");
-                                for (Element parameter : instruction.getListOfOperands()){
-                                    jasminCode.append(decideInvokeReturns(parameter.getType()));
-                                }
-                                jasminCode.append(")");
-                                jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
-                            }
+            }
+            // Static call to a method
+            else if(opFirstArg.getType().getTypeOfElement() == ElementType.CLASS){
+                for (Element parameter : instruction.getListOfOperands()){
+                    decideType(parameter);
+                    jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) parameter).getName()));
+                }
+                jasminCode.append("\n\t\tinvokestatic ");
+                jasminCode.append(opFirstArg.getName());
+                if(instruction.getNumOperands() > 1){
+                    Element secondArg = instruction.getSecondArg();
+                    if(secondArg.isLiteral()){
+                        jasminCode.append(".");
+                        jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
+                        jasminCode.append("(");
+                        for (Element parameter : instruction.getListOfOperands()){
+                            jasminCode.append(decideInvokeReturns(parameter.getType()));
                         }
-                        else{
-                            jasminCode.append("\n\t\tinvokespecial ");
-                            Element secondArg = instruction.getSecondArg();
-                            if(!secondArg.isLiteral() && secondArg.getType().getTypeOfElement() == ElementType.OBJECTREF){
-                                jasminCode.append(".");
-                                jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
-                                jasminCode.append("(");
-                                for (Element parameter : instruction.getListOfOperands()){
-                                    jasminCode.append(decideInvokeReturns(parameter.getType()));
-                                }
-                                jasminCode.append(")");
-                                jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
-                            }
-                        }
+                        jasminCode.append(")");
+                        jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
                     }
                 }
+            }
 
+            // Case method is declared in the class
+            else if(opFirstArg.getName().equals("this")) {
+                jasminCode.append("\n\t\taload 0");
+                jasminCode.append("\n\t\tinvokevirtual ");
+                int nOperands = instruction.getNumOperands();
+                if (nOperands > 1) {
+                    Element secondArg = instruction.getSecondArg();
+                    if (secondArg.isLiteral()) {
+                        LiteralElement secondArgLiteral = (LiteralElement) secondArg;
+                        jasminCode.append(method.getClassName());
+                        jasminCode.append(".");
+                        jasminCode.append(secondArgLiteral.getLiteral().replace("\"", ""));
+                        jasminCode.append("(");
+                        for (Element parameter : instruction.getListOfOperands()){
+                            jasminCode.append(decideInvokeReturns(parameter.getType()));
+                        }
+                        jasminCode.append(")");
+                        jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
+                    }
+                }
             }
         }
     }
@@ -205,7 +228,7 @@ public class InstructionJasmin {
     private void generateReturn(ReturnInstruction instruction) {
         if(instruction.getOperand() != null){
             decideType(instruction.getOperand());
-            jasminCode.append("load_");
+            jasminCode.append("load ");
             String returnedVariable = ((Operand) instruction.getOperand()).getName();
             String value = method.getLocalVariableByKey(returnedVariable).toString();
             jasminCode.append(value);
@@ -231,20 +254,20 @@ public class InstructionJasmin {
         } else {
             Operand o3 = (Operand) e3;
             decideType(e3);
-            jasminCode.append("load_").append(method.getLocalVariableByKey(o3.getName()));
+            jasminCode.append("load ").append(method.getLocalVariableByKey(o3.getName()));
         }
 
         decideType(e2);
-        jasminCode.append("store_").append(method.getLocalVariableByKey(o2.getName()));
+        jasminCode.append("store ").append(method.getLocalVariableByKey(o2.getName()));
 
         String name = o1.getName();
 
         decideType(e1);
-        jasminCode.append("load_").append(method.getLocalVariableByKey(name));
+        jasminCode.append("load ").append(method.getLocalVariableByKey(name));
         if(name.equals("this")) name = method.getClassName();
 
         decideType(e2);
-        jasminCode.append("load_").append(method.getLocalVariableByKey(o2.getName()));
+        jasminCode.append("load ").append(method.getLocalVariableByKey(o2.getName()));
 
         jasminCode.append("\n\t\tputfield ").append(name).append("/").append(o2.getName()).append(" ").append(decideInvokeReturns(e2.getType()));
 
@@ -256,7 +279,7 @@ public class InstructionJasmin {
         if(!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
             Operand o1 = (Operand) e1;
             firstName = o1.getName();
-            jasminCode.append("\n\t\taload_").append(method.getLocalVariableByKey(o1.getName()));
+            jasminCode.append("\n\t\taload ").append(method.getLocalVariableByKey(o1.getName()));
         }
 
         if(firstName.equals("this")) firstName = method.getClassName();
@@ -286,6 +309,7 @@ public class InstructionJasmin {
             case BOOLEAN -> jasminCode.append("\n\t\ti"); // weird... == int? confirm
             case ARRAYREF -> jasminCode.append("\n\t\ta");
             case THIS -> jasminCode.append("\n\t\ta");
+            case OBJECTREF -> jasminCode.append("\n\t\ta");
             default -> jasminCode.append("\n\t\t");
         }
         // other types of variables
