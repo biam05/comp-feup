@@ -28,11 +28,9 @@ public class OLLIRTemplates {
 
 
     public static String invokeSpecial(String identifierClass) {
-        return "invokespecial(" + identifierClass + ", \"<init>\").V;\n"; //invokespecial(A.myClass,"<init>").V
+        return "invokespecial(" + identifierClass + ", \"<init>\").V;\n";
     }
 
-    //invokestatic(io, "println", t2.String, t1.i32).V; //io.println("val = ", this.get());  -> invokeStaticVirtual(true, "io", "println", ["t2.String", "t1.i32"], ".V")
-    //invokevirtual(c1.myClass, "put", 2.i32).V; // c1.put(2); ->  chamaria: invokeStaticVirtual(false, "c1.myClass", "put", ["2.i32"], ".V")
     public static String invokeStaticVirtual(boolean isStatic, String identifier, String methodName, List<String> fields, String returnType){
         StringBuilder result = new StringBuilder();
         List<String> temporary = new ArrayList<>();
@@ -70,17 +68,40 @@ public class OLLIRTemplates {
 
     public static String assign(String left, String type, String right) {
         StringBuilder result = new StringBuilder();
-        List<String> last = new ArrayList<>();
-        String[] reversed = (left + " :=" + type + " " + right).split("\\n");
-        for (int i = reversed.length - 1; i >= 1; i--)
-            if (reversed[i].contains("invokespecial"))
-                last.add(reversed[i]);
-            else
-                result.append(reversed[i]).append(";\n");
-        result.append(reversed[0]);
-        for (String invoke: last)
-            result.append(";\n").append(invoke);
-        return result.toString();
+        System.out.println("left: " +  left + ", type : " + type + ", right: " + right + "|") ;
+
+
+        if(left.contains(";\n") || right.contains(";\n")) {
+            if (left.contains(";\n")) {
+                System.out.println("tou aqui btro: " + left + "|");
+                int index = left.indexOf(";\n");
+                result.append(left, 0, index + 2);
+                left = left.substring(index + 2);
+                System.out.println("left oi: " + left + "!");
+            }
+            if (right.contains(";\n")) {
+                int index = right.indexOf(";\n");
+                String right_1 = right.substring(0, index);
+                String right_2 = right.substring(index + 2);
+                System.out.println("right: " + right + ", right1: " + right_1 + ", right2: " + right_2 + "!");
+
+                if(right_2.equals("")) return result.append(left).append(" :=").append(type).append(" ").append(right_1).toString();
+                /*if(!aux.equals("")) {
+                    result.append(right, 0, index + 2);
+                    right = aux + ";\n";
+                }
+                else right = aux;*/
+
+                //System.out.println("right oi: " + right + "!");
+            }
+
+            System.out.println("\n\n");
+            return result.append(left).append(" :=").append(type).append(" ").append(right).toString();
+        }
+
+        System.out.println("\n\n");
+        return result.append(left).append(" :=").append(type).append(" ").append(right).append(";\n").toString();
+
     }
 
     public static String methodDeclaration(SymbolMethod method) {
@@ -124,13 +145,21 @@ public class OLLIRTemplates {
 
     public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
-
         if(symbolTable.returnFieldTypeIfExists(ret) != null){ //its a class field
             JmmNode parent = node.getParent().getParent().getParent();
             if(parent.getKind().equals("Assign") && parent.getChildren().get(0).getChildren().get(0).equals(node.getParent()))
                 return "putfield = " + ret + getIdentifierType(node, symbolTable, method);
 
             return getField(ret, node, symbolTable, method);
+        }
+        else if(method.returnTypeIfExists(ret) != null){
+            int param = method.getParameterOrder(ret);
+
+            if(param > 0) {
+                ret = "$" + param + "." + ret;
+                return ret;
+            }
+            return ret;
         }
         return ret;
     }
@@ -146,12 +175,12 @@ public class OLLIRTemplates {
     public static String getField(String obj, JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method){
         String var = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         String type = getIdentifierType(node, symbolTable, method);
-        return "getfield(this" + ", " + var + type + ")" + type; //getfield(obj, variable).returnType
+        return "getfield(this" + ", " + var + type + ")" + type;
     }
 
 
     public static String putField(String assigned, String assignee){
-        return "putfield(this" +  ", " + assigned + ", " + assignee + ").V"; // putfield(obj, variable, value).V
+        return "putfield(this" +  ", " + assigned + ", " + assignee + ").V;\n";
     }
 
     public static String getReturnTypeExpression(String expression) { //for example, parse a.i32: return .i32
@@ -168,7 +197,20 @@ public class OLLIRTemplates {
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a
         String[] values = expression.split("\\.");
-        return values[0].trim();
+
+        if(values.length == 2) return values[0].trim();
+        if(values.length > 2) {
+            String no_last = values[values.length - 2];
+            int index = 1;
+            if(no_last.equals("array")) index = 2;
+            List<String> ret = new ArrayList<>();
+            for(int i = 0; i < values.length - index; i++) {
+                ret.add(values[i]);
+            }
+            return String.join(".", ret);
+        }
+
+        return expression;
     }
 
     public static boolean hasOperation(JmmNode expression) {
@@ -211,13 +253,16 @@ public class OLLIRTemplates {
 
     public static String getMethodInfo(JmmNode method, List<String> p){
         StringBuilder res = new StringBuilder();
-        List<JmmNode> children = method.getChildren();
-        String methodName = OLLIRTemplates.getMethodName(children.get(0));
-        if(children.size() == 1) return methodName + "()";
+
+        String methodName = OLLIRTemplates.getMethodName(method.getChildren().get(0));
+        if(p.size() == 0) return methodName + "()";
+
         List<String> param = new ArrayList<>();
+
         for(String s: p){
             param.add(OLLIRTemplates.getReturnTypeExpression(s));
         }
+
         res.append(methodName).append("(").append(ollirListToJavaType(param)).append(")");
         return res.toString();
     }
@@ -229,8 +274,11 @@ public class OLLIRTemplates {
                 case ".i32":
                     types.add("Int");
                     break;
-                case ".array":
+                case ".array.i32":
                     types.add("Int[]");
+                    break;
+                case ".array.String":
+                    types.add("String[]");
                     break;
                 case ".bool":
                     types.add("Boolean");
@@ -244,5 +292,6 @@ public class OLLIRTemplates {
         }
         return String.join(",", types);
     }
+
 
 }

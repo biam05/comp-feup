@@ -38,10 +38,9 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         addVisit("Less", this::visitOperation);
         addVisit("ArrayAccess", this::visitArrayAccess);
         addVisit("WhileStatement", this::visitWhile);
+        addVisit("IfElse", this::visitIfElse);
         setDefaultVisit(this::defaultVisit);
     }
-
-
 
     public List<Report> getReports() { return reports; }
 
@@ -50,10 +49,10 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
     private String defaultVisit(JmmNode node, StringBuilder stringBuilder) {
         List<JmmNode> nodes = node.getChildren();
         StringBuilder res = new StringBuilder();
-        for(JmmNode child: nodes)
+        for(JmmNode child: nodes) {
             res.append(visit(child));
+        }
 
-        this.code += res.toString();
         return res.toString();
     }
 
@@ -104,6 +103,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             res.append("}\n\n");
         }
         this.currentMethod = null;
+        this.code += res.toString();
         return res.toString();
     }
 
@@ -142,7 +142,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             }
             return res + OLLIRTemplates.putField(var, temporary[0]);
         }
-        else{
+        else {
             String type = OLLIRTemplates.getReturnTypeExpression(left);
             return OLLIRTemplates.assign(left, type, right);
         }
@@ -162,12 +162,18 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
 
-        for(JmmNode child: children) res.append(visit(child));
+        for(JmmNode child: children) {
+            String str = visit(child);
+            if(!str.endsWith(";") && str.contains("invokestatic")){
+                str += ";";
+            }
+            res.append(str);
+        }
 
-        return res.append(";\n").toString();
+
+        return res.toString();
     }
 
-    //TODO: test
     private String visitWhile(JmmNode node, StringBuilder stringBuilder) {
         StringBuilder res = new StringBuilder();
         List<JmmNode> children = node.getChildren();
@@ -177,12 +183,14 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         res.append("\nLoop").append(loop_counter).append(":\n");
         String cond = visit(condition);
 
-        if(cond.contains("\n")){ //TODO: rever isto
+        if(cond.contains("\n")){
             String[] args = cond.split("\n");
             res.append(args[1]).append("\n");
-            res.append("if(").append(args[0]).append(") goto Body").append(loop_counter).append(";\n");
+            res.append("if (").append(args[0]).append(") goto Body").append(loop_counter).append(";\n");
         }
-        else res.append("if(").append(cond).append(")").append("goto Body").append(loop_counter).append(";\n");
+        else {
+            res.append("if (").append(cond).append(")").append("goto Body").append(loop_counter).append(";\n");
+        }
 
         res.append("goto EndLoop").append(loop_counter).append(";");
         res.append("\nBody").append(loop_counter).append(":\n").append(visit(body));
@@ -220,7 +228,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
             res = "new(" + value + ")." + value; // new(myClass).myClass
-            res += "\n" + "invokespecial(" + visit(node.getParent().getParent().getChildren().get(0)) + ", \"<init>\").V";
+            res += ";\n" + "invokespecial(" + visit(node.getParent().getParent().getChildren().get(0)) + ", \"<init>\").V";
         } else if (child.getKind().contains("Identifier")) {
             value = OLLIRTemplates.getIdentifier(child, symbolTable, currentMethod);
             res = value;
@@ -258,18 +266,21 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             case "virtual":
                 List<String> temporary = new ArrayList<>();
                 List<String> args = getMethodArgs(method);
+                System.out.println("args = " + args + "!");
+
                 for (int i = 0; i < args.size(); i++) {
                     String[] splitted = args.get(i).split("\\n");
-                    args.set(i, splitted[0]);
                     temporary.addAll(Arrays.asList(splitted).subList(1, splitted.length));
                 }
+
                 String methodInfo = OLLIRTemplates.getMethodInfo(method, args);
+                System.out.println("method info = " + methodInfo);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
                 StringBuilder res = new StringBuilder();
                 for (String temp: temporary) {
                     res.append(temp).append(";\n");
                 }
-                return res + OLLIRTemplates.invokeStaticVirtual(false, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR());
+                return res + OLLIRTemplates.invokeStaticVirtual(false, identifier, OLLIRTemplates.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR()) + ";\n";
             case "static":
                 List<String> arg = getMethodArgs(method);
                 String returnType = getStaticReturnType(call);
@@ -300,11 +311,12 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         else return ".V";
     }
 
-    //TODO: ver quando sao necessarias variaveis temporarias para o array
+    //TODO: ver quando sao necessarias variaveis temporarias para o array Ex: oi.getArray().length
     private String visitLength(JmmNode identifier) {
         String array = visit(identifier);
         return "arraylength(" + array + ").i32;";
     }
+
 
     private String visitOperation(JmmNode node, StringBuilder stringBuilder) {
         String resultLeft, resultRight;
@@ -350,11 +362,21 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         String type = OLLIRTemplates.getReturnTypeExpression(a);
         if(type.length() - type.replaceAll(".", "").length() > 1) type = type.substring(type.lastIndexOf("."));
 
+        int ident = -1;
+        try {
+            int index = a.indexOf(".");
+            ident = Integer.parseInt(a.substring(0, index));
+            var_temp++;
+            a = "aux" + var_temp + ".i32";
+            res.append(a).append(" :=.i32 ").append(ident).append(".i32;\n");
+        } catch (NumberFormatException e) {}
+
         res.append(OLLIRTemplates.getIdentifierExpression(i)).append("[").append(a).append("]").append(type);
+
         return res.toString();
     }
 
-    public String checkReturnTemporary(JmmNode expression) {
+    private String checkReturnTemporary(JmmNode expression) {
         StringBuilder result = new StringBuilder();
         if(OLLIRTemplates.hasOperation(expression) || OLLIRTemplates.hasCall(expression) || OLLIRTemplates.hasField(expression, symbolTable, currentMethod)) {
             String aux = visit(expression);
@@ -368,5 +390,20 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         }
         return result.toString();
     }
+
+    private String visitIfElse(JmmNode node, StringBuilder stringBuilder) {
+        StringBuilder res = new StringBuilder();
+
+        List<JmmNode> children = node.getChildren();
+        res.append("\nif (").append(visit(children.get(0))).append(") goto else").append(if_counter).append(";\n");
+        res.append(visit(children.get(1)));
+        res.append("\ngoto endif").append(if_counter).append(";\n");
+        res.append("else").append(if_counter).append(":\n");
+        res.append(visit(children.get(3)));
+        res.append("\nendif").append(if_counter).append(":\n");
+
+        return res.toString();
+    }
+
 
 }

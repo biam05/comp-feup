@@ -21,61 +21,13 @@ public class OptimizeTest {
 
     @Test
     public void testHelloWorld() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
     }
 
     @Test
     public void testSimple() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/Simple.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testFindMaximum() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testHelloWorldAdd() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testLazySort() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testLife() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/Life.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testMonteCarloPi() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testQuickSort() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testTicTacToe() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testWhileAndIF() {
-        var result = TestUtils.analyse(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Simple.jmm"));
         TestUtils.noErrors(result.getReports());
     }
 
@@ -126,5 +78,8 @@ public class OptimizeTest {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
         TestUtils.noErrors(result.getReports());
     }
+
+
+
 
 }
