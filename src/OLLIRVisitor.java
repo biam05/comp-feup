@@ -131,7 +131,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             else
                 aux.append("aux").append(var_temp).append(OLLIRTemplates.getReturnTypeExpression(visit(rightchild))).append("\n").append(result);
 
-            System.out.println(aux);
             String[] temporary = aux.toString().split("\\n");
 
             StringBuilder res = new StringBuilder();
@@ -193,6 +192,7 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
             res = "new(" + value + ")." + value; // new(myClass).myClass
+            res += "\n" + "invokespecial(" + visit(node.getParent().getParent().getChildren().get(0)) + ", \"<init>\").V";
         } else if (child.getKind().contains("Identifier")) {
             value = OLLIRTemplates.getIdentifier(child, symbolTable, currentMethod);
             res = value;
@@ -205,7 +205,6 @@ public class OLLIRVisitor extends AJmmVisitor<StringBuilder, String> {
             res = visit(child);
         }else if(child.getKind().equals("This")){
             res = "this";
-
         }
 
         result.append(res);

@@ -9,7 +9,7 @@ public class InstructionJasmin {
     private final Instruction instruction;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
-    private MethodJasmin method;
+    private final MethodJasmin method;
 
     public InstructionJasmin(Instruction instruction, MethodJasmin method) {
         this.instruction = instruction;
@@ -26,9 +26,9 @@ public class InstructionJasmin {
         return reports;
     }
 
-    public void generateJasminCode(){
+    public void generateJasminCode() {
         instruction.show();
-        switch(instruction.getInstType()){
+        switch (instruction.getInstType()) {
             case ASSIGN:
                 generateAssign((AssignInstruction) instruction);
                 break;
@@ -51,9 +51,9 @@ public class InstructionJasmin {
         String value, variable;
         Instruction rhs = instruction.getRhs();
 
-        switch (rhs.getInstType()){
+        switch (rhs.getInstType()) {
             case NOPER:
-                variable = ((Operand)instruction.getDest()).getName();
+                variable = ((Operand) instruction.getDest()).getName();
 
                 Element rhsElement = ((SingleOpInstruction) rhs).getSingleOperand();
                 if (rhsElement.isLiteral()){
@@ -72,7 +72,7 @@ public class InstructionJasmin {
                 break;
 
             case BINARYOPER:
-                variable = ((Operand)instruction.getDest()).getName();
+                variable = ((Operand) instruction.getDest()).getName();
                 value = method.getLocalVariableByKey(variable).toString();
 
                 OperationType operation = ((BinaryOpInstruction) rhs).getUnaryOperation().getOpType();
@@ -134,8 +134,8 @@ public class InstructionJasmin {
                 }
                 break;
             case GETFIELD:
-                variable = ((Operand)instruction.getDest()).getName();
-                generateGetField((GetFieldInstruction)rhs);
+                variable = ((Operand) instruction.getDest()).getName();
+                generateGetField((GetFieldInstruction) rhs);
                 decideType(instruction.getDest());
                 jasminCode.append("store ");
 
@@ -247,7 +247,7 @@ public class InstructionJasmin {
     }
 
     private void generateReturn(ReturnInstruction instruction) {
-        if(instruction.getOperand() != null){
+        if (instruction.getOperand() != null) {
             decideType(instruction.getOperand());
             jasminCode.append("load ");
             String returnedVariable = ((Operand) instruction.getOperand()).getName();
@@ -256,8 +256,7 @@ public class InstructionJasmin {
 
             decideType(instruction.getOperand());
             jasminCode.append("return");
-        }
-        else{
+        } else {
             jasminCode.append("\n\t\treturn");
         }
     }
@@ -297,17 +296,17 @@ public class InstructionJasmin {
     private void generateGetField(GetFieldInstruction instruction) {
         String firstName = "";
         Element e1 = instruction.getFirstOperand();
-        if(!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
+        if (!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
             Operand o1 = (Operand) e1;
             firstName = o1.getName();
             jasminCode.append("\n\t\taload ").append(method.getLocalVariableByKey(o1.getName()));
         }
 
-        if(firstName.equals("this")) firstName = method.getClassName();
+        if (firstName.equals("this")) firstName = method.getClassName();
         jasminCode.append("\n\t\tgetfield ").append(firstName).append("/");
         e1 = instruction.getSecondOperand();
 
-        if(!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
+        if (!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
             Operand o1 = (Operand) e1;
             jasminCode.append(o1.getName()).append(" ").append(decideInvokeReturns(o1.getType()));
         }
@@ -324,22 +323,32 @@ public class InstructionJasmin {
         jasminCode.append("\n\t\t").append(res).append(val);
     }
 
-    private void decideType(Element element){
-        switch (element.getType().getTypeOfElement()){
-            case INT32 -> jasminCode.append("\n\t\ti");
-            case BOOLEAN -> jasminCode.append("\n\t\ti"); // weird... == int? confirm
-            case ARRAYREF -> jasminCode.append("\n\t\ta");
-            case THIS -> jasminCode.append("\n\t\ta");
-            case OBJECTREF -> jasminCode.append("\n\t\ta");
-            default -> jasminCode.append("\n\t\t");
+    private void decideType(Element element) {
+        switch (element.getType().getTypeOfElement()) {
+            case INT32:
+                jasminCode.append("\n\t\ti");
+                break;
+            case BOOLEAN:// weird... == int? confirm
+                jasminCode.append("\n\t\ti");
+                break;
+            case ARRAYREF:
+                jasminCode.append("\n\t\ta");
+                break;
+            case THIS:
+                jasminCode.append("\n\t\ta");
+                break;
+            case OBJECTREF:
+                jasminCode.append("\n\t\ta");
+                break;
+            default:
+                jasminCode.append("\n\t\t");
+                break;
         }
-        // other types of variables
     }
 
-    private String decideInvokeReturns(Type type){
+    public String decideInvokeReturns(Type type) {
         String returnType = null;
-        switch(type.getTypeOfElement()){
-            // todo: verificar com o ollir como é o tipo quando retorna uma classe
+        switch (type.getTypeOfElement()) {
             case INT32:
                 returnType = "I";
                 break;
@@ -350,7 +359,7 @@ public class InstructionJasmin {
                 returnType = "[I";
                 break;
             case OBJECTREF:
-                returnType = method.getClass().getName(); //Todo: probably wrong
+                returnType = method.getClass().getName();
                 break;
             case VOID:
                 returnType = "V";
@@ -358,6 +367,6 @@ public class InstructionJasmin {
             default:
                 break;
         }
-         return returnType;
+        return returnType;
     }
 }

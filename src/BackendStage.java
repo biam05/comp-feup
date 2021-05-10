@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.specs.comp.ollir.ElementType.INT32;
+
 /**
  * Copyright 2021 SPeCS.
  * <p>
@@ -43,7 +45,28 @@ public class BackendStage implements JasminBackend {
 
             jasminCode.append(".class public ").append(ollirClass.getClassName());
 
-            jasminCode.append("\n.super java/lang/Object");
+            jasminCode.append("\n.super java/lang/Object\n");
+
+            for (var field : ollirClass.getFields())
+            {
+                jasminCode.append("\n.field ");
+                if (field.isFinalField())
+                    jasminCode.append("final ");
+                jasminCode.append(field.getFieldName()).append(" ");
+                switch(field.getFieldType().toString()){
+                    case "INT32":
+                        jasminCode.append("I");
+                        break;
+                    case "BOOLEAN":
+                        jasminCode.append("Z");
+                        break;
+                    case "ARRAYREF":
+                        jasminCode.append("[I");
+                        break;
+                    default:
+                        break;
+                }
+            }
 
             for (var method : ollirClass.getMethods()){
                 System.out.println("METHOD " + method.getMethodName());
