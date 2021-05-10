@@ -13,6 +13,7 @@ public class MethodJasmin {
     private final String className;
     private int n_locals;
     private int n_stack;
+    private int n_branches;
     private Map<String, Integer> localVariables;
 
     public MethodJasmin(Method method, String className) {
@@ -21,6 +22,7 @@ public class MethodJasmin {
         this.reports = new ArrayList<>();
         this.n_locals = 0; // change
         this.n_stack = 99; //change
+        this.n_branches = 0;
         this.localVariables = new HashMap<String, Integer>();
         this.className = className;
         addLocalVariable("this", n_locals);
@@ -38,8 +40,16 @@ public class MethodJasmin {
         return method;
     }
 
+    public int getN_branches() {
+        return n_branches;
+    }
+
     public int getN_locals() {
         return n_locals;
+    }
+
+    public void incN_branches() {
+        n_branches++;
     }
 
     public String getClassName() {

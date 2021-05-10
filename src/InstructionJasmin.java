@@ -99,18 +99,39 @@ public class InstructionJasmin {
                     jasminCode.append(method.getLocalVariableByKey(((Operand)rightElement).getName()));
                 }
 
-                decideType(instruction.getDest());
-                if (operation.toString().equals("LTH"))
+                if (operation.toString().equals("LTH")) {
                     //TODO
-                    jasminCode.append("cmpl");
-                else
+                    jasminCode.append("\n\n\t\tif_icmpgt ").append("Else").append(method.getN_branches());
+                    decideType(instruction.getDest());
+                    jasminCode.append("const_1");
+
+                    decideType(instruction.getDest());
+                    jasminCode.append("store ");
+                    jasminCode.append(value);
+
+                    jasminCode.append("\n\t\tgoto ").append("Afterif").append(method.getN_branches());
+
+                    jasminCode.append("\n\n\tElse").append(method.getN_branches()).append(":");
+                    decideType(instruction.getDest());
+                    jasminCode.append("const_0");
+
+                    decideType(instruction.getDest());
+                    jasminCode.append("store ");
+                    jasminCode.append(value);
+
+                    jasminCode.append("\n\n\tAfterif").append(method.getN_branches()).append(":");
+                    method.incN_branches();
+                }
+                else {
+                    decideType(instruction.getDest());
                     jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
 
-                decideType(instruction.getDest());
-                jasminCode.append("store ");
-                jasminCode.append(value);
+                    decideType(instruction.getDest());
+                    jasminCode.append("store ");
+                    jasminCode.append(value);
 
-                jasminCode.append("\n");
+                    jasminCode.append("\n");
+                }
                 break;
             case GETFIELD:
                 variable = ((Operand)instruction.getDest()).getName();
