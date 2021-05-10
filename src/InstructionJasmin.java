@@ -144,16 +144,14 @@ public class InstructionJasmin {
             case CALL:
                 variable = ((Operand) instruction.getDest()).getName();
                 generateCall((CallInstruction) rhs);
-                decideType(instruction.getDest());
-                jasminCode.append("store ").append(method.getLocalVariableByKey(variable)).append("\n");
                 Element firstArg = ((CallInstruction) rhs).getFirstArg();
                 Operand opFirstArg = (Operand) firstArg;
                 if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
-                opFirstArg.getName().equals(method.getClassName())) {
-                    decideType(opFirstArg);
-                    jasminCode.append("load ").append(method.getLocalVariableByKey(variable));
-                    jasminCode.append("\n\t\tinvokespecial ").append(method.getClassName()).append(".<init>()V\n");
+                        opFirstArg.getName().equals(method.getClassName())) {
+                    jasminCode.append("\n\t\tinvokespecial ").append(method.getClassName()).append(".<init>()V");
                 }
+                decideType(instruction.getDest());
+                jasminCode.append("store ").append(method.getLocalVariableByKey(variable)).append("\n");
                 break;
         }
     }
@@ -175,7 +173,14 @@ public class InstructionJasmin {
                     jasminCode.append("\n\t\tnew ").append(method.getClassName());
                     jasminCode.append("\n\t\tdup");
                 }
-                else{
+                else {
+                    if (instruction.getNumOperands() > 1) {
+                        Element secondArg = instruction.getSecondArg();
+                        if (secondArg.isLiteral()) {
+                            if (((LiteralElement) secondArg).getLiteral().replace("\"", "").equals("<init>"))
+                                return;
+                        }
+                    }
                     decideType(opFirstArg);
                     jasminCode.append("load ").append(method.getLocalVariableByKey(opFirstArg.getName()));
                     for (Element parameter : instruction.getListOfOperands()){
@@ -184,7 +189,7 @@ public class InstructionJasmin {
                     }
                     jasminCode.append("\n\t\tinvokevirtual ");
                     jasminCode.append(method.getClassName());
-                    if(instruction.getNumOperands() > 1){
+                    if (instruction.getNumOperands() > 1){
                         Element secondArg = instruction.getSecondArg();
                         if(secondArg.isLiteral()){
                             jasminCode.append(".");
