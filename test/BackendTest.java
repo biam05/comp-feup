@@ -34,14 +34,6 @@ public class BackendTest {
     }
 
     @Test
-    public void testHelloWorldAdd() {
-        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
-        TestUtils.noErrors(result.getReports());
-        var output = result.run();
-        assertEquals("Hello, World!", output.trim());
-    }
-
-    @Test
     public void testSimple() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
         TestUtils.noErrors(result.getReports());
@@ -55,5 +47,12 @@ public class BackendTest {
                 null, new ArrayList<>()));
         var output = result.run();
         assertEquals("Hello, World!", output.trim());
+    }
+
+    @Test
+    public void testIfElseFromOllir() {
+        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/IfElse.ollir")),
+                null, new ArrayList<>()));
+        var output = result.run();
     }
 }
