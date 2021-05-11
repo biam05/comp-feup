@@ -41,6 +41,12 @@ public class InstructionJasmin {
             case PUTFIELD:
                 generatePutField((PutFieldInstruction) instruction);
                 break;
+            case BRANCH:
+                generateBranch((CondBranchInstruction) instruction);
+                break;
+            case GOTO:
+                generateGoto((GotoInstruction) instruction);
+                break;
 
             default:
                 break;
@@ -100,7 +106,6 @@ public class InstructionJasmin {
                 }
 
                 if (operation.toString().equals("LTH")) {
-                    //TODO
                     jasminCode.append("\n\n\t\tif_icmpgt ").append("Else").append(method.getN_branches());
                     decideType(instruction.getDest());
                     jasminCode.append("const_1");
@@ -316,6 +321,49 @@ public class InstructionJasmin {
             jasminCode.append(o1.getName()).append(" ").append(decideInvokeReturns(o1.getType()));
         }
 
+    }
+
+    private void generateBranch(CondBranchInstruction instruction) {
+        // TODO
+        if (instruction.getLeftOperand().isLiteral()) {
+            String leftLiteral = ((LiteralElement) instruction.getLeftOperand()).getLiteral();
+            decideInstructionConstSize(leftLiteral);
+        }
+        else {
+            Operand leftOperand = (Operand) instruction.getLeftOperand();
+            jasminCode.append("\n\t\tiload_").append(method.getLocalVariableByKey(leftOperand.getName()));
+        }
+
+        if (instruction.getRightOperand().isLiteral()) {
+            String rightLiteral = ((LiteralElement) instruction.getRightOperand()).getLiteral();
+            decideInstructionConstSize(rightLiteral);
+        }
+        else {
+            Operand rightOperand = (Operand) instruction.getRightOperand();
+            jasminCode.append("\n\t\tiload_").append(method.getLocalVariableByKey(rightOperand.getName()));
+        }
+
+        OperationType conditionType = instruction.getCondOperation().getOpType();
+        switch (conditionType) {
+            case EQ:
+                jasminCode.append("\n\t\tif_icmpeq ");
+                break;
+            case LTH:
+                jasminCode.append("\n\t\tif_icmplt ");
+                break;
+            case ANDB:
+                jasminCode.append("\n\t\tiandb");
+                jasminCode.append("\n\t\ticonst_1");
+                jasminCode.append("\n\t\tif_icmpeq ");
+                break;
+            default:
+                break;
+        }
+        jasminCode.append(instruction.getLabel());
+    }
+
+    private void generateGoto(GotoInstruction instruction) {
+        jasminCode.append("\n\t\tgoto ").append(instruction.getLabel()).append("\n");
     }
 
     private void decideInstructionConstSize(String value){
