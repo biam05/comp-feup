@@ -13,21 +13,21 @@ FindMaximum {
 		maximum.i32 :=.i32 $2.arr[t1.i32].i32;
 		Loop0:
 			t2.i32 :=.i32 arraylength($2.arr.array.i32).i32;
-t3.bool :=.bool i.i32  <.bool t2.i32;
+            t3.bool :=.bool i.i32  <.bool t2.i32;
 			if (t3.bool ==.bool 1.bool) goto Body0;
 			goto EndLoop0;
 		Body0:
 			value.i32 :=.i32 $2.arr[i.i32].i32;
-					t4.bool :=.bool maximum.i32  <.bool value.i32;
-		if (t4.bool !.bool 1.bool) goto else1;
+            t4.bool :=.bool maximum.i32  <.bool value.i32;
+		    if (t4.bool ==.bool 1.bool) goto else1;
 			maximum.i32 :=.i32 value.i32;
 			goto endif1;
-					else1:
+        else1:
 		endif1:
 			i.i32 :=.i32 i.i32 +.i32 1.i32;
 			goto Loop0;
 		EndLoop0:
-		ret.i32 maximum.i32;
+		    ret.i32 maximum.i32;
 	}
 
 	.method public build_test_arr().i32 {

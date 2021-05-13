@@ -124,7 +124,9 @@ public class MethodJasmin {
             if (!method.getLabels(inst).isEmpty())
                 if (!currentlabel.equals(method.getLabels(inst).get(0))) {
                     currentlabel = method.getLabels(inst).get(0);
-                    auxiliaryJasmin.append("\n\t").append(currentlabel).append(":");
+                    for (String label: method.getLabels(inst)) {
+                        auxiliaryJasmin.append("\n\t").append(label).append(":");
+                    }
                 }
             InstructionJasmin instructionJasmin = new InstructionJasmin(inst, this);
             instructionJasmin.generateJasminCode();

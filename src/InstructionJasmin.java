@@ -105,7 +105,7 @@ public class InstructionJasmin {
                 }
 
                 if (operation.toString().equals("LTH")) {
-                    jasminCode.append("\n\n\t\tif_icmplt ").append("Else").append(method.getN_branches());
+                    jasminCode.append("\n\n\t\tif_icmplt ").append("ElseLTH").append(method.getN_branches());
                     decideType(instruction.getDest());
                     jasminCode.append("const_1");
 
@@ -114,9 +114,9 @@ public class InstructionJasmin {
                     jasminCode.append("store ");
                     jasminCode.append(value);
 
-                    jasminCode.append("\n\t\tgoto ").append("Afterif").append(method.getN_branches());
+                    jasminCode.append("\n\t\tgoto ").append("AfterLTH").append(method.getN_branches());
 
-                    jasminCode.append("\n\n\tElse").append(method.getN_branches()).append(":");
+                    jasminCode.append("\n\n\tElseLTH").append(method.getN_branches()).append(":");
                     decideType(instruction.getDest());
                     jasminCode.append("const_0");
 
@@ -124,7 +124,7 @@ public class InstructionJasmin {
                     jasminCode.append("store ");
                     jasminCode.append(value);
 
-                    jasminCode.append("\n\n\tAfterif").append(method.getN_branches()).append(":");
+                    jasminCode.append("\n\n\tAfterLTH").append(method.getN_branches()).append(":");
                     method.incN_branches();
                 }
                 else {
@@ -258,15 +258,23 @@ public class InstructionJasmin {
     }
 
     private void generateReturn(ReturnInstruction instruction) {
-        if (instruction.getOperand() != null) {
-            decideType(instruction.getOperand());
-            jasminCode.append("load ");
-            String returnedVariable = ((Operand) instruction.getOperand()).getName();
-            String value = method.getLocalVariableByKey(returnedVariable).toString();
-            jasminCode.append(value);
+        Element e1 = instruction.getOperand();
+        if (e1 != null) {
+            if (!e1.isLiteral()){
+                decideType(instruction.getOperand());
+                jasminCode.append("load ");
+                String returnedVariable = ((Operand) instruction.getOperand()).getName();
+                String value = method.getLocalVariableByKey(returnedVariable).toString();
+                jasminCode.append(value);
+                decideType(instruction.getOperand());
+                jasminCode.append("return");
+            }
+            else { // return 0; return true;
+                String literal = ((LiteralElement) e1).getLiteral();
+                decideInstructionConstSize(literal);
+                jasminCode.append("\n\t\tireturn");
+            }
 
-            decideType(instruction.getOperand());
-            jasminCode.append("return");
         } else {
             jasminCode.append("\n\t\treturn");
         }
@@ -382,7 +390,7 @@ public class InstructionJasmin {
             case INT32:
                 jasminCode.append("\n\t\ti");
                 break;
-            case BOOLEAN:// weird... == int? confirm
+            case BOOLEAN:
                 jasminCode.append("\n\t\ti");
                 break;
             case ARRAYREF:

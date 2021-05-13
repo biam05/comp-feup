@@ -55,4 +55,19 @@ public class BackendTest {
                 null, new ArrayList<>()));
         var output = result.run();
     }
+
+    @Test
+    public void findMaximumFromOllir() {
+        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/FindMaximum.ollir")),
+                null, new ArrayList<>()));
+        var output = result.run();
+        assertEquals("28", output.trim());
+    }
+
+    @Test
+    public void lifeFromOllir() {
+        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/Life.ollir")),
+                null, new ArrayList<>()));
+        var output = result.run();
+    }
 }
