@@ -3,7 +3,7 @@ myClass {
 		invokespecial(this, "<init>").V;
 	}
 
-	.method public static main(args.array.String).V {
+	.method public static main(args.array.String).V{
 		i.i32 :=.i32 0.i32;
 		all.bool :=.bool 0.bool;
 

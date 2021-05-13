@@ -23,7 +23,7 @@ public class MethodJasmin {
         this.n_locals = 0; // change
         this.n_stack = 99; //change
         this.n_branches = 0;
-        this.localVariables = new HashMap<String, Integer>();
+        this.localVariables = new HashMap<>();
         this.className = className;
         addLocalVariable("this", n_locals);
     }
@@ -54,6 +54,10 @@ public class MethodJasmin {
 
     public String getClassName() {
         return className;
+    }
+
+    public Map<String, Integer> getLocalVariables() {
+        return localVariables;
     }
 
     public Integer getLocalVariableByKey(String key) {
@@ -115,7 +119,13 @@ public class MethodJasmin {
         }
         jasminCode.append(methodReturn);
         StringBuilder auxiliaryJasmin = new StringBuilder();
-        for(var inst : method.getInstructions()){
+        String currentlabel = "";
+        for(var inst : method.getInstructions()) {
+            if (!method.getLabels(inst).isEmpty())
+                if (!currentlabel.equals(method.getLabels(inst).get(0))) {
+                    currentlabel = method.getLabels(inst).get(0);
+                    auxiliaryJasmin.append("\n\t").append(currentlabel).append(":");
+                }
             InstructionJasmin instructionJasmin = new InstructionJasmin(inst, this);
             instructionJasmin.generateJasminCode();
             auxiliaryJasmin.append(instructionJasmin.getJasminCode());

@@ -51,7 +51,7 @@ public class BackendTest {
 
     @Test
     public void testIfElseFromOllir() {
-        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/IfElse.ollir")),
+        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/IfElseLoops.ollir")),
                 null, new ArrayList<>()));
         var output = result.run();
     }

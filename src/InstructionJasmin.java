@@ -79,7 +79,6 @@ public class InstructionJasmin {
 
             case BINARYOPER:
                 variable = ((Operand) instruction.getDest()).getName();
-                value = method.getLocalVariableByKey(variable).toString();
 
                 OperationType operation = ((BinaryOpInstruction) rhs).getUnaryOperation().getOpType();
                 Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
@@ -106,10 +105,11 @@ public class InstructionJasmin {
                 }
 
                 if (operation.toString().equals("LTH")) {
-                    jasminCode.append("\n\n\t\tif_icmpgt ").append("Else").append(method.getN_branches());
+                    jasminCode.append("\n\n\t\tif_icmplt ").append("Else").append(method.getN_branches());
                     decideType(instruction.getDest());
                     jasminCode.append("const_1");
 
+                    value = method.getLocalVariableByKey(variable).toString();
                     decideType(instruction.getDest());
                     jasminCode.append("store ");
                     jasminCode.append(value);
@@ -131,6 +131,7 @@ public class InstructionJasmin {
                     decideType(instruction.getDest());
                     jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
 
+                    value = method.getLocalVariableByKey(variable).toString();
                     decideType(instruction.getDest());
                     jasminCode.append("store ");
                     jasminCode.append(value);
@@ -331,7 +332,7 @@ public class InstructionJasmin {
         }
         else {
             Operand leftOperand = (Operand) instruction.getLeftOperand();
-            jasminCode.append("\n\t\tiload_").append(method.getLocalVariableByKey(leftOperand.getName()));
+            jasminCode.append("\n\t\tiload ").append(method.getLocalVariableByKey(leftOperand.getName()));
         }
 
         if (instruction.getRightOperand().isLiteral()) {
@@ -340,7 +341,7 @@ public class InstructionJasmin {
         }
         else {
             Operand rightOperand = (Operand) instruction.getRightOperand();
-            jasminCode.append("\n\t\tiload_").append(method.getLocalVariableByKey(rightOperand.getName()));
+            jasminCode.append("\n\t\tiload ").append(method.getLocalVariableByKey(rightOperand.getName()));
         }
 
         OperationType conditionType = instruction.getCondOperation().getOpType();
