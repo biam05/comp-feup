@@ -299,13 +299,13 @@ public class JasminInstruction {
         Element e1 = instruction.getOperand();
         if (e1 != null) {
             if (!e1.isLiteral()) {
-                String type = decideType(instruction.getOperand());
                 String returnedVariable = ((Operand) instruction.getOperand()).getName();
                 String value = Integer.toString(method.getLocalVariableByKey(returnedVariable, null, instruction.getOperand().getType()).getVirtualReg());
+                String type = decideType(instruction.getOperand());
+                jasminCode.append("load ").append(value).append("\n\t\t");
                 if (type == null) {
-                    jasminCode.append("load ").append(value).append("\n\t\t");
                     decideType(instruction.getOperand());
-                    jasminCode.append(type).append("return");
+                    jasminCode.append("return");
                 }
                 else {
                     jasminCode.append(type).append("return");
