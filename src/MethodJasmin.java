@@ -14,18 +14,18 @@ public class MethodJasmin {
     private int n_locals;
     private int n_stack;
     private int n_branches;
-    private Map<String, Integer> localVariables;
+    private Map<String, Descriptor> localVariables;
 
     public MethodJasmin(Method method, String className) {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
         this.n_locals = 0; // change
-        this.n_stack = 99; //change
+        this.n_stack = 99; // change
         this.n_branches = 0;
         this.localVariables = new HashMap<>();
         this.className = className;
-        addLocalVariable("this", n_locals);
+        addLocalVariable("this", VarScope.FIELD, new Type(ElementType.CLASS));
     }
 
     public StringBuilder getJasminCode() {
@@ -56,24 +56,23 @@ public class MethodJasmin {
         return className;
     }
 
-    public Map<String, Integer> getLocalVariables() {
+    public Map<String, Descriptor> getLocalVariables() {
         return localVariables;
     }
 
-    public Integer getLocalVariableByKey(String key) {
+    public Descriptor getLocalVariableByKey(String key, VarScope type, Type tp) {
         if(localVariables.get(key) == null){
-            addLocalVariable(key, n_locals);
+            addLocalVariable(key, type, tp);
         }
         return localVariables.get(key);
     }
 
-    public Boolean addLocalVariable(String variable, int id){
+    public Boolean addLocalVariable(String variable, VarScope type, Type tp){
         if(!localVariables.containsKey(variable)){
-            localVariables.put(variable, id);
+            localVariables.put(variable, new Descriptor(type, n_locals, tp));
             n_locals++;
             return true;
         }
-
         return false;
     }
 
@@ -144,7 +143,7 @@ public class MethodJasmin {
     private void analyseParameters(){
         if(method.getMethodName().equals("main")){
             jasminCode.append("[Ljava/lang/String;");
-            addLocalVariable("args", n_locals);
+            addLocalVariable("args", VarScope.PARAMETER, new Type(ElementType.ARRAYREF));
         }
         else{
             for(Element param : method.getParams()){
@@ -168,7 +167,7 @@ public class MethodJasmin {
                     default:
                         break;
                 }
-                addLocalVariable(((Operand)param).getName(), n_locals);
+                addLocalVariable(((Operand)param).getName(), VarScope.PARAMETER, param.getType());
             }
         }
     }

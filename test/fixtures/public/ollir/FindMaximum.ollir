@@ -10,14 +10,14 @@ FindMaximum {
 		i.i32 :=.i32 1.i32;
 
 		t1.i32 :=.i32 0.i32;
-		maximum.i32 :=.i32 $2.arr[t1.i32].i32;
+		maximum.i32 :=.i32 $1.arr[t1.i32].i32;
 		Loop0:
-			t2.i32 :=.i32 arraylength($2.arr.array.i32).i32;
-            t3.bool :=.bool i.i32  <.bool t2.i32;
+			t2.i32 :=.i32 5.i32;
+            t3.bool :=.bool i.i32 <.bool t2.i32;
 			if (t3.bool ==.bool 1.bool) goto Body0;
 			goto EndLoop0;
 		Body0:
-			value.i32 :=.i32 $2.arr[i.i32].i32;
+			value.i32 :=.i32 $1.arr[i.i32].i32;
             t4.bool :=.bool maximum.i32  <.bool value.i32;
 		    if (t4.bool ==.bool 1.bool) goto else1;
 			maximum.i32 :=.i32 value.i32;
