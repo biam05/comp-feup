@@ -92,7 +92,7 @@ public class JasminMethod {
         }
         jasminCode.append("(");
 
-        JasminUtils.getParametersFromMethod(this);
+        jasminCode.append(JasminUtils.getParametersFromMethod(this));
 
         jasminCode.append(")");
     }
@@ -101,7 +101,7 @@ public class JasminMethod {
 
         getMethodDeclaration();
 
-        jasminCode.append(JasminUtils.getReturnFromMethod(method));
+        jasminCode.append(JasminUtils.getReturnFromMethod(method, method.getReturnType()));
 
         StringBuilder auxiliaryJasmin = new StringBuilder();
         String currentlabel = "";

@@ -66,7 +66,7 @@ public class JasminInstruction {
                 Element rhsElement = ((SingleOpInstruction) rhs).getSingleOperand();
                 if (rhsElement.isLiteral()) {
                     value = ((LiteralElement) rhsElement).getLiteral();
-                    decideInstructionConstSize(value);
+                    jasminCode.append(JasminUtils.getInstructionConstSize(value));
                     decideType(rhsElement);
                     jasminCode.append("store ").append(method.getLocalVariableByKey(variable, VarScope.LOCAL, instruction.getDest().getType()).getVirtualReg()).append("\n");
                 }
@@ -91,33 +91,9 @@ public class JasminInstruction {
                 Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
                 Element rightElement = ((BinaryOpInstruction) rhs).getRightOperand();
 
-                if (leftElement.isLiteral()){
-                    value = ((LiteralElement)leftElement).getLiteral();
-                    decideInstructionConstSize(value);
-                }
-                else {
-                    String type = decideType(leftElement);
-                    if (type == null) {
-                        jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) leftElement).getName(), VarScope.LOCAL, leftElement.getType()).getVirtualReg());
-                    }
-                    else {
-                        jasminCode.append(type).append("aload");
-                    }
-                }
+                constOrLoad(leftElement);
 
-                if (rightElement.isLiteral()){
-                    value = ((LiteralElement)rightElement).getLiteral();
-                    decideInstructionConstSize(value);
-                }
-                else{
-                    String type = decideType(rightElement);
-                    if (type == null) {
-                        jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) rightElement).getName(), VarScope.LOCAL, rightElement.getType()).getVirtualReg());
-                    }
-                    else {
-                        jasminCode.append(type).append("aload");
-                    }
-                }
+                constOrLoad(rightElement);
 
                 if (operation.toString().equals("LTH")) {
                     jasminCode.append("\n\n\t\tif_icmpgt ").append("ElseLTH").append(method.getN_branches());
@@ -198,6 +174,23 @@ public class JasminInstruction {
         }
     }
 
+    private void constOrLoad(Element element) {
+        String value;
+        if (element.isLiteral()){
+            value = ((LiteralElement) element).getLiteral();
+            jasminCode.append(JasminUtils.getInstructionConstSize(value));
+        }
+        else {
+            String type = decideType(element);
+            if (type == null) {
+                jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) element).getName(), VarScope.LOCAL, element.getType()).getVirtualReg());
+            }
+            else {
+                jasminCode.append(type).append("aload");
+            }
+        }
+    }
+
     // invokestatic, invokevirtual, invokespecial
     private void generateCall(CallInstruction instruction) {
         if(method.getMethod().isConstructMethod()){
@@ -244,10 +237,10 @@ public class JasminInstruction {
                             jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
                             jasminCode.append("(");
                             for (Element parameter : instruction.getListOfOperands()) {
-                                jasminCode.append(decideInvokeReturns(parameter.getType()));
+                                jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),parameter.getType()));
                             }
                             jasminCode.append(")");
-                            jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
+                            jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
                         }
                     }
                 }
@@ -270,10 +263,10 @@ public class JasminInstruction {
                         jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
                         jasminCode.append("(");
                         for (Element parameter : instruction.getListOfOperands()){
-                            jasminCode.append(decideInvokeReturns(parameter.getType()));
+                            jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),parameter.getType()));
                         }
                         jasminCode.append(")");
-                        jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
+                        jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
                     }
                 }
             }
@@ -292,10 +285,10 @@ public class JasminInstruction {
                         jasminCode.append(secondArgLiteral.getLiteral().replace("\"", ""));
                         jasminCode.append("(");
                         for (Element parameter : instruction.getListOfOperands()){
-                            jasminCode.append(decideInvokeReturns(parameter.getType()));
+                            jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),parameter.getType()));
                         }
                         jasminCode.append(")");
-                        jasminCode.append(decideInvokeReturns(instruction.getReturnType()));
+                        jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
                     }
                 }
             }
@@ -306,15 +299,21 @@ public class JasminInstruction {
         Element e1 = instruction.getOperand();
         if (e1 != null) {
             if (!e1.isLiteral()) {
-                decideType(instruction.getOperand());
+                String type = decideType(instruction.getOperand());
                 String returnedVariable = ((Operand) instruction.getOperand()).getName();
                 String value = Integer.toString(method.getLocalVariableByKey(returnedVariable, null, instruction.getOperand().getType()).getVirtualReg());
-                jasminCode.append("load ").append(value).append("\n\t\t");
-                jasminCode.append("return");
+                if (type == null) {
+                    jasminCode.append("load ").append(value).append("\n\t\t");
+                    decideType(instruction.getOperand());
+                    jasminCode.append(type).append("return");
+                }
+                else {
+                    jasminCode.append(type).append("return");
+                }
             }
             else { // return 0; return true;
                 String literal = ((LiteralElement) e1).getLiteral();
-                decideInstructionConstSize(literal);
+                jasminCode.append(JasminUtils.getInstructionConstSize(literal));
                 jasminCode.append("\n\t\tireturn");
             }
 
@@ -333,7 +332,7 @@ public class JasminInstruction {
         String type;
 
         if(e3.isLiteral()) { // if the e1 is not a literal, then it is a variable
-            decideInstructionConstSize(((LiteralElement) e3).getLiteral());
+            jasminCode.append(JasminUtils.getInstructionConstSize(((LiteralElement) e3).getLiteral()));
         } else {
             Operand o3 = (Operand) e3;
             type = decideType(e3);
@@ -367,7 +366,7 @@ public class JasminInstruction {
         else
             jasminCode.append(type).append("aload");
 
-        jasminCode.append("\n\t\tputfield ").append(name).append("/").append(o2.getName()).append(" ").append(decideInvokeReturns(e2.getType()));
+        jasminCode.append("\n\t\tputfield ").append(name).append("/").append(o2.getName()).append(" ").append(JasminUtils.getReturnFromMethod(method.getMethod(),e2.getType()));
 
     }
 
@@ -386,7 +385,7 @@ public class JasminInstruction {
 
         if (!e1.isLiteral()) { // if the e1 is not a literal, then it is a variable
             Operand o1 = (Operand) e1;
-            jasminCode.append(o1.getName()).append(" ").append(decideInvokeReturns(o1.getType()));
+            jasminCode.append(o1.getName()).append(" ").append(JasminUtils.getReturnFromMethod(method.getMethod(),o1.getType()));
         }
 
     }
@@ -395,7 +394,7 @@ public class JasminInstruction {
         // TODO
         if (instruction.getLeftOperand().isLiteral()) {
             String leftLiteral = ((LiteralElement) instruction.getLeftOperand()).getLiteral();
-            decideInstructionConstSize(leftLiteral);
+            jasminCode.append(JasminUtils.getInstructionConstSize(leftLiteral));
         }
         else {
             Operand leftOperand = (Operand) instruction.getLeftOperand();
@@ -404,7 +403,7 @@ public class JasminInstruction {
 
         if (instruction.getRightOperand().isLiteral()) {
             String rightLiteral = ((LiteralElement) instruction.getRightOperand()).getLiteral();
-            decideInstructionConstSize(rightLiteral);
+            jasminCode.append(JasminUtils.getInstructionConstSize(rightLiteral));
         }
         else {
             Operand rightOperand = (Operand) instruction.getRightOperand();
@@ -434,16 +433,6 @@ public class JasminInstruction {
         jasminCode.append("\n\t\tgoto ").append(instruction.getLabel()).append("\n");
     }
 
-    private void decideInstructionConstSize(String value){
-        int val = Integer.parseInt(value);
-        String res;
-        if (val >= 0 && val <= 5) res = "iconst_";
-        else if (val > 5 && val <= 128) res = "bipush ";
-        else if (val > 128 && val <= 32768) res = "sipush ";
-        else res = "ldc ";
-        jasminCode.append("\n\t\t").append(res).append(val);
-    }
-
     private String decideType(Element element) {
         switch (element.getType().getTypeOfElement()) {
             case INT32:
@@ -467,29 +456,5 @@ public class JasminInstruction {
                 break;
         }
         return null;
-    }
-
-    public String decideInvokeReturns(Type type) {
-        String returnType = null;
-        switch (type.getTypeOfElement()) {
-            case INT32:
-                returnType = "I";
-                break;
-            case BOOLEAN:
-                returnType = "Z";
-                break;
-            case ARRAYREF:
-                returnType = "[I";
-                break;
-            case OBJECTREF:
-                returnType = method.getClass().getName();
-                break;
-            case VOID:
-                returnType = "V";
-                break;
-            default:
-                break;
-        }
-        return returnType;
     }
 }
