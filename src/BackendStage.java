@@ -1,3 +1,4 @@
+import jasmin.JasminMethod;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
@@ -8,8 +9,6 @@ import pt.up.fe.comp.jmm.report.Stage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static org.specs.comp.ollir.ElementType.INT32;
 
 /**
  * Copyright 2021 SPeCS.
@@ -70,10 +69,10 @@ public class BackendStage implements JasminBackend {
 
             for (var method : ollirClass.getMethods()){
                 System.out.println("METHOD " + method.getMethodName());
-                MethodJasmin methodJasmin = new MethodJasmin(method, ollirClass.getClassName());
-                methodJasmin.generateJasminCode();
-                jasminCode.append(methodJasmin.getJasminCode());
-                reports.addAll(methodJasmin.getReports());
+                JasminMethod jasminMethod = new JasminMethod(method, ollirClass.getClassName());
+                jasminMethod.generateJasminCode();
+                jasminCode.append(jasminMethod.getJasminCode());
+                reports.addAll(jasminMethod.getReports());
             }
 
             System.out.println("\n------------------- JASMIN CODE -------------------");

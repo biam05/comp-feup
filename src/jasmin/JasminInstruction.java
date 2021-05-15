@@ -1,3 +1,5 @@
+package jasmin;
+
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
 
@@ -5,13 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class InstructionJasmin {
+public class JasminInstruction {
     private final Instruction instruction;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
-    private final MethodJasmin method;
+    private final JasminMethod method;
 
-    public InstructionJasmin(Instruction instruction, MethodJasmin method) {
+    public JasminInstruction(Instruction instruction, JasminMethod method) {
         this.instruction = instruction;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();

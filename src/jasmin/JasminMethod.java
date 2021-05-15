@@ -1,3 +1,5 @@
+package jasmin;
+
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
 
@@ -6,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MethodJasmin {
+public class JasminMethod {
     private final Method method;
     private final StringBuilder jasminCode;
     private final List<Report> reports;
@@ -16,7 +18,7 @@ public class MethodJasmin {
     private int n_branches;
     private Map<String, Descriptor> localVariables;
 
-    public MethodJasmin(Method method, String className) {
+    public JasminMethod(Method method, String className) {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
@@ -127,10 +129,10 @@ public class MethodJasmin {
                         auxiliaryJasmin.append("\n\t").append(label).append(":");
                     }
                 }
-            InstructionJasmin instructionJasmin = new InstructionJasmin(inst, this);
-            instructionJasmin.generateJasminCode();
-            auxiliaryJasmin.append(instructionJasmin.getJasminCode());
-            this.reports.addAll(instructionJasmin.getReports());
+            JasminInstruction jasminInstruction = new JasminInstruction(inst, this);
+            jasminInstruction.generateJasminCode();
+            auxiliaryJasmin.append(jasminInstruction.getJasminCode());
+            this.reports.addAll(jasminInstruction.getReports());
         }
         if(!this.method.isConstructMethod()){
             this.jasminCode.append("\n\t\t.limit locals ").append(n_locals);
