@@ -10,8 +10,8 @@ class FindMaximum {
 
         i = 1;
         maximum = i;
-        oi = new int[1+2];
-        while (i < test_arr.length) {
+        test_arr = new int[i + this.ola()];
+        while (i < test_arr.length + 2) {
             value = 0;
             if (maximum < value){
                 value = maximum;
@@ -25,4 +25,7 @@ class FindMaximum {
         return maximum;
     }
 
+    public int ola() {
+        return 2;
+    }
 }

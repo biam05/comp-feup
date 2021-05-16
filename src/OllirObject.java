@@ -77,21 +77,6 @@ public class OllirObject {
         this.aboveTemp.add(temp);
     }
 
-    public boolean returnNeedsTemp() {
-        String[] auxiliar = this.code.toString().split(" ");
-        return (auxiliar.length > 2);
-    }
-
-    public void getReturn(int var_temp) {
-        List<String> auxiliar = new LinkedList<>(Arrays.asList(this.code.toString().split(" ")));
-
-        String type = OLLIRUtils.getReturnTypeExpression(auxiliar.get(0));
-
-        String temp_name = "aux" + var_temp;
-        String temp = temp_name + type + " :=" + type + " " + String.join(" ", auxiliar);
-        addAboveTemp(temp);
-        code = new StringBuilder(OLLIRUtils.returnTemplate(temp_name, type));
-    }
 
     public void getReturn() {
         String type = OLLIRUtils.getReturnTypeExpression(this.code.toString());

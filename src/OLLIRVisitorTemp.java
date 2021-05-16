@@ -5,6 +5,7 @@ import pt.up.fe.comp.jmm.report.Report;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
@@ -117,16 +118,11 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
     private OllirObject visitReturn(JmmNode node, String dummy) {
         JmmNode returnExpression = node.getChildren().get(0).getChildren().get(0);
         OllirObject result = visit(returnExpression);
-        checkReturnTemporary(result);
+
+        checkExpressionTemporary(result);
+        result.getReturn();
+
         return result;
-    }
-
-    private void checkReturnTemporary(OllirObject object) {
-
-        if (object.returnNeedsTemp()) {
-            var_temp++;
-            object.getReturn(var_temp);
-        } else object.getReturn();
     }
 
     private OllirObject visitMethodBody(JmmNode node, String dummy) {
@@ -172,9 +168,21 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         OllirObject left = visit(leftchild);
         OllirObject right = visit(rightchild);
+        String leftC = left.getCode();
+        String rightC = right.getCode();
 
-        String type = OLLIRUtils.getReturnTypeExpression(left.getCode());
-        OllirObject result = new OllirObject(OLLIRUtils.assign(left.getCode(), type, right.getCode()));
+        OllirObject result = new OllirObject("");
+        if (leftC.contains("putfield")) {
+            leftC = leftC.replace("putfield = ", "");
+            checkExpressionTemporary(right);
+            rightC = right.getCode();
+            result.appendCode(OLLIRUtils.putField(leftC, rightC));
+        }
+        else {
+            String type = OLLIRUtils.getReturnTypeExpression(leftC);
+            result.appendCode(OLLIRUtils.assign(leftC, type, rightC));
+        }
+
         result.appendTemps(left);
         result.appendTemps(right);
 
@@ -243,8 +251,9 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         } else if (child.getKind().equals("NewIntArrayExpression")) { //TODO: check if var needs temporary variable
             System.out.println("new int array: " + child + ", " + child.getChildren());
             OllirObject var = visit(child.getChildren().get(0));
+            checkExpressionTemporary(var);
+            result.appendTemps(var);
             result.appendCode("new(array, " + var.getCode() + ").array.i32");
-            result.appendTemps(var); //TODO: check this
 
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
@@ -252,9 +261,12 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         } else if (child.getKind().contains("Identifier")) {
             value = OLLIRUtils.getIdentifier(child, symbolTable, currentMethod);
+            System.out.println("value -> " + value);
+
             result.appendCode(value);
             if (!value.contains("putfield") && !value.contains("getfield"))
                 result.appendCode(OLLIRUtils.getIdentifierType(child, symbolTable, currentMethod));
+
 
         } else if (child.getKind().equals("True") || child.getKind().equals("False")) {
             int bool = child.getKind().equals("True") ? 1 : 0;
@@ -439,4 +451,18 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         return aux.getCode();
     }
 
+    //used when we want the code in a single variable
+    private void checkExpressionTemporary(OllirObject res) {
+        List<String> auxiliar = new LinkedList<>(Arrays.asList(res.getCode().split(" ")));
+        if(auxiliar.size() == 1) return;
+
+        var_temp++;
+        String type = OLLIRUtils.getReturnTypeExpression(auxiliar.get(1));
+        String temp_name = "aux" + var_temp + type;
+
+        String temp = temp_name + " :=" + type + " " + String.join(" ", auxiliar);
+
+        res.addAboveTemp(temp);
+        res.setCode(temp_name);
+    }
 }
