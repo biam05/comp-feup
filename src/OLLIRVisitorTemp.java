@@ -119,7 +119,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         JmmNode returnExpression = node.getChildren().get(0).getChildren().get(0);
         OllirObject result = visit(returnExpression);
 
-        checkExpressionTemporary(result);
+        result.setCode(checkExpressionTemporary("", result));
         result.getReturn();
 
         return result;
@@ -174,11 +174,9 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         OllirObject result = new OllirObject("");
         if (leftC.contains("putfield")) {
             leftC = leftC.replace("putfield = ", "");
-            checkExpressionTemporary(right);
-            rightC = right.getCode();
+            rightC = checkExpressionTemporary("", right);
             result.appendCode(OLLIRUtils.putField(leftC, rightC));
-        }
-        else {
+        } else {
             String type = OLLIRUtils.getReturnTypeExpression(leftC);
             result.appendCode(OLLIRUtils.assign(leftC, type, rightC));
         }
@@ -186,7 +184,8 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         result.appendTemps(left);
         result.appendTemps(right);
 
-        if (right.getCode().contains("new(") && !right.getCode().contains("new(array,")) result.addBelowTemp(OLLIRUtils.invokeSpecial(left.getCode()));
+        if (right.getCode().contains("new(") && !right.getCode().contains("new(array,"))
+            result.addBelowTemp(OLLIRUtils.invokeSpecial(left.getCode()));
         return result;
     }
 
@@ -248,10 +247,9 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             value = child.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "");
             result.appendCode(value + ".i32");
 
-        } else if (child.getKind().equals("NewIntArrayExpression")) { //TODO: check if var needs temporary variable
-            System.out.println("new int array: " + child + ", " + child.getChildren());
+        } else if (child.getKind().equals("NewIntArrayExpression")) {
             OllirObject var = visit(child.getChildren().get(0));
-            checkExpressionTemporary(var);
+            var.setCode(checkExpressionTemporary("", var));
             result.appendTemps(var);
             result.appendCode("new(array, " + var.getCode() + ").array.i32");
 
@@ -290,13 +288,16 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             case "And":
             case "Less":
                 String resultLeft = checkExpressionTemporary(node.getChildren().get(0), result);
+                resultLeft = checkExpressionTemporary(resultLeft, result);
+
                 String resultRight = checkExpressionTemporary(node.getChildren().get(1), result);
+                resultRight = checkExpressionTemporary(resultRight, result);
 
                 result.appendCode(resultLeft + " " + OLLIRUtils.getOperationType(node) + " " + resultRight);
                 return result;
             case "Not":
                 String resultR = checkExpressionTemporary(node.getChildren().get(0), result);
-
+                resultR = checkExpressionTemporary(resultR, result);
                 result.appendCode(OLLIRUtils.getOperationType(node) + " " + resultR);
 
                 return result;
@@ -356,22 +357,21 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         String invokeType = OLLIRUtils.getInvokeType(identifier.getCode(), method.getChildren().get(0), symbolTable);
 
+        List<String> args = getMethodArgs(method, result);
+        for (int i = 0; i < args.size(); i++) {
+            String s = args.get(i);
+            if (s.contains("new(array") || s.contains("[")) {
+                var_temp++;
+                String type = OLLIRUtils.getReturnTypeExpression(s);
+                String var_name = "aux" + var_temp + type;
+                result.addAboveTemp(var_name + " :=" + type + " " + s);
+                args.set(i, var_name);
+            }
+        }
+
         switch (invokeType) {
             case "virtual":
                 List<String> temporary = new ArrayList<>();
-                List<String> args = getMethodArgs(method, result);
-                System.out.println("args -> " + args + "<-");
-
-                for (int i = 0; i < args.size(); i++) {
-                    String s = args.get(i);
-                    if(s.contains("new(array")) {
-                        var_temp++;
-                        String type = OLLIRUtils.getReturnTypeExpression(s);
-                        String var_name = "aux" + var_temp + type;
-                        result.addAboveTemp(var_name + " :=" + type + " " + s);
-                        args.set(i, var_name);
-                    }
-                }
 
                 String methodInfo = OLLIRUtils.getMethodInfo(method, args);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
@@ -388,6 +388,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
                     result.addAboveTemp(OLLIRUtils.invokeSpecial(aux));
+
                 } else if (identifier.getCode().contains("invokevirtual")) {
                     String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
 
@@ -400,9 +401,8 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 result.appendCode(methodCode);
                 return result;
             case "static":
-                List<String> arg = getMethodArgs(method, result);
                 String returnType = getStaticReturnType(call);
-                result.appendCode(OLLIRUtils.invokeStaticVirtual(true, identifier.getCode(), OLLIRUtils.getMethodName(method.getChildren().get(0)), arg, returnType));
+                result.appendCode(OLLIRUtils.invokeStaticVirtual(true, identifier.getCode(), OLLIRUtils.getMethodName(method.getChildren().get(0)), args, returnType));
                 return result;
             default:
                 return result;
@@ -459,9 +459,14 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
     }
 
     //used when we want the code in a single variable
-    private void checkExpressionTemporary(OllirObject res) {
-        List<String> auxiliar = new LinkedList<>(Arrays.asList(res.getCode().split(" ")));
-        if(auxiliar.size() == 1) return;
+    private String checkExpressionTemporary(String result, OllirObject res) {
+        String code;
+
+        if (result.equals("")) code = res.getCode();
+        else code = result;
+
+        List<String> auxiliar = new LinkedList<>(Arrays.asList(code.split(" ")));
+        if (auxiliar.size() == 1) return code;
 
         var_temp++;
         String type = OLLIRUtils.getReturnTypeExpression(auxiliar.get(1));
@@ -470,6 +475,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         String temp = temp_name + " :=" + type + " " + String.join(" ", auxiliar);
 
         res.addAboveTemp(temp);
-        res.setCode(temp_name);
+        return temp_name;
     }
+
 }
