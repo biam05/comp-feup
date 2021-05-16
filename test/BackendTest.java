@@ -64,10 +64,10 @@ public class BackendTest {
         assertEquals("Result: 28", output.trim());
     }
 
-    @Test
+    /*@Test
     public void lifeFromOllir() {
         var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/Life.ollir")),
                 null, new ArrayList<>()));
         var output = result.run();
-    }
+    }*/
 }
