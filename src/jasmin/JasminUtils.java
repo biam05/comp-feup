@@ -73,47 +73,4 @@ public class JasminUtils {
         return res;
     }
 
-    public static String constOrLoad(JasminMethod method, Element element) {
-        String value;
-        if (element.isLiteral()){
-            value = ((LiteralElement) element).getLiteral();
-            return JasminUtils.getInstructionConstSize(value);
-            //jasminCode.append(JasminUtils.getInstructionConstSize(value));
-        }
-        else {
-            //String type = decideType(element);
-            String type = null;
-            if (type == null) {
-                return "load " + method.getLocalVariableByKey(((Operand) element).getName(), VarScope.LOCAL, element.getType()).getVirtualReg();
-            }
-            else {
-                return type + "aload";
-            }
-        }
-    }
-
-    public static String decideType(JasminMethod method, Element element) {
-        switch (element.getType().getTypeOfElement()) {
-            case INT32:
-            case BOOLEAN:
-                if (!element.isLiteral())
-                    if (method.getLocalVariableByKey(((Operand) element).getName(), null, element.getType()).getVarType().getTypeOfElement() == ElementType.ARRAYREF) {
-                        /*jasminCode.append("\n\t\taload ").append(method.getLocalVariableByKey(((Operand) element).getName(), null, element.getType()).getVirtualReg());
-                        Operand indexOp = (Operand) ((ArrayOperand) element).getIndexOperands().get(0);
-                        jasminCode.append("\n\t\tiload ").append(method.getLocalVariableByKey(indexOp.getName(), null, indexOp.getType()).getVirtualReg());
-                        */return "\n\t\ti";
-                    }
-                //jasminCode.append("\n\t\ti");
-                break;
-            case ARRAYREF:
-            case THIS:
-            case OBJECTREF:
-                //jasminCode.append("\n\t\ta");
-                break;
-            default:
-                //jasminCode.append("\n\t\t");
-                break;
-        }
-        return null;
-    }
 }
