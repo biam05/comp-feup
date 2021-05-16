@@ -40,7 +40,7 @@ public class OllirObject {
     }
 
     public String toString() {
-        return getAboveTemp() + code + getBelowTemp();
+        return getAboveTemp() + ", " + code + ", " + getBelowTemp();
     }
 
     public void appendToCode(OllirObject obj) {
@@ -64,12 +64,14 @@ public class OllirObject {
     }
 
     public void addBelowTemp(String temp) {
+        System.out.println("below -> " + temp);
         temp = temp.replaceAll(";", "").replaceAll("\n", "");
         temp += ";\n";
         this.belowTemp.add(temp);
     }
 
     public void addAboveTemp(String temp) {
+        System.out.println("above -> " + temp);
         temp = temp.replaceAll(";", "").replaceAll("\n", "");
         temp += ";\n";
         this.aboveTemp.add(temp);

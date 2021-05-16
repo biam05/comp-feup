@@ -142,8 +142,14 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         for (JmmNode child : children) {
             OllirObject aux = visit(child);
-            if (!aux.getCode().isEmpty() && !aux.getCode().endsWith(";") && !aux.getCode().endsWith(";\n"))
+            List<JmmNode> childrenC = child.getChildren();
+
+            if (!aux.getCode().isEmpty() && !aux.getCode().endsWith(";") && !aux.getCode().endsWith(";\n") &&
+                    !child.getKind().equals("WhileStatement") && !child.getKind().equals("IfElse") &&
+                    !childrenC.get(childrenC.size() - 1).getKind().equals("WhileStatement") && !childrenC.get(childrenC.size() - 1).getKind().equals("IfElse")) {
                 aux.appendCode(";\n");
+            }
+
             result.appendToCode(aux);
         }
         return result;
@@ -167,33 +173,14 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         OllirObject left = visit(leftchild);
         OllirObject right = visit(rightchild);
 
-        /*if (left.contains("putfield")) {
-            String[] args = left.split(" ");
-            String var = args[2];
-
-            StringBuilder aux = new StringBuilder();
-            String result = checkReturnTemporary(rightchild.getChildren().get(0));
-            if (result.equals(""))
-                aux.append(visit(rightchild));
-            else
-                aux.append("aux").append(var_temp).append(OLLIRUtils.getReturnTypeExpression(visit(rightchild))).append("\n").append(result);
-
-            String[] temporary = aux.toString().split("\\n");
-
-            StringBuilder res = new StringBuilder();
-            for (int i = temporary.length - 1; i >= 1; i--) {
-                res.append(temporary[i]).append(";\n");
-            }
-            return res + OLLIRUtils.putField(var, temporary[0]);
-        } else {
-            String type = OLLIRUtils.getReturnTypeExpression(left);
-            return OLLIRUtils.assign(left, type, right);
-        }*/
-
         String type = OLLIRUtils.getReturnTypeExpression(left.getCode());
         OllirObject result = new OllirObject(OLLIRUtils.assign(left.getCode(), type, right.getCode()));
         result.appendTemps(left);
         result.appendTemps(right);
+
+        if (right.getCode().contains("new("))
+            result.addBelowTemp(OLLIRUtils.invokeSpecial(left.getCode()));
+
         return result;
     }
 
@@ -206,22 +193,18 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         JmmNode body = children.get(1);
 
         result.appendCode("\nLoop" + loop_counter + ":\n");
-        String cond = visit(condition).getCode();
-        StringBuilder res = new StringBuilder();
+        OllirObject cond = visit(condition);
+        result.appendCode(cond.getAboveTemp());
 
-        /*if (cond.contains("\n")) {
-            String[] args = cond.split("\n");
-            res.append(args[1]).append("\n");
-            res.append("if (").append(args[0]).append(") goto Body").append(loop_counter).append(";\n");
-        } else {*/
-            res.append("if (").append(cond).append(")").append("goto Body").append(loop_counter).append(";\n");
-        //}
+        result.appendCode("if (" + cond.getCode() + ") goto Body" + loop_counter + ";\n");
+        result.appendCode("goto EndLoop" + loop_counter + ";");
+        result.appendCode("\nBody" + loop_counter + ":\n");
 
-        res.append("goto EndLoop").append(loop_counter).append(";");
-        res.append("\nBody").append(loop_counter).append(":\n").append(visit(body));
-        res.append("\nEndLoop").append(loop_counter).append(":\n");
+        OllirObject cond1 = visit(body);
+        System.out.println("\nESTOUAQUI\n\n -> " + cond1.getCode() + "-------------\n\n");
+        result.append(cond1);
+        result.appendCode("\nEndLoop" + loop_counter + ":\n");
 
-        result.appendCode(res.toString());
         loop_counter++;
         return result;
     }
@@ -229,17 +212,24 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
     //TODO
     private OllirObject visitIfElse(JmmNode node, String dummy) {
         OllirObject result = new OllirObject("");
-        StringBuilder res =  new StringBuilder();
+
         List<JmmNode> children = node.getChildren();
+        OllirObject aux = visit(children.get(0));
+        for (String above : aux.getAboveList()) result.addAboveTemp(above);
 
-        res.append("\nif (").append(visit(children.get(0)).getCode()).append(") goto else").append(if_counter).append(";\n");
-        res.append(visit(children.get(1)).getCode());
-        res.append("\ngoto endif").append(if_counter).append(";\n");
-        res.append("else").append(if_counter).append(":\n");
-        res.append(visit(children.get(3)));
-        res.append("\nendif").append(if_counter).append(":\n");
+        result.appendCode("\nif (" + aux.getCode() + ") goto else" + if_counter + ";\n");
+        result.appendCode(aux.getBelowTemp()); //TODO: not sure about this
 
-        result.appendCode(res.toString());
+        aux = visit(children.get(1));
+        result.append(aux);
+
+        result.appendCode("\ngoto endif" + if_counter + ";\n");
+        result.appendCode("else" + if_counter + ":\n");
+
+        aux = visit(children.get(1));
+        result.append(aux);
+        result.appendCode("\nendif" + if_counter + ":\n");
+
         if_counter++;
         return result;
     }
@@ -263,10 +253,9 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             result.appendCode(var.getBelowTemp()); //TODO: check this
 
         } else if (child.getKind().contains("NewIdentifier")) {
-            value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "").trim();
+            value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
             result.appendCode("new(" + value + ")." + value); // new(myClass).myClass
-            OllirObject var = visit(node.getParent().getParent().getChildren().get(0)); //TODO: checkar se preciso de lidar com below e above
-            result.addBelowTemp("invokespecial(" + var.getCode() + ", \"<init>\").V;\n");
+
         } else if (child.getKind().contains("Identifier")) {
             value = OLLIRUtils.getIdentifier(child, symbolTable, currentMethod);
             result.appendCode(value);
@@ -298,7 +287,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 String resultRight = checkExpressionTemporary(node.getChildren().get(1), result);
 
                 result.appendCode(resultLeft + " " + OLLIRUtils.getOperationType(node) + " " + resultRight);
-               return result;
+                return result;
             case "Not":
                 String resultR = checkExpressionTemporary(node.getChildren().get(0), result);
 
@@ -344,21 +333,24 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
     private OllirObject visitCall(JmmNode node, String dummy) {
 
         List<JmmNode> children = node.getChildren();
-        JmmNode left = children.get(0);
-        JmmNode right = children.get(1);
+        JmmNode child1 = children.get(0);
+        JmmNode child2 = children.get(1);
 
-        if (left.getKind().equals("FinalTerms") && right.getKind().equals("MethodCall"))
-            return visitMethodCall(node, left, right);
-        else if (left.getKind().equals("FinalTerms") && right.getKind().equals("Length")) return visitLength(left);
+        System.out.println("visit call: " + node + ", " + child1 + ", " + child2);
+        if (child2.getKind().equals("MethodCall"))
+            return visitMethodCall(node, child1, child2);
+        else if (child2.getKind().equals("Length")) return visitLength(child1);
 
         return new OllirObject("");
     }
 
-    private OllirObject visitMethodCall(JmmNode call, JmmNode finalTerm, JmmNode method) {
-        OllirObject identifier = visit(finalTerm);
-        String invokeType = OLLIRUtils.getInvokeType(identifier.getCode(), method.getChildren().get(0), symbolTable);
+    private OllirObject visitMethodCall(JmmNode call, JmmNode firstChild, JmmNode method) {
 
         OllirObject result = new OllirObject("");
+        OllirObject identifier = visit(firstChild);
+        System.out.println("method call -> " + identifier);
+        String invokeType = OLLIRUtils.getInvokeType(identifier.getCode(), method.getChildren().get(0), symbolTable);
+
         switch (invokeType) {
             case "virtual":
                 List<String> temporary = new ArrayList<>();
@@ -371,21 +363,38 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
                 String methodInfo = OLLIRUtils.getMethodInfo(method, args);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
+                String type = met.getReturnType().toOLLIR();
 
                 for (String temp : temporary) result.addAboveTemp(temp + ";");
+                String aux = identifier.getCode();
 
-                String methodCode = OLLIRUtils.invokeStaticVirtual(false, identifier.getCode(), OLLIRUtils.getMethodName(method.getChildren().get(0)), args, met.getReturnType().toOLLIR());
+                if (identifier.getCode().contains("new(")) {
+                    String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
+
+                    var_temp++;
+                    aux = "aux" + var_temp + identifierType;
+
+                    result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
+                    result.addAboveTemp(OLLIRUtils.invokeSpecial(aux));
+                } else if (identifier.getCode().contains("invokevirtual")) {
+                    String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
+
+                    var_temp++;
+                    aux = "aux" + var_temp + identifierType;
+                    result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
+                } else result.appendTemps(identifier);
+
+                String methodCode = OLLIRUtils.invokeStaticVirtual(false, aux, OLLIRUtils.getMethodName(method.getChildren().get(0)), args, type);
                 result.appendCode(methodCode);
-                break;
+                return result;
             case "static":
                 List<String> arg = getMethodArgs(method, result);
                 String returnType = getStaticReturnType(call);
                 result.appendCode(OLLIRUtils.invokeStaticVirtual(true, identifier.getCode(), OLLIRUtils.getMethodName(method.getChildren().get(0)), arg, returnType));
-                break;
+                return result;
             default:
                 return result;
         }
-        return result;
     }
 
     public List<String> getMethodArgs(JmmNode method, OllirObject res) {
@@ -396,6 +405,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             String result = checkExpressionTemporary(children.get(i).getChildren().get(0), res);
             args.add(result);
         }
+
         return args;
     }
 
@@ -406,11 +416,13 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         } else return ".V";
     }
 
-    //TODO: ver quando sao necessarias variaveis temporarias para o array Ex: oi.getArray().length
     private OllirObject visitLength(JmmNode identifier) {
-        OllirObject array = visit(identifier);
-        //String res = checkReturnTemporary(identifier); //ver se o identifier precisa de variavel
-        return new OllirObject("arraylength(" + array.getCode() + ").i32;\n");
+        OllirObject result = new OllirObject("");
+        String ident = checkExpressionTemporary(identifier, result);
+
+        result.appendCode("arraylength(" + ident + ").i32");
+
+        return result;
     }
 
     private String checkExpressionTemporary(JmmNode expression, OllirObject res) {
@@ -427,7 +439,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             var_temp++;
             String temp_name = "aux" + var_temp + type;
 
-            res.addAboveTemp(temp_name+ " :=" + type + " " + aux.getCode());
+            res.addAboveTemp(temp_name + " :=" + type + " " + aux.getCode());
             return temp_name;
         }
 

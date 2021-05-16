@@ -232,7 +232,7 @@ void Parameter() #void:{}
     Expression() (<COMMA> Expression())*
 }
 
-void Arrays()  #void:{}
+void Arrays() #void:{}
 {
     FinalTerms()((<LBRACKET> Expression() <RBRACKET>) #ArrayAccess(2) (FinalTerms())?)*
 }
