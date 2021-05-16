@@ -6,10 +6,12 @@ class FindMaximum {
         int i;
         int maximum;
         int value;
+        int[] oi;
 
         i = 1;
         maximum = i;
-        while (i < arr.length) {
+        oi = new int[1+2];
+        while (i < test_arr.length) {
             value = 0;
             if (maximum < value){
                 value = maximum;
@@ -22,4 +24,5 @@ class FindMaximum {
 
         return maximum;
     }
+
 }

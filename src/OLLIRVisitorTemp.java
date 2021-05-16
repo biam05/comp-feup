@@ -178,13 +178,10 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         result.appendTemps(left);
         result.appendTemps(right);
 
-        if (right.getCode().contains("new("))
-            result.addBelowTemp(OLLIRUtils.invokeSpecial(left.getCode()));
-
+        if (right.getCode().contains("new(") && !right.getCode().contains("new(array,")) result.addBelowTemp(OLLIRUtils.invokeSpecial(left.getCode()));
         return result;
     }
 
-    //TODO
     private OllirObject visitWhile(JmmNode node, String dummy) {
         OllirObject result = new OllirObject("");
 
@@ -200,16 +197,13 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         result.appendCode("goto EndLoop" + loop_counter + ";");
         result.appendCode("\nBody" + loop_counter + ":\n");
 
-        OllirObject cond1 = visit(body);
-        System.out.println("\nESTOUAQUI\n\n -> " + cond1.getCode() + "-------------\n\n");
-        result.append(cond1);
+        result.append(visit(body));
         result.appendCode("\nEndLoop" + loop_counter + ":\n");
 
         loop_counter++;
         return result;
     }
 
-    //TODO
     private OllirObject visitIfElse(JmmNode node, String dummy) {
         OllirObject result = new OllirObject("");
 
@@ -234,7 +228,6 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         return result;
     }
 
-    //TODO : newintarrayexpression and its temporary variables
     private OllirObject visitFinalTerms(JmmNode node, String dummy) {
         OllirObject result = new OllirObject("");
 
@@ -242,15 +235,16 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         JmmNode child = children.get(0);
         String value;
 
+
         if (child.getKind().contains("Number")) {
             value = child.getKind().replace("Number", "").replaceAll("'", "").replaceAll(" ", "");
             result.appendCode(value + ".i32");
 
         } else if (child.getKind().equals("NewIntArrayExpression")) { //TODO: check if var needs temporary variable
+            System.out.println("new int array: " + child + ", " + child.getChildren());
             OllirObject var = visit(child.getChildren().get(0));
-            result.appendCode(var.getAboveTemp());
-            result.appendCode("new(array," + var.getCode() + ").array.i32");
-            result.appendCode(var.getBelowTemp()); //TODO: check this
+            result.appendCode("new(array, " + var.getCode() + ").array.i32");
+            result.appendTemps(var); //TODO: check this
 
         } else if (child.getKind().contains("NewIdentifier")) {
             value = child.getKind().replaceAll("'", "").replace("NewIdentifier ", "");
@@ -336,7 +330,6 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         JmmNode child1 = children.get(0);
         JmmNode child2 = children.get(1);
 
-        System.out.println("visit call: " + node + ", " + child1 + ", " + child2);
         if (child2.getKind().equals("MethodCall"))
             return visitMethodCall(node, child1, child2);
         else if (child2.getKind().equals("Length")) return visitLength(child1);
@@ -348,7 +341,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         OllirObject result = new OllirObject("");
         OllirObject identifier = visit(firstChild);
-        System.out.println("method call -> " + identifier);
+
         String invokeType = OLLIRUtils.getInvokeType(identifier.getCode(), method.getChildren().get(0), symbolTable);
 
         switch (invokeType) {
@@ -368,7 +361,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 for (String temp : temporary) result.addAboveTemp(temp + ";");
                 String aux = identifier.getCode();
 
-                if (identifier.getCode().contains("new(")) {
+                if (identifier.getCode().contains("new(") && !identifier.getCode().contains("new(array,")) {
                     String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
 
                     var_temp++;

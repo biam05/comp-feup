@@ -3,7 +3,7 @@ class Simple {
 
     public int add(int a, int b){
         int c;
-        c = a + this.constInstr(1+2);
+        c = a + this.constInstr(1+2) + this.constInstr(2);
         return c + 1;
     }
 
@@ -15,7 +15,7 @@ class Simple {
         a = 20;
         b = 10;
         s = new Simple();
-        c = s.add(a,1+1);
+        c = this.oi().add(a,1+1);
         io.println(c);
     }
 
