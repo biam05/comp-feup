@@ -61,7 +61,7 @@ public class BackendTest {
         var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/FindMaximum.ollir")),
                 null, new ArrayList<>()));
         var output = result.run();
-        assertEquals("28", output.trim());
+        assertEquals("Result: 28", output.trim());
     }
 
     @Test
