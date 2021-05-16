@@ -360,10 +360,17 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             case "virtual":
                 List<String> temporary = new ArrayList<>();
                 List<String> args = getMethodArgs(method, result);
+                System.out.println("args -> " + args + "<-");
 
-                for (String s : args) {
-                    String[] splitted = s.split("\\n");
-                    temporary.addAll(Arrays.asList(splitted).subList(1, splitted.length));
+                for (int i = 0; i < args.size(); i++) {
+                    String s = args.get(i);
+                    if(s.contains("new(array")) {
+                        var_temp++;
+                        String type = OLLIRUtils.getReturnTypeExpression(s);
+                        String var_name = "aux" + var_temp + type;
+                        result.addAboveTemp(var_name + " :=" + type + " " + s);
+                        args.set(i, var_name);
+                    }
                 }
 
                 String methodInfo = OLLIRUtils.getMethodInfo(method, args);
@@ -371,8 +378,8 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 String type = met.getReturnType().toOLLIR();
 
                 for (String temp : temporary) result.addAboveTemp(temp + ";");
-                String aux = identifier.getCode();
 
+                String aux = identifier.getCode();
                 if (identifier.getCode().contains("new(") && !identifier.getCode().contains("new(array,")) {
                     String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
 

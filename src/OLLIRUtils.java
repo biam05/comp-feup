@@ -56,10 +56,6 @@ public class OLLIRUtils {
         return "ret.V;\n";
     }
 
-    public static String returnTemplate(String identifier, String type) {
-        return "ret" + type + " " + identifier + type + ";";
-    }
-
     public static String assign(String left, String type, String right) {
         return left + " :=" + type + " " + right + ";\n";
     }

@@ -14,9 +14,7 @@ class Simple {
         Simple s;
         a = 20;
         b = 10;
-        s = this.oi();
-        c = s.add()
-        c = this.oi().add(a,1+1);
+        c = this.oi().oi().add(a,1+1);
         io.println(c);
     }
 
