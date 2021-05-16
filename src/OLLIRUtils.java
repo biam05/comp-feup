@@ -45,7 +45,7 @@ public class OLLIRUtils {
             temporary.addAll(Arrays.asList(splitted).subList(1, splitted.length));
         }
         result.append(")").append(returnType);
-        System.out.println("result -> " + result + ", " + temporary);
+
         for (String temp : temporary) {
             result.append("\n").append(temp);
         }
@@ -61,44 +61,7 @@ public class OLLIRUtils {
     }
 
     public static String assign(String left, String type, String right) {
-
-        StringBuilder result = new StringBuilder();
-        System.out.println("left: " + left + ", type : " + type + ", right: " + right + "|");
-
-        /*if (left.contains(";\n") || right.contains(";\n")) {
-            if (left.contains(";\n")) {
-                int index = left.indexOf(";\n");
-                result.append(left, 0, index + 2);
-                left = left.substring(index + 2);
-            }
-
-            if (right.contains(";\n")) {
-                int index = right.indexOf(";\n");
-                String right_1 = right.substring(0, index);
-                String right_2 = right.substring(index + 2);
-
-                if (right_2.equals("")) {
-                    if (right_1.contains("\n")) {
-                        String[] values = right_1.split("\n");
-                        result.append(values[1].replaceAll(";", "")).append(";\n");
-                        right_1 = values[0];
-                    }
-                    result.append(left).append(" :=").append(type).append(" ").append(right_1).append(";\n");
-                } else if (right_2.contains("invoke")) {
-                    result.append(left).append(" :=").append(type).append(" ").append(right_1).append(";\n");
-                    result.append(right_2).append(";\n");
-                } else {
-                    result.append(right_1).append(";\n");
-                    result.append(left).append(" :=").append(type).append(" ").append(right_2).append(";\n");
-                }
-                return result.toString();
-            }
-
-            return result.append(left).append(" :=").append(type).append(" ").append(right).append(";\n").toString();
-        }*/
-
-
-        return result.append(left).append(" :=").append(type).append(" ").append(right).append(";\n").toString();
+        return left + " :=" + type + " " + right + ";\n";
     }
 
     public static String methodDeclaration(SymbolMethod method) {
