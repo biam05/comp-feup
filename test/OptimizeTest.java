@@ -19,7 +19,7 @@ import pt.up.fe.specs.util.SpecsIo;
 
 public class OptimizeTest {
 
-    @Test
+   @Test
     public void testHelloWorld() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
@@ -37,7 +37,7 @@ public class OptimizeTest {
         TestUtils.noErrors(result.getReports());
     }
 
-    @Test
+   @Test
     public void testHelloWorldAdd() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
         TestUtils.noErrors(result.getReports());
@@ -78,7 +78,6 @@ public class OptimizeTest {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
         TestUtils.noErrors(result.getReports());
     }
-
 
 
 

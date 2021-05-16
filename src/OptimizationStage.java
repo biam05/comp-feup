@@ -28,7 +28,7 @@ public class OptimizationStage implements JmmOptimization {
         JmmNode node = semanticsResult.getRootNode();
 
         // Convert the AST to a String containing the equivalent OLLIR code
-        OLLIRVisitor ollirVisitor = new OLLIRVisitor((GrammarSymbolTable) semanticsResult.getSymbolTable());
+        OLLIRVisitorTemp ollirVisitor = new OLLIRVisitorTemp((GrammarSymbolTable) semanticsResult.getSymbolTable());
         ollirVisitor.visit(node);
         String ollirCode = ollirVisitor.getCode()  + "\n}";
 

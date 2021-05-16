@@ -3,8 +3,8 @@ class Simple {
 
     public int add(int a, int b){
         int c;
-        c = a + this.constInstr();
-        return c;
+        c = a; // + this.constInstr() + 2;
+        return c + 1;
     }
 
     public static void main(String[] args){
@@ -15,7 +15,7 @@ class Simple {
         a = 20;
         b = 10;
         s = new Simple();
-        c = s.add(a,b);
+        c = s.add(a,1);
         io.println(c);
     }
 
