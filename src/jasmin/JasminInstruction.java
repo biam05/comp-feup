@@ -100,10 +100,7 @@ public class JasminInstruction {
     }
 
     private void generateAssignBinaryOper(AssignInstruction instruction){
-        String variable;
         Instruction rhs = instruction.getRhs();
-
-        variable = ((Operand) instruction.getDest()).getName();
 
         OperationType operation = ((BinaryOpInstruction) rhs).getUnaryOperation().getOpType();
         Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
@@ -117,20 +114,16 @@ public class JasminInstruction {
         else {
             decideType(leftElement);
             jasminCode.append(operation.toString().toLowerCase(Locale.ROOT));
-            storeOrIastore(instruction, variable);
+            storeOriastore(instruction.getDest());
         }
     }
 
     private void getLessThanOperation(AssignInstruction instruction){
-        String value, variable;
-
-        variable = ((Operand) instruction.getDest()).getName();
-
         jasminCode.append("\n\n\t\tif_icmpge ").append("ElseLTH").append(method.getN_branches());
         decideType(instruction.getDest());
         jasminCode.append("const_1");
 
-        storeOrIastore(instruction, variable);
+        storeOriastore(instruction.getDest());
 
         jasminCode.append("\n\t\tgoto ").append("AfterLTH").append(method.getN_branches());
 
@@ -138,24 +131,20 @@ public class JasminInstruction {
         decideType(instruction.getDest());
         jasminCode.append("const_0");
 
-        storeOrIastore(instruction, variable);
+        storeOriastore(instruction.getDest());
 
         jasminCode.append("\n\n\tAfterLTH").append(method.getN_branches()).append(":");
         method.incN_branches();
     }
 
     private void generateAssignGetfield(AssignInstruction instruction){
-        String variable;
         Instruction rhs = instruction.getRhs();
-        variable = ((Operand) instruction.getDest()).getName();
         generateGetField((GetFieldInstruction) rhs);
-        storeOrIastore(instruction, variable);
+        storeOriastore(instruction.getDest());
     }
 
     private void generateAssignCall(AssignInstruction instruction){
-        String variable;
         Instruction rhs = instruction.getRhs();
-        variable = ((Operand) instruction.getDest()).getName();
         generateCall((CallInstruction) rhs);
         Element firstArg = ((CallInstruction) rhs).getFirstArg();
         Operand opFirstArg = (Operand) firstArg;
@@ -163,7 +152,7 @@ public class JasminInstruction {
                 opFirstArg.getName().equals(method.getClassName())) {
             jasminCode.append("\n\t\tinvokespecial ").append(method.getClassName()).append(".<init>()V");
         }
-        storeOrIastore(instruction, variable);
+        storeOriastore(instruction.getDest());
     }
 
     // -------------- Call Instructions --------------
@@ -230,24 +219,11 @@ public class JasminInstruction {
             }
             jasminCode.append("\n\t\tinvokevirtual ");
             jasminCode.append(method.getClassName());
-            if (instruction.getNumOperands() > 1){
-                Element secondArg = instruction.getSecondArg();
-                if(secondArg.isLiteral()){
-                    jasminCode.append(".");
-                    jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
-                    jasminCode.append("(");
-                    for (Element parameter : instruction.getListOfOperands()) {
-                        jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),parameter.getType()));
-                    }
-                    jasminCode.append(")");
-                    jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
-                }
-            }
+            invokeParameters(instruction);
         }
     }
 
     private void generateNewArray(CallInstruction instruction){
-
         Element element = instruction.getListOfOperands().get(0);
         if (element.isLiteral())
             jasminCode.append(JasminUtils.getInstructionConstSize(((LiteralElement) element).getLiteral()));
@@ -263,27 +239,11 @@ public class JasminInstruction {
         Operand opFirstArg = (Operand)firstArg;
 
         for (Element parameter : instruction.getListOfOperands()) {
-            String type = decideType(parameter);
-            if (type == null)
-                jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) parameter).getName(), VarScope.LOCAL, parameter.getType()).getVirtualReg());
-            else
-                jasminCode.append(type).append("aload");
+            loadOraload(parameter, VarScope.LOCAL);
         }
         jasminCode.append("\n\t\tinvokestatic ");
         jasminCode.append(opFirstArg.getName());
-        if(instruction.getNumOperands() > 1){
-            Element secondArg = instruction.getSecondArg();
-            if(secondArg.isLiteral()){
-                jasminCode.append(".");
-                jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
-                jasminCode.append("(");
-                for (Element parameter : instruction.getListOfOperands()){
-                    jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),parameter.getType()));
-                }
-                jasminCode.append(")");
-                jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
-            }
-        }
+        invokeParameters(instruction);
     }
 
     private void generateClassMethod(CallInstruction instruction){
@@ -343,15 +303,9 @@ public class JasminInstruction {
         Element e3 = instruction.getThirdOperand();
         Operand o1 = (Operand) e1;
         Operand o2 = (Operand) e2;
-        String type;
 
         String name = o1.getName();
-        type = decideType(e1);
-        if (type == null)
-            jasminCode.append("load ").append(method.getLocalVariableByKey(name, VarScope.FIELD, o1.getType()).getVirtualReg());
-        else
-            jasminCode.append(type).append("aload");
-
+        loadOraload(e1, VarScope.FIELD);
         constOrLoad(e3, null);
 
         if(name.equals("this")) name = method.getClassName();
@@ -439,26 +393,41 @@ public class JasminInstruction {
             String value = ((LiteralElement) element).getLiteral();
             jasminCode.append(JasminUtils.getInstructionConstSize(value));
         }
-        else {
-            String type = decideType(element);
-            int localVariable = method.getLocalVariableByKey(((Operand)element).getName(), varScope, element.getType()).getVirtualReg();
-            if (type == null) {
-                jasminCode.append("load ").append(localVariable);
-            }
-            else {
-                jasminCode.append(type).append("aload");
-            }
-        }
+        else loadOraload(element, varScope);
     }
 
-    private void storeOrIastore(AssignInstruction instruction, String variable) {
-        String type = decideType(instruction.getDest());
+    private void storeOriastore(Element element) {
+        String type = decideType(element);
         if (type == null)
-            jasminCode.append("store ").append(method.getLocalVariableByKey(variable, VarScope.LOCAL, instruction.getDest().getType()).getVirtualReg());
+            jasminCode.append("store ").append(method.getLocalVariableByKey(((Operand) element).getName(), VarScope.LOCAL, element.getType()).getVirtualReg());
         else {
-            jasminCode.append(type).append("load ").append(method.getLocalVariableByKey(variable, VarScope.LOCAL, instruction.getDest().getType()).getVirtualReg());
+            jasminCode.append(type).append("load ").append(method.getLocalVariableByKey(((Operand) element).getName(), VarScope.LOCAL, element.getType()).getVirtualReg());
             jasminCode.append(type).append("astore");
         }
         jasminCode.append("\n");
+    }
+
+    private void loadOraload( Element element, VarScope varScope) {
+        String type = decideType(element);
+        if (type == null)
+            jasminCode.append("load ").append(method.getLocalVariableByKey(((Operand) element).getName(), varScope, element.getType()).getVirtualReg());
+        else
+            jasminCode.append(type).append("aload");
+    }
+
+    private void invokeParameters(CallInstruction instruction) {
+        if(instruction.getNumOperands() > 1){
+            Element secondArg = instruction.getSecondArg();
+            if(secondArg.isLiteral()){
+                jasminCode.append(".");
+                jasminCode.append(((LiteralElement) secondArg).getLiteral().replace("\"", ""));
+                jasminCode.append("(");
+                for (Element parameter : instruction.getListOfOperands()){
+                    jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),parameter.getType()));
+                }
+                jasminCode.append(")");
+                jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
+            }
+        }
     }
 }

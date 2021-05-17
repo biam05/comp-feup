@@ -64,6 +64,14 @@ public class BackendTest {
         assertEquals("Result: 28", output.trim());
     }
 
+    @Test
+    public void complexSimpleFromOllir() {
+        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/ComplexSimple.ollir")),
+                null, new ArrayList<>()));
+        var output = result.run();
+        //assertEquals("30", output.trim());
+    }
+
     /*@Test
     public void lifeFromOllir() {
         var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/Life.ollir")),
