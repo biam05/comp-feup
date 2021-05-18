@@ -62,7 +62,7 @@ public class JasminUtils {
         return res;
     }
 
-    public static String getInstructionConstSize(String value){
+    public static String getConstSize(String value){
         int val = Integer.parseInt(value);
         String res, aux;
         if (val >= 0 && val <= 5) aux = "iconst_";
@@ -73,4 +73,19 @@ public class JasminUtils {
         return res;
     }
 
+    public static String getLoadSize(int num){
+        String res, aux;
+        if (num >= 0 && num <= 3) aux = "load_";
+        else aux = "load ";
+        res = aux + num;
+        return res;
+    }
+
+    public static String getStoreSize(int num){
+        String res, aux;
+        if (num >= 0 && num <= 3) aux = "store_";
+        else aux = "store ";
+        res = aux + num;
+        return res;
+    }
 }
