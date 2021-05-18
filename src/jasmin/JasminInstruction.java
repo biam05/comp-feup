@@ -3,6 +3,7 @@ package jasmin;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -106,6 +107,8 @@ public class JasminInstruction {
         Element leftElement = ((BinaryOpInstruction) rhs).getLeftOperand();
         Element rightElement = ((BinaryOpInstruction) rhs).getRightOperand();
 
+        if (iincInstruction(leftElement, rightElement, instruction.getDest(), operation)) return;
+
         constOrLoad(leftElement, VarScope.LOCAL);
 
         constOrLoad(rightElement, VarScope.LOCAL);
@@ -206,7 +209,7 @@ public class JasminInstruction {
                 }
             }
 
-            loadOrAload(opFirstArg, null);
+            loadOrAload(opFirstArg, null); // gimme 1 sec
             for (Element parameter : instruction.getListOfOperands()) {
                 loadOrAload(parameter, VarScope.LOCAL);
             }
@@ -408,5 +411,30 @@ public class JasminInstruction {
                 jasminCode.append(JasminUtils.getReturnFromMethod(method.getMethod(),instruction.getReturnType()));
             }
         }
+    }
+
+    private boolean sameOperand(Element first, Element second) {
+        if (first.isLiteral() || second.isLiteral())
+            return false;
+        return (((Operand) first).getName().equals(((Operand) second).getName()));
+    }
+
+    private boolean iincInstruction(Element leftElement, Element rightElement, Element dest, OperationType operation) {
+        String literal;
+        if ((operation.toString().equals("ADD") || operation.toString().equals("SUB"))) {
+            if (sameOperand(dest, leftElement) && rightElement.isLiteral()) literal = ((LiteralElement) rightElement).getLiteral();
+            else if (sameOperand(dest, rightElement) && leftElement.isLiteral()) literal = ((LiteralElement) leftElement).getLiteral();
+            else return false;
+            Descriptor var = method.getLocalVariableByKey(((Operand) dest).getName(), null, dest.getType());
+            if (var.getVarType().getTypeOfElement() != ElementType.ARRAYREF) {
+                jasminCode.append("\n\t\tiinc ").append(var.getVirtualReg());
+                if ((operation.toString().equals("ADD")))
+                    jasminCode.append(" ").append(literal);
+                else
+                    jasminCode.append(" -").append(literal);
+                return true;
+            }
+        }
+        return false;
     }
 }
