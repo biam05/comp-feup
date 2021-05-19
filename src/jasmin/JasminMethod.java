@@ -14,7 +14,8 @@ public class JasminMethod {
     private final List<Report> reports;
     private final String className;
     private int n_locals;
-    private int n_stack;
+    private int max_n_stack;
+    private int current_n_stack;
     private int n_branches;
     private Map<String, Descriptor> localVariables;
 
@@ -22,8 +23,9 @@ public class JasminMethod {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
-        this.n_locals = 0; // change
-        this.n_stack = 99; // change
+        this.n_locals = 0;
+        this.max_n_stack = 0;
+        this.current_n_stack = 0;
         this.n_branches = 0;
         this.localVariables = new HashMap<>();
         this.className = className;
@@ -46,25 +48,26 @@ public class JasminMethod {
         return n_branches;
     }
 
-    public int getN_locals() {
-        return n_locals;
-    }
-
     public void incN_branches() {
         n_branches++;
     }
+
+    public void incN_stack() {
+        current_n_stack++;
+        if (current_n_stack > max_n_stack)
+            max_n_stack = current_n_stack;
+    }
+
+    public void decN_stack() { current_n_stack--;}
 
     public String getClassName() {
         return className;
     }
 
-    public Map<String, Descriptor> getLocalVariables() {
-        return localVariables;
-    }
-
-    public Descriptor getLocalVariableByKey(String key, VarScope type, Type tp) {
+    public Descriptor getLocalVariableByKey(Element dest, VarScope type) {
+        String key = ((Operand) dest).getName();
         if(localVariables.get(key) == null){
-            addLocalVariable(key, type, tp);
+            addLocalVariable(key, type, dest.getType());
         }
         return localVariables.get(key);
     }
@@ -101,7 +104,7 @@ public class JasminMethod {
 
         getMethodDeclaration();
 
-        jasminCode.append(JasminUtils.getReturnFromMethod(method, method.getReturnType()));
+        jasminCode.append(JasminUtils.getReturnFromMethod(this, method.getReturnType()));
 
         StringBuilder auxiliaryJasmin = new StringBuilder();
         String currentlabel = "";
@@ -120,7 +123,7 @@ public class JasminMethod {
         }
         if(!this.method.isConstructMethod()){
             this.jasminCode.append("\n\t\t.limit locals ").append(n_locals);
-            this.jasminCode.append("\n\t\t.limit stack ").append(n_stack).append("\n");
+            this.jasminCode.append("\n\t\t.limit stack ").append(max_n_stack).append("\n");
         }
         this.jasminCode.append(auxiliaryJasmin);
         jasminCode.append("\n.end method");

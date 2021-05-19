@@ -1,5 +1,6 @@
 package jasmin;
 
+import jas.Var;
 import org.specs.comp.ollir.*;
 
 public class JasminUtils {
@@ -38,7 +39,7 @@ public class JasminUtils {
         return res.toString();
     }
 
-    public static String getReturnFromMethod(Method method, Type type){
+    public static String getReturnFromMethod(JasminMethod method, Type type){
         String res = "";
         switch(type.getTypeOfElement()){
             case INT32:
@@ -51,7 +52,7 @@ public class JasminUtils {
                 res = "[I";
                 break;
             case OBJECTREF:
-                res = method.getClass().getName();
+                res = method.getClassName();
                 break;
             case VOID:
                 res = "V";
@@ -62,7 +63,7 @@ public class JasminUtils {
         return res;
     }
 
-    public static String getConstSize(String value){
+    public static String getConstSize(JasminMethod method, String value){
         int val = Integer.parseInt(value);
         String res, aux;
         if (val >= 0 && val <= 5) aux = "iconst_";
@@ -70,22 +71,25 @@ public class JasminUtils {
         else if (val > 128 && val <= 32768) aux = "sipush ";
         else aux = "ldc ";
         res = "\n\t\t" + aux + val;
+        method.incN_stack();
         return res;
     }
 
-    public static String getLoadSize(int num){
-        String res, aux;
+    public static String getLoadSize(JasminMethod method, Element element, VarScope varScope) {
+        String aux;
+        int num = method.getLocalVariableByKey(element, varScope).getVirtualReg();
         if (num >= 0 && num <= 3) aux = "load_";
         else aux = "load ";
-        res = aux + num;
-        return res;
+        method.incN_stack();
+        return aux + num;
     }
 
-    public static String getStoreSize(int num){
-        String res, aux;
+    public static String getStoreSize(JasminMethod method, Element element, VarScope varScope){
+        String aux;
+        int num = method.getLocalVariableByKey(element, varScope).getVirtualReg();
         if (num >= 0 && num <= 3) aux = "store_";
         else aux = "store ";
-        res = aux + num;
-        return res;
+        method.decN_stack();
+        return aux + num;
     }
 }
