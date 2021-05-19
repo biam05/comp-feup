@@ -24,6 +24,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         addVisit("MethodDeclaration", this::visitMethod);
         addVisit("Statement", this::visitStatement);
         addVisit("Expression", this::visitExpression);
+        addVisit("IfExpression", this::visitExpressionParent);
         addVisit("ClassDeclaration", this::visitClassDeclaration);
         addVisit("Return", this::visitReturn);
         addVisit("Assign", this::visitAssign);
@@ -95,13 +96,13 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 this.currentMethod = symbolTable.getMethodByInfo(methodInfo.toString());
                 result.appendCode(OLLIRUtils.methodDeclaration(this.currentMethod));
                 result.appendCode("{\n");
-                result.appendToCode(visit(child));
+                result.append(visit(child));
                 result.appendCode("\n"); //ver isto
 
                 alreadyInBody = true;
             } else if (child.getKind().equals("Return")) {
                 hasReturn = true;
-                result.appendToCode(visit(child));
+                result.append(visit(child));
                 result.appendCode("\n}\n\n");
             }
         }
@@ -109,7 +110,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         if (!hasReturn) result.appendCode(OLLIRUtils.returnVoid() + "}\n\n");
 
         this.currentMethod = null;
-        this.code.appendToCode(result);
+        this.code.appendCode(result.getCode());
 
         return result;
     }
@@ -137,6 +138,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
+            System.out.println("statement -> " + child);
             OllirObject aux = visit(child);
             List<JmmNode> childrenC = child.getChildren();
 
@@ -151,13 +153,17 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         return result;
     }
 
+    private OllirObject visitExpressionParent(JmmNode node, String dummy) {
+        return visit(node.getChildren().get(0));
+    }
+
     private OllirObject visitExpression(JmmNode node, String dummy) {
         return visit(node.getChildren().get(0));
     }
 
     private OllirObject visitClassDeclaration(JmmNode node, String dummy) {
         OllirObject result = new OllirObject("");
-        for (JmmNode child : node.getChildren()) result.appendToCode(visit(child));
+        for (JmmNode child : node.getChildren()) visit(child);
         return result;
     }
 
@@ -172,12 +178,19 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         String rightC = right.getCode();
 
         OllirObject result = new OllirObject("");
+        System.out.println("left : " + leftC + ", " + rightC);
+
         if (leftC.contains("putfield")) {
             leftC = leftC.replace("putfield = ", "");
             rightC = checkExpressionTemporary("", right);
             result.appendCode(OLLIRUtils.putField(leftC, rightC));
-        } else {
+        }
+        else {
             String type = OLLIRUtils.getReturnTypeExpression(leftC);
+            if(rightC.contains("invokestatic")) {
+                rightC = rightC.substring(0, rightC.lastIndexOf(".V"));
+                rightC += type;
+            }
             result.appendCode(OLLIRUtils.assign(leftC, type, rightC));
         }
 
@@ -198,9 +211,10 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         result.appendCode("\nLoop" + loop_counter + ":\n");
         OllirObject cond = visit(condition);
+        cond.setCode(checkExpressionTemporary("", cond));
         result.appendCode(cond.getAboveTemp());
 
-        result.appendCode("if (" + cond.getCode() + ") goto Body" + loop_counter + ";\n");
+        result.appendCode("if (" + cond.getCode() + " ==.bool 1.bool) goto Body" + loop_counter + ";\n");
         result.appendCode("goto EndLoop" + loop_counter + ";");
         result.appendCode("\nBody" + loop_counter + ":\n");
 
@@ -216,10 +230,14 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         List<JmmNode> children = node.getChildren();
         OllirObject aux = visit(children.get(0));
-        for (String above : aux.getAboveList()) result.addAboveTemp(above);
+        System.out.println("\n\n----------------------> OLAAAAAAAAAAA");
+        System.out.println("kind : " + children.get(0).getKind());
+        System.out.println("aux -> " + aux);
+        System.out.println("----------------------> ADEUSSSSSS\n\n");
+        result.appendTemps(aux);
+        String code = checkExpressionTemporary(aux.getCode(), result);
 
-        result.appendCode("\nif (" + aux.getCode() + ") goto else" + if_counter + ";\n");
-        result.appendCode(aux.getBelowTemp()); //TODO: not sure about this
+        result.appendCode("\nif (" + code + " ==.bool 1.bool) goto else" + if_counter + ";\n");
 
         aux = visit(children.get(1));
         result.append(aux);
@@ -259,8 +277,6 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         } else if (child.getKind().contains("Identifier")) {
             value = OLLIRUtils.getIdentifier(child, symbolTable, currentMethod);
-            System.out.println("value -> " + value);
-
             result.appendCode(value);
             if (!value.contains("putfield") && !value.contains("getfield"))
                 result.appendCode(OLLIRUtils.getIdentifierType(child, symbolTable, currentMethod));
@@ -332,7 +348,11 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         } catch (NumberFormatException ignored) {
         }
 
-        result.appendCode(OLLIRUtils.getIdentifierExpression(i.getCode()) + "[" + aCode + "]" + type);
+        String finalExp = checkExpressionTemporary(i.getCode(), result);
+        if(!finalExp.equals(i.getCode())) finalExp = "aux_" + var_temp;
+        else finalExp = OLLIRUtils.getIdentifierExpression(i.getCode());
+
+        result.appendCode(finalExp + "[" + aCode + "]" + type);
 
         return result;
     }
@@ -368,7 +388,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 args.set(i, var_name);
             }
         }
-
+        System.out.println("invoke -> " + invokeType + ", " + identifier + ", " + args);
         switch (invokeType) {
             case "virtual":
                 List<String> temporary = new ArrayList<>();
@@ -395,7 +415,8 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                     var_temp++;
                     aux = "aux" + var_temp + identifierType;
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
-                } else result.appendTemps(identifier);
+                }
+                else result.appendTemps(identifier);
 
                 String methodCode = OLLIRUtils.invokeStaticVirtual(false, aux, OLLIRUtils.getMethodName(method.getChildren().get(0)), args, type);
                 result.appendCode(methodCode);
@@ -454,7 +475,6 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
             res.addAboveTemp(temp_name + " :=" + type + " " + aux.getCode());
             return temp_name;
         }
-
         return aux.getCode();
     }
 
@@ -465,15 +485,20 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         if (result.equals("")) code = res.getCode();
         else code = result;
 
-        List<String> auxiliar = new LinkedList<>(Arrays.asList(code.split(" ")));
-        if (auxiliar.size() == 1) return code;
+        String aux = code;
 
+        if(!code.startsWith("invoke") && !code.contains("[")) {
+            List<String> auxiliar = new LinkedList<>(Arrays.asList(code.split(" ")));
+            if (auxiliar.size() == 1) return code;
+            code = auxiliar.get(1);
+            aux = String.join(" ", auxiliar);
+        }
+
+        String type = OLLIRUtils.getReturnTypeExpression(code);
         var_temp++;
-        String type = OLLIRUtils.getReturnTypeExpression(auxiliar.get(1));
         String temp_name = "aux" + var_temp + type;
 
-        String temp = temp_name + " :=" + type + " " + String.join(" ", auxiliar);
-
+        String temp = temp_name + " :=" + type + " " + aux;
         res.addAboveTemp(temp);
         return temp_name;
     }

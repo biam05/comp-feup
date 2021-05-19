@@ -129,6 +129,7 @@ public class OLLIRUtils {
     public static String getField(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method) {
         String var = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         String type = getIdentifierType(node, symbolTable, method);
+
         return "getfield(this" + ", " + var + type + ")" + type;
     }
 
@@ -149,8 +150,9 @@ public class OLLIRUtils {
 
     public static String getIdentifierExpression(String expression) { //for example, parse a.i32: return a
         String[] values = expression.split("\\.");
+        if (values.length == 2)
+            return values[0].trim();
 
-        if (values.length == 2) return values[0].trim();
         if (values.length > 2) {
             String no_last = values[values.length - 2];
             int index = 1;
@@ -192,6 +194,7 @@ public class OLLIRUtils {
 
     public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable) {
         String methodName = getMethodName(method);
+        System.out.println("method -> " + methodName + ", " + symbolTable.hasMethod(methodName));
         if (identifier.contains("this") || symbolTable.hasMethod(methodName))
             return "virtual"; // if it belongs to the class
         return "static";
