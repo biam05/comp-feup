@@ -46,7 +46,7 @@ public class BackendStage implements JasminBackend {
 
             jasminCode.append("\n.super ");
 
-            if (!ollirClass.getSuperClass().equals("null"))
+            if (ollirClass.getSuperClass() != null)
                 jasminCode.append(ollirClass.getClassName());
             else
                 jasminCode.append("java/lang/Object");
