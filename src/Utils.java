@@ -1,16 +1,13 @@
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 
 public class Utils {
-	
-	public static InputStream toInputStream(String text) {
-        try {
-            return new ByteArrayInputStream(text.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
+
+    public static InputStream toInputStream(String text) {
+        return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
     }
 
 }

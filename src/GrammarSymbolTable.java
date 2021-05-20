@@ -77,9 +77,9 @@ public class GrammarSymbolTable implements SymbolTable {
         list.add(info.substring(0, indexBeg));
 
         int indexEnd = info.indexOf(')');
-        String param = info.substring(indexBeg+1, indexEnd).trim();
+        String param = info.substring(indexBeg + 1, indexEnd).trim();
 
-        if(!param.equals("")) {
+        if (!param.equals("")) {
             String[] paramm = param.split(",");
             list.addAll(Arrays.asList(paramm));
         }
@@ -123,7 +123,7 @@ public class GrammarSymbolTable implements SymbolTable {
         return null;
     }
 
-    public Type hasImport(String identifierName){
+    public Type hasImport(String identifierName) {
         for (String importName : getImports()) {
             String[] imports = importName.split("\\.");
             if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);
@@ -131,9 +131,9 @@ public class GrammarSymbolTable implements SymbolTable {
         return null;
     }
 
-    public Boolean hasMethod(String methodName){
-        for(SymbolMethod method: methods){
-            if(method.getName().equals(methodName)) return true;
+    public Boolean hasMethod(String methodName) {
+        for (SymbolMethod method : methods) {
+            if (method.getName().equals(methodName)) return true;
         }
         return false;
     }

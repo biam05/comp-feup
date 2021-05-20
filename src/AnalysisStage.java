@@ -40,7 +40,7 @@ public class AnalysisStage implements JmmAnalysis {
         semanticAnalysisVisitor.visit(node);
         reports.addAll(semanticAnalysisVisitor.getReports());
 
-        if(reports.size() > 0) {
+        if (reports.size() > 0) {
             System.out.println("\n\n------------ REPORTS (Semantic Analysis) ------------");
             for (Report report : reports)
                 System.out.println(report);

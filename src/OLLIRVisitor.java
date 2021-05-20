@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
+public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
     private final GrammarSymbolTable symbolTable;
     private final List<Report> reports;
     private final OllirObject code;
@@ -17,7 +17,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
     private int var_temp = 0;
     private SymbolMethod currentMethod;
 
-    public OLLIRVisitorTemp(GrammarSymbolTable symbolTable) {
+    public OLLIRVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
         this.code = new OllirObject(OLLIRUtils.init(symbolTable.getClassName(), symbolTable.getFields()));
@@ -138,7 +138,6 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
-            System.out.println("statement -> " + child);
             OllirObject aux = visit(child);
             List<JmmNode> childrenC = child.getChildren();
 
@@ -178,16 +177,14 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         String rightC = right.getCode();
 
         OllirObject result = new OllirObject("");
-        System.out.println("left : " + leftC + ", " + rightC);
 
         if (leftC.contains("putfield")) {
             leftC = leftC.replace("putfield = ", "");
             rightC = checkExpressionTemporary("", right);
             result.appendCode(OLLIRUtils.putField(leftC, rightC));
-        }
-        else {
+        } else {
             String type = OLLIRUtils.getReturnTypeExpression(leftC);
-            if(rightC.contains("invokestatic")) {
+            if (rightC.startsWith("invoke") && rightC.endsWith(".V")) {
                 rightC = rightC.substring(0, rightC.lastIndexOf(".V"));
                 rightC += type;
             }
@@ -230,10 +227,6 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         List<JmmNode> children = node.getChildren();
         OllirObject aux = visit(children.get(0));
-        System.out.println("\n\n----------------------> OLAAAAAAAAAAA");
-        System.out.println("kind : " + children.get(0).getKind());
-        System.out.println("aux -> " + aux);
-        System.out.println("----------------------> ADEUSSSSSS\n\n");
         result.appendTemps(aux);
         String code = checkExpressionTemporary(aux.getCode(), result);
 
@@ -349,7 +342,8 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
         }
 
         String finalExp = checkExpressionTemporary(i.getCode(), result);
-        if(!finalExp.equals(i.getCode())) finalExp = "aux_" + var_temp;
+        aCode = checkExpressionTemporary(aCode, result);
+        if (!finalExp.equals(i.getCode())) finalExp = "aux_" + var_temp;
         else finalExp = OLLIRUtils.getIdentifierExpression(i.getCode());
 
         result.appendCode(finalExp + "[" + aCode + "]" + type);
@@ -388,22 +382,20 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                 args.set(i, var_name);
             }
         }
-        System.out.println("invoke -> " + invokeType + ", " + identifier + ", " + args);
+
         switch (invokeType) {
             case "virtual":
-                List<String> temporary = new ArrayList<>();
 
                 String methodInfo = OLLIRUtils.getMethodInfo(method, args);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
                 String type = met.getReturnType().toOLLIR();
-
-                for (String temp : temporary) result.addAboveTemp(temp + ";");
 
                 String aux = identifier.getCode();
                 if (identifier.getCode().contains("new(") && !identifier.getCode().contains("new(array,")) {
                     String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
 
                     var_temp++;
+                    aux = "aux" + var_temp + identifierType;
                     aux = "aux" + var_temp + identifierType;
 
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
@@ -415,15 +407,15 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
                     var_temp++;
                     aux = "aux" + var_temp + identifierType;
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
-                }
-                else result.appendTemps(identifier);
+                } else result.appendTemps(identifier);
 
-                String methodCode = OLLIRUtils.invokeStaticVirtual(false, aux, OLLIRUtils.getMethodName(method.getChildren().get(0)), args, type);
+                String methodCode = OLLIRUtils.invokeMethod(invokeType, aux, OLLIRUtils.getMethodName(method.getChildren().get(0)), args, type);
                 result.appendCode(methodCode);
                 return result;
             case "static":
+            case "special":
                 String returnType = getStaticReturnType(call);
-                result.appendCode(OLLIRUtils.invokeStaticVirtual(true, identifier.getCode(), OLLIRUtils.getMethodName(method.getChildren().get(0)), args, returnType));
+                result.appendCode(OLLIRUtils.invokeMethod(invokeType, identifier.getCode(), OLLIRUtils.getMethodName(method.getChildren().get(0)), args, returnType));
                 return result;
             default:
                 return result;
@@ -487,7 +479,7 @@ public class OLLIRVisitorTemp extends AJmmVisitor<String, OllirObject> {
 
         String aux = code;
 
-        if(!code.startsWith("invoke") && !code.contains("[")) {
+        if (!code.startsWith("invoke") && !code.contains("[") && !code.startsWith("arraylength(")) {
             List<String> auxiliar = new LinkedList<>(Arrays.asList(code.split(" ")));
             if (auxiliar.size() == 1) return code;
             code = auxiliar.get(1);

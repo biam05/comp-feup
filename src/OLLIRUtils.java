@@ -30,14 +30,12 @@ public class OLLIRUtils {
         return "invokespecial(" + identifierClass + ", \"<init>\").V;\n";
     }
 
-    public static String invokeStaticVirtual(boolean isStatic, String identifier, String methodName, List<String> fields, String returnType) {
+    public static String invokeMethod(String method, String identifier, String methodName, List<String> fields, String returnType) {
 
         StringBuilder result = new StringBuilder();
         List<String> temporary = new ArrayList<>();
 
-        if (isStatic) result.append("invokestatic");
-        else result.append("invokevirtual");
-
+        result.append("invoke").append(method);
         result.append("(").append(identifier).append(", \"").append(methodName).append("\"");
         for (String field : fields) {
             String[] splitted = field.split("\n");
@@ -194,10 +192,10 @@ public class OLLIRUtils {
 
     public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable) {
         String methodName = getMethodName(method);
-        System.out.println("method -> " + methodName + ", " + symbolTable.hasMethod(methodName));
         if (identifier.contains("this") || symbolTable.hasMethod(methodName))
             return "virtual"; // if it belongs to the class
-        return "static";
+        if (symbolTable.getSuper().equals("") || (symbolTable.hasImport(identifier) != null)) return "static";
+        return "special";
     }
 
     public static String getMethodName(JmmNode method) {

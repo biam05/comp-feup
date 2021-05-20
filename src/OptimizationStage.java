@@ -4,7 +4,6 @@ import pt.up.fe.comp.jmm.ollir.JmmOptimization;
 import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp.jmm.report.Report;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,9 +27,9 @@ public class OptimizationStage implements JmmOptimization {
         JmmNode node = semanticsResult.getRootNode();
 
         // Convert the AST to a String containing the equivalent OLLIR code
-        OLLIRVisitorTemp ollirVisitor = new OLLIRVisitorTemp((GrammarSymbolTable) semanticsResult.getSymbolTable());
+        OLLIRVisitor ollirVisitor = new OLLIRVisitor((GrammarSymbolTable) semanticsResult.getSymbolTable());
         ollirVisitor.visit(node);
-        String ollirCode = ollirVisitor.getCode()  + "}";
+        String ollirCode = ollirVisitor.getCode() + "}";
 
         System.out.println("\n------------ OLLIR CODE ------------");
         System.out.println(ollirCode);
@@ -38,7 +37,7 @@ public class OptimizationStage implements JmmOptimization {
 
         // More reports from this stage
         List<Report> reports = ollirVisitor.getReports();
-        if(reports.size() > 0) {
+        if (reports.size() > 0) {
             System.out.println("\n\n------------ REPORTS (Ollir) ------------");
             for (Report report : reports)
                 System.out.println(report);

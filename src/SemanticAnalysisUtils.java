@@ -264,10 +264,9 @@ public class SemanticAnalysisUtils {
         List<JmmNode> children = node.getChildren();
         if (children.size() != 2) return null;
         if (children.get(0).getKind().equals("FinalTerms") || children.get(0).getKind().equals("Call")) {
-            if (children.get(1).getKind().equals("MethodCall")){
+            if (children.get(1).getKind().equals("MethodCall")) {
                 return evaluateMethodCall(symbolTable, method, children, reports);
-            }
-            else if (children.get(1).getKind().equals("Length") && evaluateArray(symbolTable, method, children.get(0), reports))
+            } else if (children.get(1).getKind().equals("Length") && evaluateArray(symbolTable, method, children.get(0), reports))
                 return new Type("Int", false);
         }
 
@@ -283,27 +282,26 @@ public class SemanticAnalysisUtils {
         Boolean hasNestedCall = false;
         String identifierN = "this";
 
-        if(identifier.getKind().equals("Call")) {
+        if (identifier.getKind().equals("Call")) {
             hasNestedCall = true;
             Type t = evaluateCall(symbolTable, method, identifier, reports);
             if (t != null) {
                 Type res = symbolTable.hasImport(t.getName());
                 if (t.equals(res)) return t;
                 else if (t.getName().equals(symbolTable.getSuper())) return new Type("Accepted", false);
-                else if(t.getName().equals(symbolTable.getClassName())) identifierN = t.getName();
-                else{
+                else if (t.getName().equals(symbolTable.getClassName())) identifierN = t.getName();
+                else {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "method does not exist or is being invoked with the wrong arguments"));
                     return null;
                 }
             }
-        }
-        else if (!identifierKind.contains("Identifier") && !identifierKind.equals("This") ) {
+        } else if (!identifierKind.contains("Identifier") && !identifierKind.equals("This")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "not a valid identifier"));
             return null;
         }
 
 
-        if(!hasNestedCall) {
+        if (!hasNestedCall) {
             Boolean isNew = false;
             if (!identifierKind.equals("This")) {
                 if (identifierKind.contains("NewIdentifier")) isNew = true;

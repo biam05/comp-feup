@@ -47,13 +47,12 @@ public class BackendStage implements JasminBackend {
 
             jasminCode.append("\n.super java/lang/Object\n");
 
-            for (var field : ollirClass.getFields())
-            {
+            for (var field : ollirClass.getFields()) {
                 jasminCode.append("\n.field ");
                 if (field.isFinalField())
                     jasminCode.append("final ");
                 jasminCode.append(field.getFieldName()).append(" ");
-                switch(field.getFieldType().toString()){
+                switch (field.getFieldType().toString()) {
                     case "INT32":
                         jasminCode.append("I");
                         break;
@@ -68,7 +67,7 @@ public class BackendStage implements JasminBackend {
                 }
             }
 
-            for (var method : ollirClass.getMethods()){
+            for (var method : ollirClass.getMethods()) {
                 System.out.println("METHOD " + method.getMethodName());
                 MethodJasmin methodJasmin = new MethodJasmin(method, ollirClass.getClassName());
                 methodJasmin.generateJasminCode();

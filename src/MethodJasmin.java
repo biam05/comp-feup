@@ -12,8 +12,8 @@ public class MethodJasmin {
     private final List<Report> reports;
     private final String className;
     private int n_locals;
-    private int n_stack;
-    private Map<String, Integer> localVariables;
+    private final int n_stack;
+    private final Map<String, Integer> localVariables;
 
     public MethodJasmin(Method method, String className) {
         this.method = method;
@@ -47,14 +47,14 @@ public class MethodJasmin {
     }
 
     public Integer getLocalVariableByKey(String key) {
-        if(localVariables.get(key) == null){
+        if (localVariables.get(key) == null) {
             addLocalVariable(key, n_locals);
         }
         return localVariables.get(key);
     }
 
-    public Boolean addLocalVariable(String variable, int id){
-        if(!localVariables.containsKey(variable)){
+    public Boolean addLocalVariable(String variable, int id) {
+        if (!localVariables.containsKey(variable)) {
             localVariables.put(variable, id);
             n_locals++;
             return true;
@@ -63,15 +63,15 @@ public class MethodJasmin {
         return false;
     }
 
-    public void generateJasminCode(){
+    public void generateJasminCode() {
 
         jasminCode.append("\n\n.method public");
 
-        if(method.isConstructMethod())
+        if (method.isConstructMethod())
             jasminCode.append(" <init>");
-        else{
-            if(method.isStaticMethod()) jasminCode.append(" static");
-            if(method.isFinalMethod())  jasminCode.append(" final");
+        else {
+            if (method.isStaticMethod()) jasminCode.append(" static");
+            if (method.isFinalMethod()) jasminCode.append(" final");
 
             jasminCode.append(" ");
             jasminCode.append(method.getMethodName());
@@ -83,7 +83,7 @@ public class MethodJasmin {
         jasminCode.append(")");
 
         String methodReturn = "";
-        switch(method.getReturnType().getTypeOfElement()){
+        switch (method.getReturnType().getTypeOfElement()) {
             // todo: verificar com o ollir como é o tipo quando retorna uma classe
             case INT32:
                 methodReturn = "I";
@@ -105,13 +105,13 @@ public class MethodJasmin {
         }
         jasminCode.append(methodReturn);
         StringBuilder auxiliaryJasmin = new StringBuilder();
-        for(var inst : method.getInstructions()){
+        for (var inst : method.getInstructions()) {
             InstructionJasmin instructionJasmin = new InstructionJasmin(inst, this);
             instructionJasmin.generateJasminCode();
             auxiliaryJasmin.append(instructionJasmin.getJasminCode());
             this.reports.addAll(instructionJasmin.getReports());
         }
-        if(!this.method.isConstructMethod()){
+        if (!this.method.isConstructMethod()) {
             this.jasminCode.append("\n\t\t.limit locals ").append(n_locals);
             this.jasminCode.append("\n\t\t.limit stack ").append(n_stack).append("\n");
         }
@@ -119,15 +119,14 @@ public class MethodJasmin {
         jasminCode.append("\n.end method");
     }
 
-    private void analyseParameters(){
-        if(method.getMethodName().equals("main")){
+    private void analyseParameters() {
+        if (method.getMethodName().equals("main")) {
             jasminCode.append("[Ljava/lang/String;");
             addLocalVariable("args", n_locals);
-        }
-        else{
-            for(Element param : method.getParams()){
-                if(param.isLiteral()) jasminCode.append("L");
-                switch (param.getType().getTypeOfElement()){
+        } else {
+            for (Element param : method.getParams()) {
+                if (param.isLiteral()) jasminCode.append("L");
+                switch (param.getType().getTypeOfElement()) {
                     case INT32:
                         jasminCode.append("I");
                         break;
@@ -146,7 +145,7 @@ public class MethodJasmin {
                     default:
                         break;
                 }
-                addLocalVariable(((Operand)param).getName(), n_locals);
+                addLocalVariable(((Operand) param).getName(), n_locals);
             }
         }
     }
