@@ -38,6 +38,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         for (int i = 0; i < children.size(); i++) {
             JmmNode child = children.get(i);
             String childKind = child.getKind();
+
             if (childKind.contains("Identifier") && !classNameSet) {
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 symbolTable.setClassName(name);
@@ -115,17 +116,21 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     parameters.add(children.get(i));
                 }
                 getMethodParameters(method, parameters);
+
             } else if (childKind.equals("MethodBody")) {
                 visitMethodBody(method, child);
                 alreadyInBody = true;
+
             } else if (childKind.contains("Identifier")) {
+
                 String name = childKind.replaceAll("'", "").replace("Identifier ", "");
                 method.setName(name);
+
             } else if (childKind.contains("Main"))
                 method.setName("main");
         }
-        this.symbolTable.addMethod(method);
 
+        this.symbolTable.addMethod(method);
         return true;
     }
 

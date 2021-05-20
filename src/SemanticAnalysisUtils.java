@@ -264,9 +264,9 @@ public class SemanticAnalysisUtils {
         List<JmmNode> children = node.getChildren();
         if (children.size() != 2) return null;
         if (children.get(0).getKind().equals("FinalTerms") || children.get(0).getKind().equals("Call")) {
-            if (children.get(1).getKind().equals("MethodCall"))
+            if (children.get(1).getKind().equals("MethodCall")) {
                 return evaluateMethodCall(symbolTable, method, children, reports);
-            if (children.get(1).getKind().equals("Length") && evaluateArray(symbolTable, method, children.get(0), reports))
+            } else if (children.get(1).getKind().equals("Length") && evaluateArray(symbolTable, method, children.get(0), reports))
                 return new Type("Int", false);
         }
 
@@ -279,36 +279,52 @@ public class SemanticAnalysisUtils {
         JmmNode methodNode = nodes.get(1);
 
         String identifierKind = identifier.getChildren().get(0).getKind();
+        Boolean hasNestedCall = false;
+        String identifierN = "this";
 
-        if (!identifierKind.contains("Identifier") && !identifierKind.equals("This")) {
+        if (identifier.getKind().equals("Call")) {
+            hasNestedCall = true;
+            Type t = evaluateCall(symbolTable, method, identifier, reports);
+            if (t != null) {
+                Type res = symbolTable.hasImport(t.getName());
+                if (t.equals(res)) return t;
+                else if (t.getName().equals(symbolTable.getSuper())) return new Type("Accepted", false);
+                else if (t.getName().equals(symbolTable.getClassName())) identifierN = t.getName();
+                else {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "method does not exist or is being invoked with the wrong arguments"));
+                    return null;
+                }
+            }
+        } else if (!identifierKind.contains("Identifier") && !identifierKind.equals("This")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "not a valid identifier"));
             return null;
         }
 
-        String identifierN = "this";
-        Boolean isNew = false;
 
-        if (!identifierKind.equals("This")) {
-            if (identifierKind.contains("NewIdentifier")) isNew = true;
-            String identifierName = identifierKind.replaceAll("'", "").replace("Identifier ", "").replace("NewIdentifier ", "");
-            Type res = symbolTable.hasImport(identifierName);
-            if (res != null) return res;
+        if (!hasNestedCall) {
+            Boolean isNew = false;
+            if (!identifierKind.equals("This")) {
+                if (identifierKind.contains("NewIdentifier")) isNew = true;
+                String identifierName = identifierKind.replaceAll("'", "").replace("Identifier ", "").replace("NewIdentifier ", "");
+                Type res = symbolTable.hasImport(identifierName);
+                if (res != null) return res;
 
-            if (!isNew) {
-                Type identifierType = checkIfIdentifierExists(symbolTable, method, identifierName);
+                if (!isNew) {
+                    Type identifierType = checkIfIdentifierExists(symbolTable, method, identifierName);
 
-                if (identifierType == null) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier '" + identifierName + "' is not declared"));
+                    if (identifierType == null) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier '" + identifierName + "' is not declared"));
+                        return null;
+                    }
+
+                    identifierN = identifierType.getName();
+                } else identifierN = identifierName;
+
+                if (identifierN.equals(symbolTable.getSuper())) return new Type("Accepted", false);
+                if (identifierN.equals("Int") || identifierN.equals("Boolean") || identifierN.equals("String")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier cannot be string, int or boolean"));
                     return null;
                 }
-
-                identifierN = identifierType.getName();
-            } else identifierN = identifierName;
-
-            if (identifierN.equals(symbolTable.getSuper())) return new Type("Accepted", false);
-            if (identifierN.equals("Int") || identifierN.equals("Boolean") || identifierN.equals("String")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier cannot be string, int or boolean"));
-                return null;
             }
         }
 
@@ -331,6 +347,7 @@ public class SemanticAnalysisUtils {
         String methodInfo = methodName + "(" + String.join(",", p) + ")";
 
         Type type = symbolTable.getReturnType(methodInfo);
+
         if (type != null) return type;
 
         if (identifierN.equals("this") || identifierN.equals(symbolTable.getClassName())) {

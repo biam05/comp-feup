@@ -65,6 +65,7 @@ public class TestUtils {
 
             // It is expected that the Analysis class can be instantiated without arguments
             JmmAnalysis analysis = (JmmAnalysis) analysisClass.getConstructor().newInstance();
+
             return analysis.semanticAnalysis(parserResult);
 
         } catch (Exception e) {
@@ -95,7 +96,7 @@ public class TestUtils {
                 semanticsResult = optimization.optimize(semanticsResult);
             }
 
-            var ollirResult = optimization.toOllir(semanticsResult);
+            var ollirResult = optimization.toOllir(semanticsResult, optimize);
 
             if (optimize) {
                 ollirResult = optimization.optimize(ollirResult);
@@ -110,7 +111,7 @@ public class TestUtils {
 
     public static OllirResult optimize(String code, boolean optimize) {
         var semanticsResult = analyse(code);
-        noErrors(semanticsResult.getReports());
+        //noErrors(semanticsResult.getReports());
         return optimize(semanticsResult, optimize);
     }
 

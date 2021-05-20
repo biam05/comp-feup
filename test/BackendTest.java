@@ -34,48 +34,19 @@ public class BackendTest {
     }
 
     @Test
-    public void testSimple() {
-        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
+    public void testHelloWorldAdd() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
         TestUtils.noErrors(result.getReports());
-        var output = result.run();
-        assertEquals("30", output.trim());
-    }
-
-    @Test
-    public void testHelloWorldFromOllir() {
-        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/HelloWorld.ollir")),
-                null, new ArrayList<>()));
         var output = result.run();
         assertEquals("Hello, World!", output.trim());
     }
 
     @Test
-    public void testIfElseFromOllir() {
-        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/IfElseLoops.ollir")),
-                null, new ArrayList<>()));
+    public void testSimple() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
+        TestUtils.noErrors(result.getReports());
         var output = result.run();
+        //assertEquals("Hello, World!", output.trim());
     }
 
-    @Test
-    public void findMaximumFromOllir() {
-        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/FindMaximum.ollir")),
-                null, new ArrayList<>()));
-        var output = result.run();
-        assertEquals("Result: 28", output.trim());
-    }
-
-    @Test
-    public void complexSimpleFromOllir() {
-        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/ComplexSimple.ollir")),
-                null, new ArrayList<>()));
-        var output = result.run();
-        //assertEquals("30", output.trim());
-    }
-
-    /*@Test
-    public void lifeFromOllir() {
-        var result = TestUtils.backend(new OllirResult(OllirUtils.parse(SpecsIo.getResource("fixtures/public/ollir/Life.ollir")),
-                null, new ArrayList<>()));
-        var output = result.run();
-    }*/
 }

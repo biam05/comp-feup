@@ -29,7 +29,7 @@ public class AnalysisStage implements JmmAnalysis {
         }
 
         JmmNode node = parserResult.getRootNode();
-        //System.out.println(node.toJson());
+        System.out.println(node.toJson());
 
         SymbolTableVisitor visitor = new SymbolTableVisitor();
         visitor.visit(node);
@@ -40,7 +40,7 @@ public class AnalysisStage implements JmmAnalysis {
         semanticAnalysisVisitor.visit(node);
         reports.addAll(semanticAnalysisVisitor.getReports());
 
-        if(reports.size() > 0) {
+        if (reports.size() > 0) {
             System.out.println("\n\n------------ REPORTS (Semantic Analysis) ------------");
             for (Report report : reports)
                 System.out.println(report);
