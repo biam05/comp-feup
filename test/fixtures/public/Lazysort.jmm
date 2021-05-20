@@ -8,12 +8,12 @@ class Lazysort extends Quicksort {
 		boolean d;
         Lazysort q;
 
-        L =  new int[10];
+        L = new int[10];
 
         i = 0;
         while (i < L.length) {
-            L[i] = L.length - 1;
-            i = L[i] + 1;
+            L[i] = L.length - i;
+            i = i + 1;
         }
 
         q = new Lazysort();
@@ -26,45 +26,45 @@ class Lazysort extends Quicksort {
         boolean lazy;
         int rand;
         rand = MathUtils.random(0, 5);
-        if (rand  < 4) {
+        if (rand  < 4 ) {
             this.beLazy(L);
             lazy = true;
         }
         else {
             lazy = false;
         }
-
+        
         if ( lazy ) {
             lazy = !lazy;
         }
         else {
             lazy = this.quicksort(L, 0, L.length - 1);
         }
-
+        
         return lazy;
     }
-
+    
     public boolean beLazy(int[] L) {
         int _allowedNameL;
-        int $allowedNameI;
+        int _allowedNameI;
 		int rand;
         _allowedNameL = L.length;
+        
+        _allowedNameI = 0;
+        while (_allowedNameI < _allowedNameL/2) {
+            L[_allowedNameI] = MathUtils.random(0, 10);
 
-        $allowedNameI = 0;
-        while ($allowedNameI < _allowedNameL/2) {
-            L[$allowedNameI] = MathUtils.random(0, 10);
-
-            $allowedNameI = $allowedNameI + 1;
+            _allowedNameI = _allowedNameI + 1;
         }
-
-        while ($allowedNameI < _allowedNameL) {
+        
+        while (_allowedNameI < _allowedNameL) {
         	rand = MathUtils.random(0, 10);
-            L[$allowedNameI] = rand + 1;
+            L[_allowedNameI] = rand + 1;
 
-            $allowedNameI = $allowedNameI + 1;
-        }
-
-
+            _allowedNameI = _allowedNameI + 1;
+        }        
+        
+        
         return true;
     }
 }
