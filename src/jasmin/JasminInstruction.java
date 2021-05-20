@@ -117,7 +117,10 @@ public class JasminInstruction {
         if (operation.toString().equals("LTH")) getLessThanOperation(instruction);
         else {
             decideType(leftElement);
-            addCode(operation.toString().toLowerCase(Locale.ROOT));
+            if(operation.toString().equals("ANDB"))
+                addCode("and");
+            else
+                addCode(operation.toString().toLowerCase(Locale.ROOT));
             storeOrIastore(instruction.getDest());
         }
     }
@@ -233,7 +236,10 @@ public class JasminInstruction {
         Operand opFirstArg = (Operand)firstArg;
 
         for (Element parameter : instruction.getListOfOperands()) {
-            loadOrAload(parameter, VarScope.LOCAL);
+            if (!parameter.isLiteral())
+                loadOrAload(parameter, VarScope.LOCAL);
+            else
+                JasminUtils.getConstSize(method, ((LiteralElement) parameter).getLiteral());
         }
         addCode("\n\t\tinvokestatic " + opFirstArg.getName());
         invokeParameters(instruction);

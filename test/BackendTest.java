@@ -26,6 +26,13 @@ import java.util.ArrayList;
 public class BackendTest {
 
     @Test
+    public void testFindMaximum() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
     public void testHelloWorld() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
@@ -42,11 +49,55 @@ public class BackendTest {
     }
 
     @Test
+    public void testLazySort() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
+    public void testLife() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Life.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
+    public void testMonteCarloPi() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
+    public void testQuickSort() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
     public void testSimple() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
-        //assertEquals("Hello, World!", output.trim());
     }
+
+    @Test
+    public void testTicTacToe() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+
+    @Test
+    public void testWhileAndIF() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+
 
 }
