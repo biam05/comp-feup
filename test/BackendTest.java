@@ -30,6 +30,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
+        assertEquals("28", output.trim());
     }
 
     @Test
@@ -45,7 +46,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
-        assertEquals("Hello, World!", output.trim());
+        assertEquals("4", output.trim());
     }
 
     @Test
@@ -53,6 +54,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
+        assertEquals("[1,2,3,4,5,6,7,8,9,10]", output.trim());
     }
 
     @Test
@@ -74,6 +76,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
+        assertEquals("[1,2,3,4,5,6,7,8,9,10]", output.trim());
     }
 
     @Test
@@ -81,6 +84,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Simple.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
+        assertEquals("30", output.trim());
     }
 
     @Test
