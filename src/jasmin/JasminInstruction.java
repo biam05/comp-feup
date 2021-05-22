@@ -200,6 +200,7 @@ public class JasminInstruction {
         {
             addCode("\n\t\tnew " + method.getClassName() + "\n\t\tdup");
             method.incN_stack();
+            method.incN_stack();
         }
 
         else {
@@ -210,9 +211,12 @@ public class JasminInstruction {
                         return;
             }
 
-            loadOrAload(opFirstArg, null); // gimme 1 sec
+            loadOrAload(opFirstArg, null);
             for (Element parameter : instruction.getListOfOperands()) {
-                loadOrAload(parameter, VarScope.LOCAL);
+                if (!parameter.isLiteral())
+                    loadOrAload(parameter, VarScope.LOCAL);
+                else
+                    JasminUtils.getConstSize(method, ((LiteralElement) parameter).getLiteral());
             }
             addCode("\n\t\tinvokevirtual " + method.getClassName());
             invokeParameters(instruction);
@@ -224,7 +228,6 @@ public class JasminInstruction {
         if (element.isLiteral())
             addCode(JasminUtils.getConstSize(method, ((LiteralElement) element).getLiteral()));
         else {
-            decideType(element);
             loadOrAload(element, null);
         }
         addCode("\n\t\tnewarray int");
@@ -286,6 +289,8 @@ public class JasminInstruction {
 
         if(name.equals("this")) name = method.getClassName();
 
+        method.decN_stack();
+        method.decN_stack();
         addCode("\n\t\tputfield " + name + "/" + o2.getName() + " " + JasminUtils.getReturnFromMethod(method, e2.getType()));
 
     }
@@ -380,7 +385,7 @@ public class JasminInstruction {
             addCode(type + JasminUtils.getLoadSize(method, element, VarScope.LOCAL) + type + "astore\n");
     }
 
-    private void loadOrAload( Element element, VarScope varScope) {
+    private void loadOrAload(Element element, VarScope varScope) {
         String type = decideType(element);
         if (type == null)
             addCode(JasminUtils.getLoadSize(method, element, varScope));

@@ -56,7 +56,7 @@ public class BackendStage implements JasminBackend {
                 jasminCode.append("\n.field ");
                 if (field.isFinalField())
                     jasminCode.append("final ");
-                jasminCode.append(field.getFieldName()).append(" ");
+                jasminCode.append("'").append(field.getFieldName()).append("' ");
                 switch (field.getFieldType().toString()) {
                     case "INT32":
                         jasminCode.append("I");
