@@ -3,8 +3,8 @@ class Simple {
 
     public int add(int a, int b){
         int c;
-        c = a + this.constInstr(1+2) + this.constInstr(2);
-        return c + 1;
+        c = a + this.constInstr();
+        return c;
     }
 
     public static void main(String[] args){
@@ -14,25 +14,24 @@ class Simple {
         Simple s;
         a = 20;
         b = 10;
-        c = this.oi().oi().add(a,1+1);
+        s = new Simple();
+        c = s.add(a,b);
         io.println(c);
     }
 
-    public Simple oi() {
-        return 2;
-    }
-
-    public int constInstr(int lo){
+    public int constInstr(){
         int c;
+        boolean res;
         c = 0;
         c = 4;
-        c = 8;
-        c = 14;
-        c = 250;
-        c = 400;
+        c = 8 + 2;
+        c = 14 - 2;
+        c = 250 * 3;
+        c = 400 / 2;
         c = 1000;
         c = 100474650;
 		c = 10;
+		res = 1 < 2;
         return c;
     }
 

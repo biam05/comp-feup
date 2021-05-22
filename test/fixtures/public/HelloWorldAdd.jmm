@@ -1,19 +1,20 @@
 import ioPlus;
+import io;
 class HelloWorld {
-
     int a;
 
 	public static void main(String[] args) {
-	    int b;
-		ioPlus.printHelloWorld();
-		a = 2;
-		b = a;
-		this.add(a,b);
+	    HelloWorld n;
+		n = new HelloWorld();
+		io.println(n.add());
 	}
 
-	public int add(int aux, int baux) {
-        int res;
-        res = aux + baux;
+	public int add() {
+	    int b;
+	    int res;
+		a = 2;
+		b = a;
+		res = a + b;
         return res;
     }
 
