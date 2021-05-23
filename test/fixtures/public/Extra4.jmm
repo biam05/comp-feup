@@ -1,0 +1,14 @@
+/*
+    extends
+*/
+
+import io;
+
+class Test4 extends ollir{
+
+
+    public static void main(String[] args){
+
+
+    }
+}

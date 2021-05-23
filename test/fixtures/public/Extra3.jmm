@@ -1,0 +1,13 @@
+/*
+Array access with method call, array creation with method call
+*/
+
+
+class Test3{
+
+
+    public static void main(String[] args){
+
+
+    }
+}

@@ -1,0 +1,40 @@
+/*
+    Array access with operations and while with complex condition
+*/
+import io;
+
+class Test2{
+    int[] a;
+    int b;
+    int c;
+
+    public int justALoop(int[] arr){
+        int k;
+
+        k = this.getValue(arr);
+
+        while(k < b && k < c && !(k < 0)){
+            if( k < 6){
+                k = 6;
+            }
+            else{
+                k = k + 1 * 6 / 6 ;
+            }
+        }
+        return k;
+    }
+
+    public static void main(String[] args){
+        int d;
+
+        b = 4;
+        c = 5;
+        d = 9;
+        a = new int[b+c/9*9];
+
+    }
+
+    public int getValue(int[] arr){
+        return arr[2*3-1];
+    }
+}
