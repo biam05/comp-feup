@@ -480,7 +480,11 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
             aux = String.join(" ", auxiliar);
         }
 
-        String type = OLLIRUtils.getReturnTypeExpression(code);
+        String type;
+
+        if(code.contains("<")) type = ".bool";
+        else type = OLLIRUtils.getReturnTypeExpression(code);
+
         var_temp++;
         String temp_name = "aux" + var_temp + type;
 
