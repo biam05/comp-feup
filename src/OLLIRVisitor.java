@@ -55,7 +55,6 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
     private OllirObject defaultVisit(JmmNode node, String dummy) {
         List<JmmNode> nodes = node.getChildren();
         OllirObject result = new OllirObject("");
-
         for (JmmNode child : nodes)
             result.appendToCode(visit(child));
 
@@ -102,7 +101,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
                 alreadyInBody = true;
             } else if (child.getKind().equals("Return")) {
                 hasReturn = true;
-                result.append(visit(child));
+                result.appendToCode(visit(child));
                 result.appendCode("\n}\n\n");
             }
         }
@@ -122,7 +121,6 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         result.setCode(checkExpressionTemporary("", result));
         result.getReturn();
-
         return result;
     }
 
@@ -224,7 +222,6 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
     private OllirObject visitIfElse(JmmNode node, String dummy) {
         OllirObject result = new OllirObject("");
-
         List<JmmNode> children = node.getChildren();
         OllirObject aux = visit(children.get(0));
         result.appendTemps(aux);
@@ -232,14 +229,14 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         result.appendCode("\nif (" + code + " ==.bool 1.bool) goto else" + if_counter + ";\n");
 
-        aux = visit(children.get(1));
-        result.append(aux);
+        OllirObject aux1 = visit(children.get(1));
+        result.append(aux1);
 
         result.appendCode("\ngoto endif" + if_counter + ";\n");
         result.appendCode("else" + if_counter + ":\n");
 
-        aux = visit(children.get(1));
-        result.append(aux);
+        OllirObject aux2 = visit(children.get(3));
+        result.append(aux2);
         result.appendCode("\nendif" + if_counter + ":\n");
 
         if_counter++;
@@ -369,8 +366,6 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
         OllirObject result = new OllirObject("");
         OllirObject identifier = visit(firstChild);
 
-        String invokeType = OLLIRUtils.getInvokeType(identifier.getCode(), method.getChildren().get(0), symbolTable);
-
         List<String> args = getMethodArgs(method, result);
         for (int i = 0; i < args.size(); i++) {
             String s = args.get(i);
@@ -383,10 +378,11 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
             }
         }
 
+        String methodInfo = OLLIRUtils.getMethodInfo(method, args);
+        String invokeType = OLLIRUtils.getInvokeType(identifier.getCode(), methodInfo, symbolTable);
+
         switch (invokeType) {
             case "virtual":
-
-                String methodInfo = OLLIRUtils.getMethodInfo(method, args);
                 SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
                 String type = met.getReturnType().toOLLIR();
 
@@ -395,7 +391,6 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
                     String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
 
                     var_temp++;
-                    aux = "aux" + var_temp + identifierType;
                     aux = "aux" + var_temp + identifierType;
 
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");

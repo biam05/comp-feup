@@ -190,10 +190,8 @@ public class OLLIRUtils {
     }
 
 
-    public static String getInvokeType(String identifier, JmmNode method, GrammarSymbolTable symbolTable) {
-        String methodName = getMethodName(method);
-        if (identifier.contains("this") || symbolTable.hasMethod(methodName))
-            return "virtual"; // if it belongs to the class
+    public static String getInvokeType(String identifier, String method, GrammarSymbolTable symbolTable) {
+        if (symbolTable.hasMethod(method)) return "virtual"; // if it belongs to the class
         if (symbolTable.getSuper().equals("") || (symbolTable.hasImport(identifier) != null)) return "static";
         return "special";
     }
