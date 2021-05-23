@@ -226,7 +226,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
         result.appendTemps(aux);
         String code = checkExpressionTemporary(aux.getCode(), result);
 
-        result.appendCode("\nif (" + code + " ==.bool 1.bool) goto else" + if_counter + ";\n");
+        result.appendCode("\nif (" + code + " ==.bool 0.bool) goto else" + if_counter + ";\n");
 
         OllirObject aux1 = visit(children.get(1));
         result.append(aux1);
@@ -324,12 +324,12 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         String aCode = a.getCode();
         String type = OLLIRUtils.getReturnTypeExpression(aCode);
-        if (type.length() - type.replaceAll("\\.", "").length() > 1) type = type.substring(type.lastIndexOf("."));
 
         int ident;
+        aCode = checkExpressionTemporary(aCode, result);
 
         try {
-            int index = a.getCode().indexOf(".");
+            int index = aCode.indexOf(".");
             ident = Integer.parseInt(aCode.substring(0, index));
             var_temp++;
             aCode = "aux" + var_temp + ".i32";
@@ -482,7 +482,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         String type;
 
-        if(code.contains("<")) type = ".bool";
+        if(aux.contains("<")) type = ".bool";
         else type = OLLIRUtils.getReturnTypeExpression(code);
 
         var_temp++;

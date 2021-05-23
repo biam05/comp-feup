@@ -8,7 +8,7 @@ class FindMaximum {
 		int value;
 
 		i = 1;
-		maximum = arr[0];
+		maximum = arr[0+1];
 		while (i < arr.length) {
 			value = arr[i];
 			if (maximum < value) {
