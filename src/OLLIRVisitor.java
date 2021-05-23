@@ -12,8 +12,8 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
     private final GrammarSymbolTable symbolTable;
     private final List<Report> reports;
     private final OllirObject code;
-    private int loop_counter = 1;
-    private int if_counter = 1;
+    private int loop_counter = 0;
+    private int if_counter = 0;
     private int var_temp = 0;
     private SymbolMethod currentMethod;
 
@@ -198,47 +198,50 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
     }
 
     private OllirObject visitWhile(JmmNode node, String dummy) {
+        loop_counter++;
+        int loop_c = loop_counter;
         OllirObject result = new OllirObject("");
 
         List<JmmNode> children = node.getChildren();
         JmmNode condition = children.get(0);
         JmmNode body = children.get(1);
 
-        result.appendCode("\nLoop" + loop_counter + ":\n");
+        result.appendCode("\nLoop" + loop_c + ":\n");
         OllirObject cond = visit(condition);
         cond.setCode(checkExpressionTemporary("", cond));
         result.appendCode(cond.getAboveTemp());
 
-        result.appendCode("if (" + cond.getCode() + " ==.bool 1.bool) goto Body" + loop_counter + ";\n");
-        result.appendCode("goto EndLoop" + loop_counter + ";");
-        result.appendCode("\nBody" + loop_counter + ":\n");
+        result.appendCode("if (" + cond.getCode() + " ==.bool 1.bool) goto Body" + loop_c + ";\n");
+        result.appendCode("goto EndLoop" + loop_c + ";");
+        result.appendCode("\nBody" + loop_c + ":\n");
         result.append(visit(body));
-        result.appendCode("goto Loop" + loop_counter + ";\nEndLoop" + loop_counter + ":\n");
+        result.appendCode("goto Loop" + loop_c + ";\nEndLoop" + loop_c + ":\n");
 
-        loop_counter++;
         return result;
     }
 
     private OllirObject visitIfElse(JmmNode node, String dummy) {
+        if_counter++;
+        int if_c = if_counter;
+
         OllirObject result = new OllirObject("");
         List<JmmNode> children = node.getChildren();
         OllirObject aux = visit(children.get(0));
         result.appendTemps(aux);
         String code = checkExpressionTemporary(aux.getCode(), result);
 
-        result.appendCode("\nif (" + code + " ==.bool 0.bool) goto else" + if_counter + ";\n");
+        result.appendCode("\nif (" + code + " ==.bool 0.bool) goto else" + if_c + ";\n");
 
         OllirObject aux1 = visit(children.get(1));
         result.append(aux1);
 
-        result.appendCode("\ngoto endif" + if_counter + ";\n");
-        result.appendCode("else" + if_counter + ":\n");
+        result.appendCode("\ngoto endif" + if_c + ";\n");
+        result.appendCode("else" + if_c + ":\n");
 
         OllirObject aux2 = visit(children.get(3));
         result.append(aux2);
-        result.appendCode("\nendif" + if_counter + ":\n");
+        result.appendCode("\nendif" + if_c + ":\n");
 
-        if_counter++;
         return result;
     }
 
