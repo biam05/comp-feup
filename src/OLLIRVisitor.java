@@ -212,9 +212,8 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
         result.appendCode("if (" + cond.getCode() + " ==.bool 1.bool) goto Body" + loop_counter + ";\n");
         result.appendCode("goto EndLoop" + loop_counter + ";");
         result.appendCode("\nBody" + loop_counter + ":\n");
-
         result.append(visit(body));
-        result.appendCode("\nEndLoop" + loop_counter + ":\n");
+        result.appendCode("goto Loop" + loop_counter + ";\nEndLoop" + loop_counter + ":\n");
 
         loop_counter++;
         return result;
