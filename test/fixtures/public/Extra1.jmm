@@ -9,14 +9,14 @@ class Test1{
     int[] b;
     int c;
 
-    public int sum(int a, int[] b, int c){
-        return a + b[0] + c;
+    public int sum(int v1, int[] v2, int v3){
+        return v1 + v2[0] + v3;
     }
-    public int sum(int a, int b){
-        return a + b;
+    public int sum(int v1, int v2){
+        return v1 + v2;
     }
-    public boolean sum(int a, int b, int c){
-        return a < b &&  b<c;
+    public boolean sum(int v1, int v2, int v3){
+        return v1 < v2 &&  v2<v3;
     }
 
     public int[] getArray(){

@@ -106,4 +106,25 @@ public class BackendTest {
 
 
 
+    @Test
+    public void testExtra1() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
+    public void testExtra2() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra2.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
+    public void testExtra3() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra3.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
 }
