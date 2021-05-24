@@ -224,7 +224,12 @@ public class JasminInstruction {
     // -------------- Call Instructions --------------
     private void generateCall(CallInstruction instruction, boolean assign) {
         if(method.getMethod().isConstructMethod()){
-            addCode("\n\taload_0\n\tinvokespecial java/lang/Object.<init>()V\n\treturn");
+            addCode("\n\taload_0\n\tinvokespecial ");
+            if (method.getSuperName() == null)
+                addCode("java/lang/Object");
+            else
+                addCode(method.getSuperName());
+            addCode(".<init>()V\n\treturn");
         }
         else{
             Element firstArg = instruction.getFirstArg();

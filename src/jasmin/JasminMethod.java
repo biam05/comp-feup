@@ -13,13 +13,14 @@ public class JasminMethod {
     private final StringBuilder jasminCode;
     private final List<Report> reports;
     private final String className;
+    private final String superName;
     private int n_locals;
     private int max_n_stack;
     private int current_n_stack;
     private int n_branches;
     private Map<String, Descriptor> localVariables;
 
-    public JasminMethod(Method method, String className) {
+    public JasminMethod(Method method, String className, String superName) {
         this.method = method;
         this.jasminCode = new StringBuilder();
         this.reports = new ArrayList<>();
@@ -29,6 +30,7 @@ public class JasminMethod {
         this.n_branches = 0;
         this.localVariables = new HashMap<>();
         this.className = className;
+        this.superName = superName;
         addLocalVariable("this", VarScope.FIELD, new Type(ElementType.CLASS));
     }
 
@@ -127,5 +129,9 @@ public class JasminMethod {
         }
         this.jasminCode.append(auxiliaryJasmin);
         jasminCode.append("\n.end method");
+    }
+
+    public String getSuperName() {
+        return superName;
     }
 }
