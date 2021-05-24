@@ -79,6 +79,39 @@ public class OptimizeTest {
         TestUtils.noErrors(result.getReports());
     }
 
+    @Test
+    public void testExtra1() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testExtra2() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra2.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testExtra3() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra3.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+  /*  @Test
+    public void testExtra4() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testExtra5() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+
+*/
+
 
 
 }
