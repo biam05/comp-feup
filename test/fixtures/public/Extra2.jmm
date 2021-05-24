@@ -18,7 +18,7 @@ class Test2{
                 k = 6;
             }
             else{
-                k = k + 1 * 6 / 6 ;
+                k = k + 1 * 6 / 6 - 2;
             }
         }
         return k;

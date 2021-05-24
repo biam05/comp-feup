@@ -93,13 +93,13 @@ public class OptimizeTest {
 
     @Test
     public void testExtra3() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra3jmm"));
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra3.jmm"));
         TestUtils.noErrors(result.getReports());
     }
 
-    @Test
+  /*  @Test
     public void testExtra4() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra4.jmm"));
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
         TestUtils.noErrors(result.getReports());
     }
 
@@ -110,7 +110,7 @@ public class OptimizeTest {
     }
 
 
-
+*/
 
 
 
