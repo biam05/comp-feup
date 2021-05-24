@@ -19,10 +19,11 @@ public class OLLIRUtils {
         return res.toString();
     }
 
-    public static String init(String className, List<Symbol> fields) {
-        return className + " {\n" + fields(fields) + "\n.construct " + className + "().V {\n" +
-                invokeSpecial("this") +
-                "}\n\n";
+    public static String init(String className, String superName, List<Symbol> fields) {
+        if (!superName.equals(""))
+            return className + " extends " + superName + " {\n" + fields(fields) + "\n.construct " + className + "().V {\n" + invokeSpecial("this") + "}\n\n";
+        else
+            return className + " {\n" + fields(fields) + "\n.construct " + className + "().V {\n" + invokeSpecial("this") + "}\n\n";
     }
 
 

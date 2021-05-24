@@ -76,6 +76,9 @@ public class JasminInstruction {
             case CALL:
                 generateAssignCall(instruction);
                 break;
+            case UNARYOPER:
+                generateAssignNot(instruction);
+                break;
         }
     }
 
@@ -86,18 +89,32 @@ public class JasminInstruction {
         Element dest = instruction.getDest();
         Descriptor localVariable = method.getLocalVariableByKey(dest, null);
 
-        if (localVariable.getVarType().getTypeOfElement() != ElementType.ARRAYREF) {
-            constOrLoad(singleOperand, null);
-            decideType(instruction.getDest());
-            addCode(JasminUtils.getStoreSize(method, dest, VarScope.LOCAL));
-        } else {
-            addCode("\n\t\ta" + JasminUtils.getLoadSize(method, dest, null));
-            Element indexElem = ((ArrayOperand) dest).getIndexOperands().get(0);
-            addCode("\n\t\ti" + JasminUtils.getLoadSize(method, indexElem, null));
-            constOrLoad(singleOperand, null);
-            addCode("\n\t\tiastore\n");
-            method.decN_stack();
+        if (dest.getType().getTypeOfElement() == ElementType.INT32 && !dest.isLiteral()) {
+            if (localVariable.getVarType().getTypeOfElement() == ElementType.ARRAYREF) {
+                addCode("\n\t\ta" + JasminUtils.getLoadSize(method, dest, null));
+                Element indexElem = ((ArrayOperand) dest).getIndexOperands().get(0);
+                addCode("\n\t\ti" + JasminUtils.getLoadSize(method, indexElem, null));
+                constOrLoad(singleOperand, null);
+                addCode("\n\t\tiastore\n");
+                method.decN_stack();
+                return;
+            }
         }
+        constOrLoad(singleOperand, null);
+        decideType(instruction.getDest());
+        addCode(JasminUtils.getStoreSize(method, dest, VarScope.LOCAL) + "\n");
+    }
+
+    private void generateAssignNot(AssignInstruction instruction) {
+        Instruction rhs = instruction.getRhs();
+
+        Element singleOperand = ((UnaryOpInstruction) rhs).getRightOperand();
+        Element dest = instruction.getDest();
+
+        constOrLoad(singleOperand, null);
+        addCode("\n\t\tineg");
+        decideType(instruction.getDest());
+        addCode(JasminUtils.getStoreSize(method, dest, VarScope.LOCAL) + "\n");
     }
 
     private void generateAssignBinaryOper(AssignInstruction instruction){
@@ -214,9 +231,9 @@ public class JasminInstruction {
             Operand opFirstArg = (Operand)firstArg;
 
             if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF) {
-                generateCallObjectRef(instruction);
-                if (!assign)
-                    method.decN_stack();
+                generateCallObjectRef(instruction, assign);
+                if (!JasminUtils.getReturnFromMethod(method, instruction.getReturnType()).equals("V") && !assign)
+                    generatePop();
             }
 
             else if (opFirstArg.getType().getTypeOfElement() == ElementType.ARRAYREF){
@@ -228,24 +245,27 @@ public class JasminInstruction {
                     addCode(JasminUtils.getLoadSize(method, firstArg, null) + "\n\t\tarraylength");
                 }
                 if (!assign)
-                    method.decN_stack();
+                    generatePop();
             }
 
             else if (opFirstArg.getType().getTypeOfElement() == ElementType.CLASS) {
                 generateStaticMethod(instruction);
-                if (!assign)
-                    method.decN_stack();
             }
 
             else if(opFirstArg.getName().equals("this")) {
                 generateClassMethod(instruction);
                 if (!assign)
-                    method.decN_stack();
+                    generatePop();
             }
         }
     }
 
-    private void generateCallObjectRef(CallInstruction instruction){
+    private void generatePop() {
+        addCode("\n\t\tpop");
+        method.decN_stack();
+    }
+
+    private void generateCallObjectRef(CallInstruction instruction, boolean assign){
         Element firstArg = instruction.getFirstArg();
         Operand opFirstArg = (Operand)firstArg;
 
@@ -355,7 +375,7 @@ public class JasminInstruction {
 
         method.decN_stack();
         method.decN_stack();
-        addCode("\n\t\tputfield " + name + "/" + o2.getName() + " " + JasminUtils.getReturnFromMethod(method, e2.getType()));
+        addCode("\n\t\tputfield " + name + "/" + o2.getName() + " " + JasminUtils.getReturnFromMethod(method, e2.getType()) + "\n");
 
     }
 

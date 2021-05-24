@@ -20,7 +20,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
     public OLLIRVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
-        this.code = new OllirObject(OLLIRUtils.init(symbolTable.getClassName(), symbolTable.getFields()));
+        this.code = new OllirObject(OLLIRUtils.init(symbolTable.getClassName(), symbolTable.getSuper(), symbolTable.getFields()));
         addVisit("MethodDeclaration", this::visitMethod);
         addVisit("Statement", this::visitStatement);
         addVisit("Expression", this::visitExpression);
@@ -342,7 +342,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         String finalExp = checkExpressionTemporary(i.getCode(), result);
         aCode = checkExpressionTemporary(aCode, result);
-        if (!finalExp.equals(i.getCode())) finalExp = "aux_" + var_temp;
+        if (!finalExp.equals(i.getCode())) finalExp = "aux" + var_temp;
         else finalExp = OLLIRUtils.getIdentifierExpression(i.getCode());
 
         result.appendCode(finalExp + "[" + aCode + "]" + type);
