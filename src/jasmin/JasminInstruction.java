@@ -109,36 +109,57 @@ public class JasminInstruction {
 
         if (iincInstruction(leftElement, rightElement, instruction.getDest(), operation)) return;
 
+        Element element = instruction.getDest();
+        if (element.getType().getTypeOfElement() == ElementType.INT32 && !element.isLiteral()) {
+            if (method.getLocalVariableByKey(element, null).getVarType().getTypeOfElement() == ElementType.ARRAYREF) {
+                addCode("\n\t\ta" + JasminUtils.getLoadSize(method, element, null));
+                Element indexElem = ((ArrayOperand) element).getIndexOperands().get(0);
+                addCode("\n\t\ti" + JasminUtils.getLoadSize(method, indexElem, null));
+
+                constOrLoad(leftElement, VarScope.LOCAL);
+                constOrLoad(rightElement, VarScope.LOCAL);
+
+                method.decN_stack();
+                method.decN_stack();
+                decideType(leftElement);
+                if (operation.toString().equals("ANDB"))
+                    addCode("and");
+                else
+                    addCode(operation.toString().toLowerCase(Locale.ROOT));
+                method.incN_stack();
+
+                addCode("\n\t\tiastore\n");
+                method.decN_stack();
+                method.decN_stack();
+                method.decN_stack();
+                return;
+            }
+        }
         constOrLoad(leftElement, VarScope.LOCAL);
 
         constOrLoad(rightElement, VarScope.LOCAL);
 
         method.decN_stack();
+        method.decN_stack();
         if (operation.toString().equals("LTH")) getLessThanOperation(instruction);
         else {
             decideType(leftElement);
-            if(operation.toString().equals("ANDB"))
+            if (operation.toString().equals("ANDB"))
                 addCode("and");
             else
                 addCode(operation.toString().toLowerCase(Locale.ROOT));
-            storeOrIastore(instruction.getDest());
+            method.incN_stack();
+            storeOrIastore(element);
         }
     }
 
     private void getLessThanOperation(AssignInstruction instruction){
         addCode("\n\n\t\tif_icmpge ElseLTH" + method.getN_branches() + JasminUtils.getConstSize(method, "1"));
-
-        method.decN_stack();
-        method.decN_stack();
-
         storeOrIastore(instruction.getDest());
-
         addCode("\n\t\tgoto AfterLTH" + method.getN_branches());
 
         addCode("\n\n\tElseLTH" + method.getN_branches() + ":" + JasminUtils.getConstSize(method, "0"));
-
         storeOrIastore(instruction.getDest());
-
         addCode("\n\n\tAfterLTH" + method.getN_branches() + ":");
         method.incN_branches();
     }
@@ -151,6 +172,28 @@ public class JasminInstruction {
 
     private void generateAssignCall(AssignInstruction instruction){
         Instruction rhs = instruction.getRhs();
+        Element element = instruction.getDest();
+        if (element.getType().getTypeOfElement() == ElementType.INT32 && !element.isLiteral()) {
+            if (method.getLocalVariableByKey(element, null).getVarType().getTypeOfElement() == ElementType.ARRAYREF) {
+                addCode("\n\t\ta" + JasminUtils.getLoadSize(method, element, null));
+                Element indexElem = ((ArrayOperand) element).getIndexOperands().get(0);
+                addCode("\n\t\ti" + JasminUtils.getLoadSize(method, indexElem, null));
+
+                generateCall((CallInstruction) rhs, true);
+                Element firstArg = ((CallInstruction) rhs).getFirstArg();
+                Operand opFirstArg = (Operand) firstArg;
+                if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
+                        opFirstArg.getName().equals(method.getClassName())) {
+                    addCode("\n\t\tinvokespecial " + method.getClassName() + ".<init>()V");
+                }
+
+                addCode("\n\t\tiastore\n");
+                method.decN_stack();
+                method.decN_stack();
+                method.decN_stack();
+                return;
+            }
+        }
         generateCall((CallInstruction) rhs, true);
         Element firstArg = ((CallInstruction) rhs).getFirstArg();
         Operand opFirstArg = (Operand) firstArg;
@@ -184,7 +227,6 @@ public class JasminInstruction {
                     decideType(firstArg);
                     addCode(JasminUtils.getLoadSize(method, firstArg, null) + "\n\t\tarraylength");
                 }
-
                 if (!assign)
                     method.decN_stack();
             }
@@ -211,7 +253,6 @@ public class JasminInstruction {
         {
             addCode("\n\t\tnew " + method.getClassName() + "\n\t\tdup");
             method.incN_stack();
-            method.incN_stack();
         }
 
         else {
@@ -219,18 +260,15 @@ public class JasminInstruction {
                 Element secondArg = instruction.getSecondArg();
                 if (secondArg.isLiteral())
                     if (((LiteralElement) secondArg).getLiteral().replace("\"", "").equals("<init>"))
+                    {
+                        method.incN_stack();
                         return;
+                    }
             }
 
             loadOrAload(opFirstArg, null);
-            for (Element parameter : instruction.getListOfOperands()) {
-                if (!parameter.isLiteral())
-                    loadOrAload(parameter, VarScope.LOCAL);
-                else
-                    addCode(JasminUtils.getConstSize(method, ((LiteralElement) parameter).getLiteral()));
-            }
-            addCode("\n\t\tinvokevirtual " + method.getClassName());
-            invokeParameters(instruction);
+            virtualParameters(instruction);
+            method.decN_stack();
         }
     }
 
@@ -242,7 +280,7 @@ public class JasminInstruction {
             loadOrAload(element, null);
         }
         addCode("\n\t\tnewarray int");
-        method.incN_stack();
+        //Increase for newarray, decrease for length of the array
     }
 
     private void generateStaticMethod(CallInstruction instruction){
@@ -256,10 +294,17 @@ public class JasminInstruction {
         }
         addCode("\n\t\tinvokestatic " + opFirstArg.getName());
         invokeParameters(instruction);
+        for (Element element : instruction.getListOfOperands()) {
+            method.decN_stack();
+        }
     }
 
     private void generateClassMethod(CallInstruction instruction){
         addCode("\n\t\taload_0");
+        virtualParameters(instruction);
+    }
+
+    private void virtualParameters(CallInstruction instruction) {
         for (Element parameter : instruction.getListOfOperands()) {
             if (!parameter.isLiteral())
                 loadOrAload(parameter, VarScope.LOCAL);
@@ -267,8 +312,10 @@ public class JasminInstruction {
                 addCode(JasminUtils.getConstSize(method, ((LiteralElement) parameter).getLiteral()));
         }
         addCode("\n\t\tinvokevirtual " + method.getClassName());
-        method.incN_stack();
         invokeParameters(instruction);
+        for (Element element : instruction.getListOfOperands()) {
+            method.decN_stack();
+        }
     }
 
     // -------------- Return Instruction --------------
@@ -276,16 +323,16 @@ public class JasminInstruction {
         Element e1 = instruction.getOperand();
         if (e1 != null) {
             if (!e1.isLiteral()) {
-                String type = decideType(instruction.getOperand());
+                boolean type = decideType(instruction.getOperand());
                 addCode(JasminUtils.getLoadSize(method, e1, null) + "\n\t\t");
-                if (type == null) decideType(instruction.getOperand());
+                if (!type) decideType(instruction.getOperand());
                 addCode("return");
             }
             else {
                 String literal = ((LiteralElement) e1).getLiteral();
                 addCode(JasminUtils.getConstSize(method, literal) + "\n\t\tireturn");
             }
-
+            method.decN_stack();
         } else {
             addCode("\n\t\treturn");
         }
@@ -361,7 +408,7 @@ public class JasminInstruction {
     }
 
     // -------------- Auxiliary Functions --------------
-    private String decideType(Element element) {
+    private boolean decideType(Element element) {
         switch (element.getType().getTypeOfElement()) {
             case INT32:
             case BOOLEAN:
@@ -370,7 +417,7 @@ public class JasminInstruction {
                         addCode("\n\t\ta" + JasminUtils.getLoadSize(method, element, null));
                         Element indexElem = ((ArrayOperand) element).getIndexOperands().get(0);
                         addCode("\n\t\ti" + JasminUtils.getLoadSize(method, indexElem, null));
-                        return "\n\t\ti";
+                        return true;
                     }
                 addCode("\n\t\ti");
                 break;
@@ -383,7 +430,7 @@ public class JasminInstruction {
                 addCode("\n\t\t");
                 break;
         }
-        return null;
+        return false;
     }
 
     private void constOrLoad(Element element, VarScope varScope){
@@ -395,19 +442,27 @@ public class JasminInstruction {
     }
 
     private void storeOrIastore(Element element) {
-        String type = decideType(element);
-        if (type == null)
+        boolean type = decideType(element);
+        if (!type)
             addCode(JasminUtils.getStoreSize(method, element, VarScope.LOCAL) + "\n");
-        else
-            addCode(type + JasminUtils.getLoadSize(method, element, VarScope.LOCAL) + type + "astore\n");
+        else {
+            addCode("\n\t\tiastore\n");
+            method.decN_stack();
+            method.decN_stack();
+            method.decN_stack();
+        }
     }
 
     private void loadOrAload(Element element, VarScope varScope) {
-        String type = decideType(element);
-        if (type == null)
+        boolean type = decideType(element);
+        if (!type)
             addCode(JasminUtils.getLoadSize(method, element, varScope));
-        else
-            addCode(type + "aload");
+        else {
+            method.decN_stack();
+            method.decN_stack();
+            addCode("\n\t\tiaload");
+            method.incN_stack();
+        }
     }
 
     private void invokeParameters(CallInstruction instruction) {

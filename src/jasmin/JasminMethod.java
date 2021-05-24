@@ -118,6 +118,8 @@ public class JasminMethod {
                 }
             JasminInstruction jasminInstruction = new JasminInstruction(inst, this);
             jasminInstruction.generateJasminCode();
+            System.out.println("Max stack: " + this.max_n_stack);
+            System.out.println("Cur stack: " + this.current_n_stack);
             auxiliaryJasmin.append(jasminInstruction.getJasminCode());
             this.reports.addAll(jasminInstruction.getReports());
         }
