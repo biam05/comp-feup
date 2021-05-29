@@ -62,14 +62,14 @@ public class BackendTest {
     public void testLife() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Life.jmm"));
         TestUtils.noErrors(result.getReports());
-        var output = result.compile(new File("Compiled"));
+        var output = result.compile(new File("test/fixtures/libs/compiled"));
     }
 
     @Test
     public void testMonteCarloPi() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/MonteCarloPi.jmm"));
         TestUtils.noErrors(result.getReports());
-        var output = result.compile(new File("Compiled"));
+        var output = result.compile(new File("test/fixtures/libs/compiled"));
     }
 
     @Test
@@ -92,8 +92,7 @@ public class BackendTest {
     public void testTicTacToe() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
         TestUtils.noErrors(result.getReports());
-        var output = result.run();
-        //var output = result.compile(new File("Compiled"));
+        var output = result.compile(new File("test/fixtures/libs/compiled"));
     }
 
 

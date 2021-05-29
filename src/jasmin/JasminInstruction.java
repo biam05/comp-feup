@@ -112,7 +112,7 @@ public class JasminInstruction {
         Element dest = instruction.getDest();
 
         constOrLoad(singleOperand, null);
-        addCode("\n\t\tineg");
+        addCode("\n\t\ticonst_1\n\t\tixor");
         decideType(instruction.getDest());
         addCode(JasminUtils.getStoreSize(method, dest, VarScope.LOCAL) + "\n");
     }
