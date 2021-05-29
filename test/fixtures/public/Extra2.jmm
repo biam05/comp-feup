@@ -26,12 +26,18 @@ class Test2{
 
     public static void main(String[] args){
         int d;
+        Test2 t;
 
+        d = 9;
+        t = new Test2();
+        t.buildArray();
+    }
+
+    public int buildArray() {
         b = 4;
         c = 5;
-        d = 9;
         a = new int[b+c/9*9];
-
+        return b;
     }
 
     public int getValue(int[] arr){

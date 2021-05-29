@@ -9,14 +9,14 @@ class Test1{
     int[] b;
     int c;
 
-    public int sum(int v1, int[] v2, int v3){
-        return v1 + v2[0] + v3;
+    public int sum(int[] v2, int v3){
+        return a + v2[0] + v3;
     }
-    public int sum(int v1, int v2){
-        return v1 + v2;
+    public int sum(int v2){
+        return a + v2;
     }
-    public boolean sum(int v1, int v2, int v3){
-        return v1 < v2 &&  v2<v3;
+    public boolean sum(int v2, int v3){
+        return a < v2 &&  v2<v3;
     }
 
     public int[] getArray(){
@@ -27,21 +27,28 @@ class Test1{
         Test1 d;
         int e;
         int g;
+        int h;
 
+        g = 3;
+        h = 5;
+
+        d = new Test1();
+        d.buildArray();
+        if(d.sum(g,h)){
+            e = d.sum(d.getArray(),h);
+        }
+        else{
+            e = d.getArray().length;
+        }
+        io.println(e);
+
+    }
+
+    public int buildArray() {
         a = 2;
         b = new int[2];
         b[0] = 1;
         c = 5;
-        g = 3;
-
-        d = new Test1();
-        if(d.sum(a,g,c)){
-            e = d.sum(a,b,c);
-        }
-        else{
-           e = d.getArray().length;
-        }
-        io.println(e);
-
+        return c;
     }
 }
