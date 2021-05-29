@@ -93,6 +93,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/TicTacToe.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
+        //var output = result.compile(new File("Compiled"));
     }
 
 
