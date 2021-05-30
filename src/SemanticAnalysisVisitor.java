@@ -30,7 +30,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         boolean alreadyInBody = false;
 
         StringBuilder methodInfo = new StringBuilder();
-        SymbolMethod method;
+        SymbolMethod method = null;
 
         for (int i = 0; i < children.size(); i++) {
 
@@ -61,10 +61,25 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
 
                 visitMethodBody(method, child);
                 alreadyInBody = true;
+            } else if (child.getKind().equals("Return")) {
+                visitReturn(method, child);
             }
         }
 
         return true;
+    }
+
+    public void visitReturn(SymbolMethod method, JmmNode node) {
+        JmmNode child = node.getChildren().get(0);
+        Type type = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, child, reports, true);
+
+        if (type == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "unexpected return type"));
+            return;
+        }
+        if (!type.equals(method.getReturnType()))
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "unexpected return type: should be " + method.getReturnType().printType() + " but it is " + type.printType()));
+
     }
 
     public void visitMethodBody(SymbolMethod method, JmmNode node) {
