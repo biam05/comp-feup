@@ -1,4 +1,4 @@
-import SymbolTable.GrammarSymbolTable;
+import symbolTable.GrammarSymbolTable;
 import ollir.OLLIRVisitor;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.JmmSemanticsResult;

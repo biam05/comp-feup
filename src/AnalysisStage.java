@@ -1,5 +1,5 @@
-import SemanticAnalysis.SemanticAnalysisVisitor;
-import SymbolTable.SymbolTableVisitor;
+import semanticAnalysis.SemanticAnalysisVisitor;
+import symbolTable.SymbolTableVisitor;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.JmmParserResult;

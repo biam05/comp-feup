@@ -1,7 +1,7 @@
-package SemanticAnalysis;
+package semanticAnalysis;
 
-import SymbolTable.GrammarSymbolTable;
-import SymbolTable.SymbolMethod;
+import symbolTable.GrammarSymbolTable;
+import symbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.report.Report;

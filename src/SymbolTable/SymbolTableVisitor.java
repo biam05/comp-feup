@@ -1,4 +1,4 @@
-package SymbolTable;
+package symbolTable;
 
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
