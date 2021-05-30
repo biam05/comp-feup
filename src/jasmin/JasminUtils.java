@@ -1,20 +1,18 @@
 package jasmin;
 
-import jas.Var;
 import org.specs.comp.ollir.*;
 
 public class JasminUtils {
 
-    public static String getParametersFromMethod(JasminMethod method){
+    public static String getParametersFromMethod(JasminMethod method) {
         StringBuilder res = new StringBuilder();
-        if(method.getMethod().getMethodName().equals("main")){
+        if (method.getMethod().getMethodName().equals("main")) {
             res = new StringBuilder("[Ljava/lang/String;");
             method.addLocalVariable("args", VarScope.PARAMETER, new Type(ElementType.ARRAYREF));
-        }
-        else{
-            for(Element param : method.getMethod().getParams()){
-                if(param.isLiteral()) res = new StringBuilder("L");
-                switch (param.getType().getTypeOfElement()){
+        } else {
+            for (Element param : method.getMethod().getParams()) {
+                if (param.isLiteral()) res = new StringBuilder("L");
+                switch (param.getType().getTypeOfElement()) {
                     case INT32:
                         res.append("I");
                         break;
@@ -33,15 +31,15 @@ public class JasminUtils {
                     default:
                         break;
                 }
-                method.addLocalVariable(((Operand)param).getName(), VarScope.PARAMETER, param.getType());
+                method.addLocalVariable(((Operand) param).getName(), VarScope.PARAMETER, param.getType());
             }
         }
         return res.toString();
     }
 
-    public static String getReturnFromMethod(JasminMethod method, Type type){
+    public static String getReturnFromMethod(JasminMethod method, Type type) {
         String res = "";
-        switch(type.getTypeOfElement()){
+        switch (type.getTypeOfElement()) {
             case INT32:
                 res = "I";
                 break;
@@ -63,7 +61,7 @@ public class JasminUtils {
         return res;
     }
 
-    public static String getConstSize(JasminMethod method, String value){
+    public static String getConstSize(JasminMethod method, String value) {
         int val = Integer.parseInt(value);
         String res, aux;
         if (val >= 0 && val <= 5) aux = "iconst_";
@@ -84,7 +82,7 @@ public class JasminUtils {
         return aux + num;
     }
 
-    public static String getStoreSize(JasminMethod method, Element element, VarScope varScope){
+    public static String getStoreSize(JasminMethod method, Element element, VarScope varScope) {
         String aux;
         int num = method.getLocalVariableByKey(element, varScope).getVirtualReg();
         if (num >= 0 && num <= 3) aux = "store_";

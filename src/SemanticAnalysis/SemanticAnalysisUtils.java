@@ -1,5 +1,8 @@
+package SemanticAnalysis;
+
+import SymbolTable.GrammarSymbolTable;
+import SymbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -199,7 +202,7 @@ public class SemanticAnalysisUtils {
             Type type = checkIfIdentifierExists(symbolTable, method, identifier);
             if (type == null)
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.get("line")), Integer.parseInt(firstChild.get("col")), "identifier '" + identifier + "' is not declared"));
-            else if(method.isMain() && symbolTable.returnFieldTypeIfExists(identifier) != null)
+            else if (method.isMain() && symbolTable.returnFieldTypeIfExists(identifier) != null)
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.get("line")), Integer.parseInt(firstChild.get("col")), "non-static variable '" + identifier + "' cannot be referenced from a static context"));
 
             return type;
@@ -225,7 +228,7 @@ public class SemanticAnalysisUtils {
             JmmNode child = children.get(0);
             if (child.getKind().contains("Identifier")) {
                 String identifier = child.getKind().replaceAll("'", "").replace("Identifier ", "");
-                if(method.isMain() && symbolTable.returnFieldTypeIfExists(identifier) != null)
+                if (method.isMain() && symbolTable.returnFieldTypeIfExists(identifier) != null)
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "non-static variable '" + identifier + "' cannot be referenced from a static context"));
                 if ((isIdentifier(symbolTable, method, child, true, true) == null) || (isIdentifier(symbolTable, method, child, false, true) == null))
                     return true;
@@ -324,8 +327,7 @@ public class SemanticAnalysisUtils {
                     if (identifierType == null) {
                         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier '" + identifierName + "' is not declared"));
                         return null;
-                    }
-                    else if(method.isMain() && symbolTable.returnFieldTypeIfExists(identifierName) != null) {
+                    } else if (method.isMain() && symbolTable.returnFieldTypeIfExists(identifierName) != null) {
                         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "non-static variable '" + identifierName + "' cannot be referenced from a static context"));
                     }
 

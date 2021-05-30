@@ -1,6 +1,10 @@
+package ollir;
+
+import SemanticAnalysis.SemanticAnalysisUtils;
+import SymbolTable.GrammarSymbolTable;
+import SymbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;

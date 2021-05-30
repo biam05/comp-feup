@@ -18,7 +18,7 @@ public class JasminMethod {
     private int max_n_stack;
     private int current_n_stack;
     private int n_branches;
-    private Map<String, Descriptor> localVariables;
+    private final Map<String, Descriptor> localVariables;
 
     public JasminMethod(Method method, String className, String superName) {
         this.method = method;
@@ -60,7 +60,9 @@ public class JasminMethod {
             max_n_stack = current_n_stack;
     }
 
-    public void decN_stack() { current_n_stack--;}
+    public void decN_stack() {
+        current_n_stack--;
+    }
 
     public String getClassName() {
         return className;
@@ -68,14 +70,14 @@ public class JasminMethod {
 
     public Descriptor getLocalVariableByKey(Element dest, VarScope type) {
         String key = ((Operand) dest).getName();
-        if(localVariables.get(key) == null){
+        if (localVariables.get(key) == null) {
             addLocalVariable(key, type, dest.getType());
         }
         return localVariables.get(key);
     }
 
-    public Boolean addLocalVariable(String variable, VarScope type, Type tp){
-        if(!localVariables.containsKey(variable)){
+    public Boolean addLocalVariable(String variable, VarScope type, Type tp) {
+        if (!localVariables.containsKey(variable)) {
             localVariables.put(variable, new Descriptor(type, n_locals, tp));
             n_locals++;
             return true;
@@ -83,14 +85,14 @@ public class JasminMethod {
         return false;
     }
 
-    public void getMethodDeclaration(){
+    public void getMethodDeclaration() {
         jasminCode.append("\n\n.method public");
 
-        if(method.isConstructMethod())
+        if (method.isConstructMethod())
             jasminCode.append(" <init>");
-        else{
-            if(method.isStaticMethod()) jasminCode.append(" static");
-            if(method.isFinalMethod())  jasminCode.append(" final");
+        else {
+            if (method.isStaticMethod()) jasminCode.append(" static");
+            if (method.isFinalMethod()) jasminCode.append(" final");
 
             jasminCode.append(" ");
             jasminCode.append(method.getMethodName());
@@ -102,7 +104,7 @@ public class JasminMethod {
         jasminCode.append(")");
     }
 
-    public void generateJasminCode(){
+    public void generateJasminCode() {
 
         getMethodDeclaration();
 
@@ -110,11 +112,11 @@ public class JasminMethod {
 
         StringBuilder auxiliaryJasmin = new StringBuilder();
         String currentlabel = "";
-        for(var inst : method.getInstructions()) {
+        for (var inst : method.getInstructions()) {
             if (!method.getLabels(inst).isEmpty())
                 if (!currentlabel.equals(method.getLabels(inst).get(0))) {
                     currentlabel = method.getLabels(inst).get(0);
-                    for (String label: method.getLabels(inst)) {
+                    for (String label : method.getLabels(inst)) {
                         auxiliaryJasmin.append("\n\t").append(label).append(":");
                     }
                 }
@@ -123,7 +125,7 @@ public class JasminMethod {
             auxiliaryJasmin.append(jasminInstruction.getJasminCode());
             this.reports.addAll(jasminInstruction.getReports());
         }
-        if(!this.method.isConstructMethod()){
+        if (!this.method.isConstructMethod()) {
             this.jasminCode.append("\n\t\t.limit locals ").append(n_locals);
             this.jasminCode.append("\n\t\t.limit stack ").append(max_n_stack).append("\n");
         }

@@ -47,9 +47,7 @@ public class Type {
         return "Type [name=" + name + ", isArray=" + isArray + "]";
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -80,9 +78,9 @@ public class Type {
         } else return name.equals(other.name);
     }
 
-    public String toOLLIR(){
+    public String toOLLIR() {
         StringBuilder res = new StringBuilder();
-        if(isArray()) res.append(".array");
+        if (isArray()) res.append(".array");
 
         switch (getName()) {
             case "Int":

@@ -3,7 +3,6 @@ package jasmin;
 import org.specs.comp.ollir.*;
 import pt.up.fe.comp.jmm.report.Report;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -29,7 +28,7 @@ public class JasminInstruction {
         return reports;
     }
 
-    public void addCode(String code){
+    public void addCode(String code) {
         jasminCode.append(code);
     }
 
@@ -82,7 +81,7 @@ public class JasminInstruction {
         }
     }
 
-    private void generateAssignNOper(AssignInstruction instruction){
+    private void generateAssignNOper(AssignInstruction instruction) {
         Instruction rhs = instruction.getRhs();
 
         Element singleOperand = ((SingleOpInstruction) rhs).getSingleOperand();
@@ -117,7 +116,7 @@ public class JasminInstruction {
         addCode(JasminUtils.getStoreSize(method, dest, VarScope.LOCAL) + "\n");
     }
 
-    private void generateAssignBinaryOper(AssignInstruction instruction){
+    private void generateAssignBinaryOper(AssignInstruction instruction) {
         Instruction rhs = instruction.getRhs();
 
         OperationType operation = ((BinaryOpInstruction) rhs).getUnaryOperation().getOpType();
@@ -170,7 +169,7 @@ public class JasminInstruction {
         }
     }
 
-    private void getLessThanOperation(AssignInstruction instruction){
+    private void getLessThanOperation(AssignInstruction instruction) {
         addCode("\n\n\t\tif_icmpge ElseLTH" + method.getN_branches() + JasminUtils.getConstSize(method, "1"));
         storeOrIastore(instruction.getDest());
         addCode("\n\t\tgoto AfterLTH" + method.getN_branches());
@@ -181,13 +180,13 @@ public class JasminInstruction {
         method.incN_branches();
     }
 
-    private void generateAssignGetfield(AssignInstruction instruction){
+    private void generateAssignGetfield(AssignInstruction instruction) {
         Instruction rhs = instruction.getRhs();
         generateGetField((GetFieldInstruction) rhs);
         storeOrIastore(instruction.getDest());
     }
 
-    private void generateAssignCall(AssignInstruction instruction){
+    private void generateAssignCall(AssignInstruction instruction) {
         Instruction rhs = instruction.getRhs();
         Element element = instruction.getDest();
         if (element.getType().getTypeOfElement() == ElementType.INT32 && !element.isLiteral()) {
@@ -199,7 +198,7 @@ public class JasminInstruction {
                 generateCall((CallInstruction) rhs, true);
                 Element firstArg = ((CallInstruction) rhs).getFirstArg();
                 Operand opFirstArg = (Operand) firstArg;
-                if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
+                if (firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
                         opFirstArg.getName().equals(method.getClassName())) {
                     addCode("\n\t\tinvokespecial " + method.getClassName() + ".<init>()V");
                 }
@@ -214,7 +213,7 @@ public class JasminInstruction {
         generateCall((CallInstruction) rhs, true);
         Element firstArg = ((CallInstruction) rhs).getFirstArg();
         Operand opFirstArg = (Operand) firstArg;
-        if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
+        if (firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
                 opFirstArg.getName().equals(method.getClassName())) {
             addCode("\n\t\tinvokespecial " + method.getClassName() + ".<init>()V");
         }
@@ -223,41 +222,34 @@ public class JasminInstruction {
 
     // -------------- Call Instructions --------------
     private void generateCall(CallInstruction instruction, boolean assign) {
-        if(method.getMethod().isConstructMethod()){
+        if (method.getMethod().isConstructMethod()) {
             addCode("\n\taload_0\n\tinvokespecial ");
             if (method.getSuperName() == null)
                 addCode("java/lang/Object");
             else
                 addCode(method.getSuperName());
             addCode(".<init>()V\n\treturn");
-        }
-        else{
+        } else {
             Element firstArg = instruction.getFirstArg();
-            Operand opFirstArg = (Operand)firstArg;
+            Operand opFirstArg = (Operand) firstArg;
 
-            if(firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF) {
+            if (firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF) {
                 generateCallObjectRef(instruction, assign);
                 if (!JasminUtils.getReturnFromMethod(method, instruction.getReturnType()).equals("V") && !assign)
                     generatePop();
-            }
-
-            else if (opFirstArg.getType().getTypeOfElement() == ElementType.ARRAYREF){
+            } else if (opFirstArg.getType().getTypeOfElement() == ElementType.ARRAYREF) {
 
                 if (instruction.getInvocationType() == CallType.NEW) generateNewArray(instruction);
 
-                else if (instruction.getInvocationType() == CallType.arraylength){
+                else if (instruction.getInvocationType() == CallType.arraylength) {
                     decideType(firstArg);
                     addCode(JasminUtils.getLoadSize(method, firstArg, null) + "\n\t\tarraylength");
                 }
                 if (!assign)
                     generatePop();
-            }
-
-            else if (opFirstArg.getType().getTypeOfElement() == ElementType.CLASS) {
+            } else if (opFirstArg.getType().getTypeOfElement() == ElementType.CLASS) {
                 generateStaticMethod(instruction);
-            }
-
-            else if(opFirstArg.getName().equals("this")) {
+            } else if (opFirstArg.getName().equals("this")) {
                 generateClassMethod(instruction);
                 if (!assign)
                     generatePop();
@@ -270,22 +262,18 @@ public class JasminInstruction {
         method.decN_stack();
     }
 
-    private void generateCallObjectRef(CallInstruction instruction, boolean assign){
+    private void generateCallObjectRef(CallInstruction instruction, boolean assign) {
         Element firstArg = instruction.getFirstArg();
-        Operand opFirstArg = (Operand)firstArg;
+        Operand opFirstArg = (Operand) firstArg;
 
-        if (opFirstArg.getName().equals(method.getClassName()))
-        {
+        if (opFirstArg.getName().equals(method.getClassName())) {
             addCode("\n\t\tnew " + method.getClassName() + "\n\t\tdup");
             method.incN_stack();
-        }
-
-        else {
+        } else {
             if (instruction.getNumOperands() > 1) {
                 Element secondArg = instruction.getSecondArg();
                 if (secondArg.isLiteral())
-                    if (((LiteralElement) secondArg).getLiteral().replace("\"", "").equals("<init>"))
-                    {
+                    if (((LiteralElement) secondArg).getLiteral().replace("\"", "").equals("<init>")) {
                         method.incN_stack();
                         return;
                     }
@@ -297,7 +285,7 @@ public class JasminInstruction {
         }
     }
 
-    private void generateNewArray(CallInstruction instruction){
+    private void generateNewArray(CallInstruction instruction) {
         Element element = instruction.getListOfOperands().get(0);
         if (element.isLiteral())
             addCode(JasminUtils.getConstSize(method, ((LiteralElement) element).getLiteral()));
@@ -308,9 +296,9 @@ public class JasminInstruction {
         //Increase for newarray, decrease for length of the array
     }
 
-    private void generateStaticMethod(CallInstruction instruction){
+    private void generateStaticMethod(CallInstruction instruction) {
         Element firstArg = instruction.getFirstArg();
-        Operand opFirstArg = (Operand)firstArg;
+        Operand opFirstArg = (Operand) firstArg;
         for (Element parameter : instruction.getListOfOperands()) {
             if (!parameter.isLiteral())
                 loadOrAload(parameter, VarScope.LOCAL);
@@ -324,7 +312,7 @@ public class JasminInstruction {
         }
     }
 
-    private void generateClassMethod(CallInstruction instruction){
+    private void generateClassMethod(CallInstruction instruction) {
         addCode("\n\t\taload_0");
         virtualParameters(instruction);
     }
@@ -352,8 +340,7 @@ public class JasminInstruction {
                 addCode(JasminUtils.getLoadSize(method, e1, null) + "\n\t\t");
                 if (!type) decideType(instruction.getOperand());
                 addCode("return");
-            }
-            else {
+            } else {
                 String literal = ((LiteralElement) e1).getLiteral();
                 addCode(JasminUtils.getConstSize(method, literal) + "\n\t\tireturn");
             }
@@ -376,7 +363,7 @@ public class JasminInstruction {
         loadOrAload(e1, VarScope.FIELD);
         constOrLoad(e3, null);
 
-        if(name.equals("this")) name = method.getClassName();
+        if (name.equals("this")) name = method.getClassName();
 
         method.decN_stack();
         method.decN_stack();
@@ -406,8 +393,8 @@ public class JasminInstruction {
 
     // -------------- Branch Instructions --------------
     private void generateBranch(CondBranchInstruction instruction) {
-        constOrLoad(instruction.getLeftOperand(),null);
-        constOrLoad(instruction.getRightOperand(),null);
+        constOrLoad(instruction.getLeftOperand(), null);
+        constOrLoad(instruction.getRightOperand(), null);
 
         OperationType conditionType = instruction.getCondOperation().getOpType();
         switch (conditionType) {
@@ -458,12 +445,11 @@ public class JasminInstruction {
         return false;
     }
 
-    private void constOrLoad(Element element, VarScope varScope){
+    private void constOrLoad(Element element, VarScope varScope) {
         if (element.isLiteral()) {
             String value = ((LiteralElement) element).getLiteral();
             addCode(JasminUtils.getConstSize(method, value));
-        }
-        else loadOrAload(element, varScope);
+        } else loadOrAload(element, varScope);
     }
 
     private void storeOrIastore(Element element) {
@@ -491,11 +477,11 @@ public class JasminInstruction {
     }
 
     private void invokeParameters(CallInstruction instruction) {
-        if(instruction.getNumOperands() > 1){
+        if (instruction.getNumOperands() > 1) {
             Element secondArg = instruction.getSecondArg();
-            if(secondArg.isLiteral()){
+            if (secondArg.isLiteral()) {
                 addCode("." + ((LiteralElement) secondArg).getLiteral().replace("\"", "") + "(");
-                for (Element parameter : instruction.getListOfOperands()){
+                for (Element parameter : instruction.getListOfOperands()) {
                     addCode(JasminUtils.getReturnFromMethod(method, parameter.getType()));
                 }
                 String ret = JasminUtils.getReturnFromMethod(method, instruction.getReturnType());

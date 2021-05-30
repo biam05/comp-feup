@@ -1,5 +1,9 @@
+package ollir;
+
+import SemanticAnalysis.SemanticAnalysisUtils;
+import SymbolTable.GrammarSymbolTable;
+import SymbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
@@ -485,7 +489,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         String type;
 
-        if(aux.contains("<")) type = ".bool";
+        if (aux.contains("<")) type = ".bool";
         else type = OLLIRUtils.getReturnTypeExpression(code);
 
         var_temp++;
