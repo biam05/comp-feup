@@ -24,7 +24,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
         addVisit("MethodDeclaration", this::visitMethod);
         addVisit("Statement", this::visitStatement);
         addVisit("Expression", this::visitExpression);
-        addVisit("IfExpression", this::visitExpressionParent);
+        addVisit("IfExpression", this::visitExpression);
         addVisit("ClassDeclaration", this::visitClassDeclaration);
         addVisit("Return", this::visitReturn);
         addVisit("Assign", this::visitAssign);
@@ -96,7 +96,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
                 result.appendCode(OLLIRUtils.methodDeclaration(this.currentMethod));
                 result.appendCode("{\n");
                 result.append(visit(child));
-                result.appendCode("\n"); //ver isto
+                result.appendCode("\n");
 
                 alreadyInBody = true;
             } else if (child.getKind().equals("Return")) {
@@ -148,10 +148,6 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
             result.appendToCode(aux);
         }
         return result;
-    }
-
-    private OllirObject visitExpressionParent(JmmNode node, String dummy) {
-        return visit(node.getChildren().get(0));
     }
 
     private OllirObject visitExpression(JmmNode node, String dummy) {

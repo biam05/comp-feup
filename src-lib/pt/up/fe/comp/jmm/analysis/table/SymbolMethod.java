@@ -1,26 +1,27 @@
 package pt.up.fe.comp.jmm.analysis.table;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class SymbolMethod {
 
     private final List<Symbol> parameters;
-    private final List<Symbol> localVariables;
+    private final HashMap<Symbol, Integer> localVariables;
     private String name;
     private Type returnType;
 
     public SymbolMethod() {
         this.parameters = new ArrayList<>();
-        this.localVariables = new ArrayList<>();
+        this.localVariables = new HashMap<>();
     }
 
     public void addParameter(Symbol parameter) {
         this.parameters.add(parameter);
     }
 
-    public void addLocalVariables(Symbol localVariable) {
-        this.localVariables.add(localVariable);
+    public void updateLocalVariable(Symbol localVariable, Integer value) {
+        this.localVariables.put(localVariable, value);
     }
 
     public String getName() {
@@ -44,7 +45,7 @@ public class SymbolMethod {
     }
 
     public Type returnTypeIfExists(String name) {
-        for (Symbol symbol : localVariables)
+        for (Symbol symbol : localVariables.keySet())
             if (symbol.getName().equals(name)) return symbol.getType();
         for (Symbol symbol : parameters)
             if (symbol.getName().equals(name)) return symbol.getType();
@@ -56,7 +57,7 @@ public class SymbolMethod {
     }
 
     public List<Symbol> getLocalVariables() {
-        return localVariables;
+        return new ArrayList<>(localVariables.keySet());
     }
 
     public boolean equalsMethod(List<String> info) {

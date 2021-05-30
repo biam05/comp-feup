@@ -146,7 +146,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                 }
                 if (method.hasVariable(localVariable))
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "variable " + localVariable.getName() + " is already defined in method " + method.getName()));
-                else method.addLocalVariables(localVariable);
+                else method.updateLocalVariable(localVariable, null);
             }
         }
     }

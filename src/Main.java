@@ -24,11 +24,19 @@ public class Main implements JmmParser {
         }
 
         File jmmFile = new File(args[0]);
+
+        boolean o_optimization = false;
+        if (args.length > 1)
+            if (args[1].equals("-o"))
+                o_optimization = true;
         String jmm = Files.readString(jmmFile.toPath());
 
         JmmParserResult parserResult = new Main().parse(jmm);
         JmmSemanticsResult semanticsResult = new AnalysisStage().semanticAnalysis(parserResult);
-        OllirResult ollirResult = new OptimizationStage().toOllir(semanticsResult);
+        OptimizationStage optimization = new OptimizationStage();
+        if (o_optimization)
+            semanticsResult = optimization.optimize(semanticsResult);
+        OllirResult ollirResult = optimization.toOllir(semanticsResult);
         JasminResult jasminResult = new BackendStage().toJasmin(ollirResult);
 
         Path p  = Paths.get(ollirResult.getSymbolTable().getClassName() + "/");

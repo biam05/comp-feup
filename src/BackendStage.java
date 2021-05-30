@@ -67,6 +67,8 @@ public class BackendStage implements JasminBackend {
                     case "ARRAYREF":
                         jasminCode.append("[I");
                         break;
+                    case "OBJECTREF":
+                        jasminCode.append(ollirClass.getClassName());
                     default:
                         break;
                 }
