@@ -32,7 +32,7 @@ public class OLLIRUtils {
     }
 
     public static String invokeMethod(String method, String identifier, String methodName, List<String> fields, String returnType) {
-
+        System.out.println("invoke -> " + method + ", " + identifier + ", " + methodName + ", " + fields + ", " + returnType);
         StringBuilder result = new StringBuilder();
         List<String> temporary = new ArrayList<>();
 

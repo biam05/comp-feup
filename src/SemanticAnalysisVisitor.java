@@ -132,7 +132,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         List<JmmNode> children = node.getChildren();
         if (children.size() != 2) return;
         if (!children.get(0).getKind().equals("Expression") || !children.get(1).getKind().equals("Expression"))
-            return; //ver isto
+            return;
 
         Type leftOperandType = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, children.get(0), reports, false);
         if (leftOperandType == null) {
@@ -150,6 +150,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         else if (leftOperandType.isArray())
             if (!rightOperandType.isArray())
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "expected array type in right assigned operator"));
+
 
     }
 

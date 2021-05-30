@@ -185,7 +185,7 @@ public class SemanticAnalysisUtils {
 
         List<JmmNode> children = node.getChildren();
         JmmNode firstChild = children.get(0);
-
+        System.out.println("final terms -> " + node + ", " + children);
         if (firstChild.getKind().contains("Number")) return new Type("Int", false);
         else if (firstChild.getKind().equals("NewIntArrayExpression") && rightOperand) {
             if (evaluatesToInteger(symbolTable, method, firstChild.getChildren().get(0), reports))
@@ -199,6 +199,9 @@ public class SemanticAnalysisUtils {
             Type type = checkIfIdentifierExists(symbolTable, method, identifier);
             if (type == null)
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.get("line")), Integer.parseInt(firstChild.get("col")), "identifier '" + identifier + "' is not declared"));
+            else if(method.isMain() && symbolTable.returnFieldTypeIfExists(identifier) != null)
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(firstChild.get("line")), Integer.parseInt(firstChild.get("col")), "non-static variable '" + identifier + "' cannot be referenced from a static context"));
+
             return type;
         } else if (rightOperand && (firstChild.getKind().equals("True") || firstChild.getKind().equals("False")))
             return new Type("Boolean", false);
@@ -207,6 +210,7 @@ public class SemanticAnalysisUtils {
 
         return null;
     }
+
 
     private static boolean evaluateArray(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports) {
 
@@ -218,10 +222,15 @@ public class SemanticAnalysisUtils {
 
         List<JmmNode> children = node.getChildren();
         if (children.size() == 1) {
-            if (children.get(0).getKind().contains("Identifier")) {
-                if ((isIdentifier(symbolTable, method, children.get(0), true, true) == null) || (isIdentifier(symbolTable, method, children.get(0), false, true) == null))
+            JmmNode child = children.get(0);
+            if (child.getKind().contains("Identifier")) {
+                String identifier = child.getKind().replaceAll("'", "").replace("Identifier ", "");
+                if(method.isMain() && symbolTable.returnFieldTypeIfExists(identifier) != null)
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "non-static variable '" + identifier + "' cannot be referenced from a static context"));
+                if ((isIdentifier(symbolTable, method, child, true, true) == null) || (isIdentifier(symbolTable, method, child, false, true) == null))
                     return true;
             }
+
         }
 
         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "length can only be used for int[] or String[]"));
@@ -230,7 +239,7 @@ public class SemanticAnalysisUtils {
 
     public static Type evaluateExpression(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
         List<JmmNode> children = node.getChildren();
-
+        System.out.println("-> expression: " + node + ", " + children);
         if (children.size() == 1) {
             JmmNode child = children.get(0);
             if (child.getKind().equals("And") && rightOperand) {
@@ -316,6 +325,10 @@ public class SemanticAnalysisUtils {
                         reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "identifier '" + identifierName + "' is not declared"));
                         return null;
                     }
+                    else if(method.isMain() && symbolTable.returnFieldTypeIfExists(identifierName) != null) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(identifier.getChildren().get(0).get("line")), Integer.parseInt(identifier.getChildren().get(0).get("col")), "non-static variable '" + identifierName + "' cannot be referenced from a static context"));
+                    }
+
 
                     identifierN = identifierType.getName();
                 } else identifierN = identifierName;

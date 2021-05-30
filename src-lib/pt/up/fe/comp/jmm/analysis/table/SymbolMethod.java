@@ -43,6 +43,10 @@ public class SymbolMethod {
         return returnTypeIfExists(symbol.getName()) != null;
     }
 
+    public boolean isMain() {
+        return name.equals("main");
+    }
+
     public Type returnTypeIfExists(String name) {
         for (Symbol symbol : localVariables)
             if (symbol.getName().equals(name)) return symbol.getType();
