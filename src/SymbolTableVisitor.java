@@ -140,13 +140,16 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         for (JmmNode child : children) {
             if (child.getKind().equals("VarDeclaration")) {
                 Symbol localVariable = parseVarDeclaration(child);
-                if (localVariable != null) method.addLocalVariables(localVariable);
-                else
+                if (localVariable == null) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "type is not valid"));
+                    continue;
+                }
+                if (method.hasVariable(localVariable))
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "variable " + localVariable.getName() + " is already defined in method " + method.getName()));
+                else method.addLocalVariables(localVariable);
             }
         }
     }
-
 
     public void getMethodParameters(SymbolMethod method, List<JmmNode> nodes) {
 
@@ -156,6 +159,9 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             JmmNode nodeType = nodes.get(i++);
             JmmNode nodeName = nodes.get(i);
             Symbol symbol = new Symbol(nodeType, nodeName);
+            if (method.hasVariable(symbol))
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(nodeName.get("line")), Integer.parseInt(nodeName.get("col")), "variable " + symbol.getName() + " is already defined in method " + method.getName()));
+
             method.addParameter(symbol);
         }
     }

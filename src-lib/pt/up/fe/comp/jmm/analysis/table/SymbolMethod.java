@@ -10,13 +10,6 @@ public class SymbolMethod {
     private String name;
     private Type returnType;
 
-    public SymbolMethod(String name, Type returnType, List<Symbol> parameters, List<Symbol> localVariables) {
-        this.name = name;
-        this.returnType = returnType;
-        this.parameters = parameters;
-        this.localVariables = localVariables;
-    }
-
     public SymbolMethod() {
         this.parameters = new ArrayList<>();
         this.localVariables = new ArrayList<>();
@@ -44,6 +37,10 @@ public class SymbolMethod {
 
     public void setReturnType(Type returnType) {
         this.returnType = returnType;
+    }
+
+    public boolean hasVariable(Symbol symbol) {
+        return returnTypeIfExists(symbol.getName()) != null;
     }
 
     public Type returnTypeIfExists(String name) {
@@ -90,13 +87,13 @@ public class SymbolMethod {
 
     @Override
     public String toString() {
-        return ("Name: " +  name + ", return: " + returnType + ", parameters: " + parameters);
+        return ("Name: " + name + ", return: " + returnType + ", parameters: " + parameters);
     }
 
-    public int getParameterOrder(String parameter){
+    public int getParameterOrder(String parameter) {
         int counter = 1;
-        for(Symbol s: parameters){
-            if(s.getName().equals(parameter)) return counter;
+        for (Symbol s : parameters) {
+            if (s.getName().equals(parameter)) return counter;
             counter++;
         }
         return 0;

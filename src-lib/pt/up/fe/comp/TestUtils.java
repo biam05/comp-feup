@@ -111,7 +111,7 @@ public class TestUtils {
 
     public static OllirResult optimize(String code, boolean optimize) {
         var semanticsResult = analyse(code);
-        //noErrors(semanticsResult.getReports());
+        noErrors(semanticsResult.getReports());
         return optimize(semanticsResult, optimize);
     }
 
