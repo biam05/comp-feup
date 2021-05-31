@@ -48,6 +48,10 @@ public class OptimizationStage implements JmmOptimization {
 
     @Override
     public JmmSemanticsResult optimize(JmmSemanticsResult semanticsResult) {
+        JmmNode node = semanticsResult.getRootNode();
+
+        OptimizationVisitor optimizationVisitor = new OptimizationVisitor((GrammarSymbolTable) semanticsResult.getSymbolTable());
+        optimizationVisitor.visit(node);
 
         return semanticsResult;
     }

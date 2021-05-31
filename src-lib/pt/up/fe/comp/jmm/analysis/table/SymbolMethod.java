@@ -24,6 +24,10 @@ public class SymbolMethod {
         this.localVariables.put(localVariable, value);
     }
 
+    public Integer getLocalVariable(String localVariable) {
+        return this.localVariables.get(new Symbol(new Type("Int", false), localVariable));
+    }
+
     public String getName() {
         return name;
     }

@@ -1,6 +1,9 @@
 import pt.up.fe.comp.jmm.JmmNode;
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
+import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +33,20 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         addVisit("Div", this::visitOperation);
         addVisit("FinalTerms", this::visitFinalTerms);
         addVisit("ArrayAccess", this::visitArrayAccess);
+        setDefaultVisit(this::defaultVisit);
     }
 
-    private boolean visitMethod(JmmNode node, boolean dummy) {
+    private Boolean defaultVisit(JmmNode node, Boolean dummy) {
+        for (JmmNode child : node.getChildren())
+            visit(child);
+        return dummy;
+    }
+
+    private Boolean visitMethod(JmmNode node, Boolean dummy) {
         List<JmmNode> children = node.getChildren();
 
         StringBuilder methodInfo = new StringBuilder();
-        boolean alreadyInBody = false;
+        Boolean alreadyInBody = false;
 
         for (int i = 0; i < children.size(); i++) {
             JmmNode child = children.get(i);
@@ -70,27 +80,27 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         return dummy;
     }
 
-    private boolean visitReturn(JmmNode node, boolean dummy) {
+    private Boolean visitReturn(JmmNode node, Boolean dummy) {
         visit(node.getChildren().get(0).getChildren().get(0));
         return dummy;
     }
 
-    private boolean visitMethodBody(JmmNode node, boolean dummy) {
+    private Boolean visitMethodBody(JmmNode node, Boolean dummy) {
         for (JmmNode child : node.getChildren()) visit(child);
         return dummy;
     }
 
-    private boolean visitStatement(JmmNode node, boolean dummy) {
+    private Boolean visitStatement(JmmNode node, Boolean dummy) {
         for (JmmNode child : node.getChildren()) visit(child);
         return dummy;
     }
 
-    private boolean visitFirstChild(JmmNode node, boolean dummy) {
+    private Boolean visitFirstChild(JmmNode node, Boolean dummy) {
         visit(node.getChildren().get(0));
         return dummy;
     }
 
-    private boolean visitCall(JmmNode node, boolean dummy) {
+    private Boolean visitCall(JmmNode node, Boolean dummy) {
         JmmNode secondChild = node.getChildren().get(1);
 
         if (secondChild.getKind().equals("MethodCall"))
@@ -99,18 +109,27 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         return dummy;
     }
 
-    private boolean visitMethodCall(JmmNode node, boolean dummy) {
-        //TODO: Change to checking if args are local variables and replacing them with their values
-        //List<String> args = getMethodArgs(node, result);
+    private Boolean visitMethodCall(JmmNode node, Boolean dummy) {
+        for (int i = 1; i < node.getChildren().size(); i++) {
+            visit(node.getChildren().get(i).getChildren().get(0));
+        }
         return dummy;
     }
 
-    private boolean visitAssign(JmmNode node, boolean dummy) {
-        //TODO: Check if right side are replaceable, save value for the variable on the left side in the symbol table
+    private Boolean visitAssign(JmmNode node, Boolean dummy) {
+        visit(node.getChildren().get(1));
+        JmmNode lhsVariable = node.getChildren().get(0).getChildren().get(0).getChildren().get(0);
+        JmmNode rhsVariable = node.getChildren().get(1).getChildren().get(0).getChildren().get(0);
+        if (lhsVariable.getKind().contains("Identifier") && rhsVariable.getKind().contains("Number")) {
+            String varName = lhsVariable.getKind().replaceAll("'","").replace("Identifier ","");
+            int value = Integer.parseInt(rhsVariable.getKind().replaceAll("'", "").replace("Number ", ""));
+            currentMethod.updateLocalVariable(new Symbol(new Type("Int", false),varName), value);
+            System.out.println("Updated " + varName + " with value " + value);
+        }
         return dummy;
     }
 
-    private boolean visitOperation(JmmNode node, boolean dummy) {
+    private Boolean visitOperation(JmmNode node, Boolean dummy) {
         switch (node.getKind()) {
             case "Add":
             case "Sub":
@@ -118,33 +137,40 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
             case "Div":
             case "And":
             case "Less":
-                //TODO: Check if left or right operand can be replaced by their value
-                JmmNode leftOperand = node.getChildren().get(0);
-                JmmNode rightOperand = node.getChildren().get(1);
+                visit(node.getChildren().get(0));
+                visit(node.getChildren().get(1));
                 break;
             case "Not":
-                //TODO: Check if operand can be replaced by its value
-                JmmNode operand = node.getChildren().get(0);
+                visit(node.getChildren().get(0));
                 break;
         }
         return dummy;
     }
 
-    private boolean visitFinalTerms(JmmNode node, boolean dummy) {
-        JmmNode child = node.getChildren().get(0);
+    private Boolean visitFinalTerms(JmmNode node, Boolean dummy) {
+        JmmNode finalterm = node.getChildren().get(0);
 
-        if (child.getKind().contains("Identifier")) {
+        if (finalterm.getKind().contains("Identifier")) {
             //TODO: Check if the variable can be replaced by its value
-            /*variable = OLLIRUtils.getIdentifier(child, symbolTable, currentMethod);
-            if (!value.contains("putfield") && !value.contains("getfield"))
-                result.appendCode(OLLIRUtils.getIdentifierType(child, symbolTable, currentMethod));*/
-        } else if (child.getKind().equals("Expression"))
-            visit(child);
+            String varName = finalterm.getKind().replaceAll("'","").replace("Identifier ","");
+            Integer value = currentMethod.getLocalVariable(varName);
+            if (value != null) {
+                JmmNodeImpl newChild = new JmmNodeImpl("Number '" + value + "'");
+                for (JmmNode child : finalterm.getChildren())
+                    newChild.add(child);
+                newChild.put("col", finalterm.get("col"));
+                newChild.put("line", finalterm.get("line"));
+                node.removeChild(finalterm);
+                node.add(newChild);
+            }
+
+        } else if (finalterm.getKind().equals("Expression"))
+            visit(finalterm);
 
         return dummy;
     }
 
-    private boolean visitArrayAccess(JmmNode node, boolean dummy) {
+    private Boolean visitArrayAccess(JmmNode node, Boolean dummy) {
         visit(node.getChildren().get(1));
         return dummy;
     }
