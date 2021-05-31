@@ -55,7 +55,6 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
-        //assertEquals("1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\n9\r\n10", output.trim());
     }
 
     @Test
@@ -124,6 +123,19 @@ public class BackendTest {
     @Test
     public void testExtra3() {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra3.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+
+    @Test
+    public void testExtra4() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra4.jmm"));
+        TestUtils.noErrors(result.getReports());
+        var output = result.run();
+    }
+    @Test
+    public void testExtra5() {
+        var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra5.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
     }

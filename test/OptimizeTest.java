@@ -114,4 +114,16 @@ public class OptimizeTest {
         TestUtils.noErrors(result.getReports());
     }
 
+    @Test
+    public void testExtra4() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra4.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
+    @Test
+    public void testExtra5() {
+        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra5.jmm"));
+        TestUtils.noErrors(result.getReports());
+    }
+
 }

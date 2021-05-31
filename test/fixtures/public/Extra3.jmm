@@ -1,5 +1,5 @@
 /*
-Array access with method call, array creation with method call and also method overloading (different parameters)
+    Array access with method call, array creation with method call and also method overloading (different parameters)
 */
 
 
@@ -13,7 +13,7 @@ class Test3{
     }
 
     public int getFirstIndex(){
-        return 0;
+        return true;
     }
 
 

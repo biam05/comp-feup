@@ -188,7 +188,7 @@ public class SemanticAnalysisUtils {
 
         List<JmmNode> children = node.getChildren();
         JmmNode firstChild = children.get(0);
-        System.out.println("final terms -> " + node + ", " + children);
+
         if (firstChild.getKind().contains("Number")) return new Type("Int", false);
         else if (firstChild.getKind().equals("NewIntArrayExpression") && rightOperand) {
             if (evaluatesToInteger(symbolTable, method, firstChild.getChildren().get(0), reports))
@@ -242,7 +242,7 @@ public class SemanticAnalysisUtils {
 
     public static Type evaluateExpression(GrammarSymbolTable symbolTable, SymbolMethod method, JmmNode node, List<Report> reports, boolean rightOperand) {
         List<JmmNode> children = node.getChildren();
-        System.out.println("-> expression: " + node + ", " + children);
+
         if (children.size() == 1) {
             JmmNode child = children.get(0);
             if (child.getKind().equals("And") && rightOperand) {
