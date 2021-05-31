@@ -1,4 +1,7 @@
-package pt.up.fe.comp.jmm.analysis.table;
+package symbolTable;
+
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +49,10 @@ public class SymbolMethod {
 
     public boolean hasVariable(Symbol symbol) {
         return returnTypeIfExists(symbol.getName()) != null;
+    }
+
+    public boolean isMain() {
+        return name.equals("main");
     }
 
     public Type returnTypeIfExists(String name) {

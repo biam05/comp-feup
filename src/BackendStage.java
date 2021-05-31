@@ -1,5 +1,6 @@
 import jasmin.JasminMethod;
-import org.specs.comp.ollir.*;
+import org.specs.comp.ollir.ClassUnit;
+import org.specs.comp.ollir.OllirErrorException;
 import pt.up.fe.comp.jmm.jasmin.JasminBackend;
 import pt.up.fe.comp.jmm.jasmin.JasminResult;
 import pt.up.fe.comp.jmm.ollir.OllirResult;

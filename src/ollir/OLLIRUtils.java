@@ -1,6 +1,10 @@
+package ollir;
+
+import semanticAnalysis.SemanticAnalysisUtils;
+import symbolTable.GrammarSymbolTable;
+import symbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
@@ -32,7 +36,7 @@ public class OLLIRUtils {
     }
 
     public static String invokeMethod(String method, String identifier, String methodName, List<String> fields, String returnType) {
-
+        System.out.println("invoke -> " + method + ", " + identifier + ", " + methodName + ", " + fields + ", " + returnType);
         StringBuilder result = new StringBuilder();
         List<String> temporary = new ArrayList<>();
 

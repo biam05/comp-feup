@@ -1,5 +1,9 @@
+package ollir;
+
+import semanticAnalysis.SemanticAnalysisUtils;
+import symbolTable.GrammarSymbolTable;
+import symbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 
@@ -363,6 +367,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
         OllirObject identifier = visit(firstChild);
 
         List<String> args = getMethodArgs(method, result);
+
         for (int i = 0; i < args.size(); i++) {
             String s = args.get(i);
             if (s.contains("new(array") || s.contains("[")) {
@@ -392,13 +397,14 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
                     result.addAboveTemp(OLLIRUtils.invokeSpecial(aux));
 
-                } else if (identifier.getCode().contains("invokevirtual")) {
+                } else if (identifier.getCode().contains("invokevirtual") || identifier.getCode().contains("getfield")) {
                     String identifierType = OLLIRUtils.getReturnTypeExpression(identifier.getCode());
 
                     var_temp++;
                     aux = "aux" + var_temp + identifierType;
                     result.addAboveTemp(aux + " :=" + identifierType + " " + identifier.getCode() + ";\n");
                 } else result.appendTemps(identifier);
+
 
                 String methodCode = OLLIRUtils.invokeMethod(invokeType, aux, OLLIRUtils.getMethodName(method.getChildren().get(0)), args, type);
                 result.appendCode(methodCode);
@@ -479,7 +485,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         String type;
 
-        if(aux.contains("<")) type = ".bool";
+        if (aux.contains("<")) type = ".bool";
         else type = OLLIRUtils.getReturnTypeExpression(code);
 
         var_temp++;
