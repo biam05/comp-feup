@@ -33,12 +33,17 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         addVisit("Div", this::visitOperation);
         addVisit("FinalTerms", this::visitFinalTerms);
         addVisit("ArrayAccess", this::visitArrayAccess);
+        addVisit("WhileStatement", this::visitWhile);
         setDefaultVisit(this::defaultVisit);
     }
 
     private Boolean defaultVisit(JmmNode node, Boolean dummy) {
         for (JmmNode child : node.getChildren())
             visit(child);
+        return dummy;
+    }
+
+    private Boolean visitWhile(JmmNode node, Boolean dummy) {
         return dummy;
     }
 

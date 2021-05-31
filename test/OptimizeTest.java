@@ -17,36 +17,47 @@ import org.junit.Test;
 import pt.up.fe.comp.TestUtils;
 import pt.up.fe.specs.util.SpecsIo;
 
+import static org.junit.Assert.assertEquals;
+
 public class OptimizeTest {
 
    @Test
     public void testHelloWorld() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorld.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("Hello, World!", output.trim());
     }
 
     @Test
     public void testSimple() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Simple.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("30", output.trim());
     }
 
     @Test
     public void testFindMaximum() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/FindMaximum.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("Result: 28", output.trim());
     }
 
    @Test
     public void testHelloWorldAdd() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/HelloWorldAdd.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("4", output.trim());
     }
 
     @Test
     public void testLazySort() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Lazysort.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
     }
 
     @Test
@@ -65,6 +76,8 @@ public class OptimizeTest {
     public void testQuickSort() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/QuickSort.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("1\r\n2\r\n3\r\n4\r\n5\r\n6\r\n7\r\n8\r\n9\r\n10", output.trim());
     }
 
     @Test
@@ -77,12 +90,16 @@ public class OptimizeTest {
     public void testWhileAndIF() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/WhileAndIF.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("10\r\n10\r\n10\r\n10\r\n10\r\n10\r\n10\r\n10\r\n10\r\n10", output.trim());
     }
 
     @Test
     public void testExtra1() {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
         TestUtils.noErrors(result.getReports());
+        var output = TestUtils.backend(result).run();
+        assertEquals("8", output.trim());
     }
 
     @Test
@@ -96,22 +113,5 @@ public class OptimizeTest {
         var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra3.jmm"));
         TestUtils.noErrors(result.getReports());
     }
-
-  /*  @Test
-    public void testExtra4() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-    @Test
-    public void testExtra5() {
-        var result = TestUtils.optimize(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
-        TestUtils.noErrors(result.getReports());
-    }
-
-
-*/
-
-
 
 }

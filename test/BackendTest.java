@@ -111,6 +111,7 @@ public class BackendTest {
         var result = TestUtils.backend(SpecsIo.getResource("fixtures/public/Extra1.jmm"));
         TestUtils.noErrors(result.getReports());
         var output = result.run();
+        assertEquals("8", output.trim());
     }
 
     @Test
