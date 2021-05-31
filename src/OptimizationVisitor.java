@@ -123,8 +123,9 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         if (lhsVariable.getKind().contains("Identifier") && rhsVariable.getKind().contains("Number")) {
             String varName = lhsVariable.getKind().replaceAll("'","").replace("Identifier ","");
             int value = Integer.parseInt(rhsVariable.getKind().replaceAll("'", "").replace("Number ", ""));
-            currentMethod.updateLocalVariable(new Symbol(new Type("Int", false),varName), value);
-            System.out.println("Updated " + varName + " with value " + value);
+            if (currentMethod.hasVariable(new Symbol(new Type("Int", false), varName))) {
+                currentMethod.updateLocalVariable(new Symbol(new Type("Int", false), varName), value);
+            }
         }
         return dummy;
     }
@@ -151,7 +152,6 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         JmmNode finalterm = node.getChildren().get(0);
 
         if (finalterm.getKind().contains("Identifier")) {
-            //TODO: Check if the variable can be replaced by its value
             String varName = finalterm.getKind().replaceAll("'","").replace("Identifier ","");
             Integer value = currentMethod.getLocalVariable(varName);
             if (value != null) {
