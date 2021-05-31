@@ -1,8 +1,6 @@
 package symbolTable;
 
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
@@ -53,7 +51,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
                     JmmNode aux = children.get(i);
                     if (aux.getKind().equals("RBrace")) break;
                     else if (aux.getKind().equals("MethodDeclaration")) continue;
-                    Symbol localVariable = parseVarDeclaration(aux);
+                    GrammarSymbol localVariable = parseVarDeclaration(aux);
                     if (localVariable != null) symbolTable.addClassField(localVariable);
                 }
             }
@@ -92,7 +90,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
 
     public Boolean visitMethod(JmmNode node, Boolean dummy) {
 
-        SymbolMethod method = new SymbolMethod();
+        GrammarMethod method = new GrammarMethod();
 
         List<JmmNode> children = node.getChildren();
 
@@ -104,7 +102,7 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
             String childKind = child.getKind();
 
             if (childKind.equals("Type") || childKind.equals("Void"))
-                method.setReturnType(new Type(child)); // return type
+                method.setReturnType(new GrammarType(child)); // return type
 
             else if (childKind.equals("LParenthesis")) { // parameters
                 if (alreadyInBody) break;
@@ -135,12 +133,12 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
-    public void visitMethodBody(SymbolMethod method, JmmNode node) {
+    public void visitMethodBody(GrammarMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
             if (child.getKind().equals("VarDeclaration")) {
-                Symbol localVariable = parseVarDeclaration(child);
+                GrammarSymbol localVariable = parseVarDeclaration(child);
                 if (localVariable == null) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "type is not valid"));
                     continue;
@@ -152,14 +150,14 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         }
     }
 
-    public void getMethodParameters(SymbolMethod method, List<JmmNode> nodes) {
+    public void getMethodParameters(GrammarMethod method, List<JmmNode> nodes) {
 
         if ((nodes.size() == 0) || (nodes.size() % 2 != 0)) return;
 
         for (int i = 0; i < nodes.size(); i++) {
             JmmNode nodeType = nodes.get(i++);
             JmmNode nodeName = nodes.get(i);
-            Symbol symbol = new Symbol(nodeType, nodeName);
+            GrammarSymbol symbol = new GrammarSymbol(nodeType, nodeName);
             if (method.hasVariable(symbol))
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(nodeName.get("line")), Integer.parseInt(nodeName.get("col")), "variable " + symbol.getName() + " is already defined in method " + method.getName()));
 
@@ -167,25 +165,25 @@ public class SymbolTableVisitor extends PreorderJmmVisitor<Boolean, Boolean> {
         }
     }
 
-    public Symbol parseVarDeclaration(JmmNode node) {
+    public GrammarSymbol parseVarDeclaration(JmmNode node) {
         List<JmmNode> children = node.getChildren();
         if (children.size() < 2) return null;
 
         JmmNode type = children.get(0);
         JmmNode name = children.get(1);
 
-        Symbol symbol = new Symbol(type, name);
+        GrammarSymbol symbol = new GrammarSymbol(type, name);
 
         return checkValidType(symbol);
     }
 
-    private Symbol checkValidType(Symbol symbol) {
+    private GrammarSymbol checkValidType(GrammarSymbol symbol) {
         String type = symbol.getType().getName();
 
         if (type.equals("String") || type.equals("Int") || type.equals("Boolean") || type.equals(symbolTable.getClassName()) || type.equals(symbolTable.getSuper()))
             return symbol;
 
-        Type res = symbolTable.hasImport(type);
+        GrammarType res = symbolTable.hasImport(type);
         if (res != null) return symbol;
 
         return null;

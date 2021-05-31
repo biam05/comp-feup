@@ -2,7 +2,6 @@ package symbolTable;
 
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,8 +10,8 @@ import java.util.List;
 public class GrammarSymbolTable implements SymbolTable {
 
     private final List<String> imports = new ArrayList<>();
-    private final List<Symbol> classFields = new ArrayList<>();
-    private final List<SymbolMethod> methods = new ArrayList<>();
+    private final List<GrammarSymbol> classFields = new ArrayList<>();
+    private final List<GrammarMethod> methods = new ArrayList<>();
     private String className = "";
     private String superExtends = "";
 
@@ -24,11 +23,11 @@ public class GrammarSymbolTable implements SymbolTable {
         this.imports.add(importName);
     }
 
-    public void addClassField(Symbol classField) {
+    public void addClassField(GrammarSymbol classField) {
         this.classFields.add(classField);
     }
 
-    public void addMethod(SymbolMethod method) {
+    public void addMethod(GrammarMethod method) {
         this.methods.add(method);
     }
 
@@ -51,24 +50,24 @@ public class GrammarSymbolTable implements SymbolTable {
         return superExtends;
     }
 
+    public List<GrammarSymbol> getGrammarFields() {
+        return classFields;
+    }
+
     @Override
     public List<Symbol> getFields() {
-        return classFields;
+        return new ArrayList<>(classFields);
     }
 
     @Override
     public List<String> getMethods() {
         List<String> methodsNames = new ArrayList<>();
 
-        for (SymbolMethod method : methods) {
+        for (GrammarMethod method : methods) {
             methodsNames.add(method.getName());
         }
 
         return methodsNames;
-    }
-
-    public List<SymbolMethod> methods() {
-        return methods;
     }
 
     private List<String> parseMethodInfo(String info) {
@@ -81,53 +80,61 @@ public class GrammarSymbolTable implements SymbolTable {
         String param = info.substring(indexBeg + 1, indexEnd).trim();
 
         if (!param.equals("")) {
-            String[] paramm = param.split(",");
-            list.addAll(Arrays.asList(paramm));
+            String[] params = param.split(",");
+            list.addAll(Arrays.asList(params));
         }
 
         return list;
     }
 
-    public SymbolMethod getMethodByInfo(String methodInfo) {
+    public GrammarMethod getMethodByInfo(String methodInfo) {
         List<String> info = parseMethodInfo(methodInfo);
 
-        for (SymbolMethod method : this.methods)
+        for (GrammarMethod method : this.methods)
             if (method.equalsMethod(info)) return method;
 
         return null;
     }
 
     @Override
-    public Type getReturnType(String methodName) { //methodName(returnP[],returnP,returnP,....)
-        SymbolMethod method = getMethodByInfo(methodName);
+    public GrammarType getReturnType(String methodName) { //methodName(returnP[],returnP,returnP,....)
+        GrammarMethod method = getMethodByInfo(methodName);
         if (method == null) return null;
         return method.getReturnType();
     }
 
     @Override
     public List<Symbol> getParameters(String methodName) {
-        SymbolMethod method = getMethodByInfo(methodName);
+        return new ArrayList<>(getGrammarParameters(methodName));
+    }
+
+    public List<GrammarSymbol> getGrammarParameters(String methodName) {
+        GrammarMethod method = getMethodByInfo(methodName);
         if (method == null) return null;
         return method.getParameters();
     }
 
     @Override
     public List<Symbol> getLocalVariables(String methodName) {
-        SymbolMethod method = getMethodByInfo(methodName);
+        return new ArrayList<>(getGrammarLocalVariables(methodName));
+    }
+
+    public List<GrammarSymbol> getGrammarLocalVariables(String methodName) {
+        GrammarMethod method = getMethodByInfo(methodName);
         if (method == null) return null;
         return method.getLocalVariables();
     }
 
-    public Type returnFieldTypeIfExists(String field) {
-        for (Symbol symbol : classFields)
-            if (symbol.getName().equals(field)) return symbol.getType();
+    public GrammarType returnFieldTypeIfExists(String field) {
+        for (GrammarSymbol symbol : classFields)
+            if (symbol.getName().equals(field)) return symbol.getGrammarType();
         return null;
     }
 
-    public Type hasImport(String identifierName) {
+    public GrammarType hasImport(String identifierName) {
         for (String importName : getImports()) {
             String[] imports = importName.split("\\.");
-            if (imports[imports.length - 1].equals(identifierName)) return new Type("Accepted", false);
+            if (imports[imports.length - 1].equals(identifierName)) return new GrammarType("Accepted", false);
         }
         return null;
     }

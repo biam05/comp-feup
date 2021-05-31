@@ -195,13 +195,7 @@ public class JasminInstruction {
                 Element indexElem = ((ArrayOperand) element).getIndexOperands().get(0);
                 addCode("\n\t\ti" + JasminUtils.getLoadSize(method, indexElem, null));
 
-                generateCall((CallInstruction) rhs, true);
-                Element firstArg = ((CallInstruction) rhs).getFirstArg();
-                Operand opFirstArg = (Operand) firstArg;
-                if (firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
-                        opFirstArg.getName().equals(method.getClassName())) {
-                    addCode("\n\t\tinvokespecial " + method.getClassName() + ".<init>()V");
-                }
+                generateAssignCallAuxiliar((CallInstruction) rhs);
 
                 addCode("\n\t\tiastore\n");
                 method.decN_stack();
@@ -210,14 +204,18 @@ public class JasminInstruction {
                 return;
             }
         }
-        generateCall((CallInstruction) rhs, true);
-        Element firstArg = ((CallInstruction) rhs).getFirstArg();
+        generateAssignCallAuxiliar((CallInstruction) rhs);
+        storeOrIastore(instruction.getDest());
+    }
+
+    public void generateAssignCallAuxiliar(CallInstruction rhs) {
+        generateCall(rhs, true);
+        Element firstArg = rhs.getFirstArg();
         Operand opFirstArg = (Operand) firstArg;
         if (firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF &&
                 opFirstArg.getName().equals(method.getClassName())) {
             addCode("\n\t\tinvokespecial " + method.getClassName() + ".<init>()V");
         }
-        storeOrIastore(instruction.getDest());
     }
 
     // -------------- Call Instructions --------------
@@ -234,7 +232,7 @@ public class JasminInstruction {
             Operand opFirstArg = (Operand) firstArg;
 
             if (firstArg.getType().getTypeOfElement() == ElementType.OBJECTREF) {
-                generateCallObjectRef(instruction, assign);
+                generateCallObjectRef(instruction);
                 if (!JasminUtils.getReturnFromMethod(method, instruction.getReturnType()).equals("V") && !assign)
                     generatePop();
             } else if (opFirstArg.getType().getTypeOfElement() == ElementType.ARRAYREF) {
@@ -262,7 +260,7 @@ public class JasminInstruction {
         method.decN_stack();
     }
 
-    private void generateCallObjectRef(CallInstruction instruction, boolean assign) {
+    private void generateCallObjectRef(CallInstruction instruction) {
         Element firstArg = instruction.getFirstArg();
         Operand opFirstArg = (Operand) firstArg;
 
@@ -307,7 +305,7 @@ public class JasminInstruction {
         }
         addCode("\n\t\tinvokestatic " + opFirstArg.getName());
         invokeParameters(instruction);
-        for (Element element : instruction.getListOfOperands()) {
+        for (Element ignored : instruction.getListOfOperands()) {
             method.decN_stack();
         }
     }
@@ -326,7 +324,7 @@ public class JasminInstruction {
         }
         addCode("\n\t\tinvokevirtual " + method.getClassName());
         invokeParameters(instruction);
-        for (Element element : instruction.getListOfOperands()) {
+        for (Element ignored : instruction.getListOfOperands()) {
             method.decN_stack();
         }
     }

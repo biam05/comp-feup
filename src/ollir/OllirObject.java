@@ -75,7 +75,6 @@ public class OllirObject {
         this.aboveTemp.add(temp);
     }
 
-
     public void getReturn() {
         String type = OLLIRUtils.getReturnTypeExpression(this.code.toString());
         this.code.insert(0, "ret" + type + " ");

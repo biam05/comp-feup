@@ -1,14 +1,14 @@
 package semanticAnalysis;
 
 
-import symbolTable.GrammarSymbolTable;
-import symbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.PreorderJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+import symbolTable.GrammarMethod;
+import symbolTable.GrammarSymbolTable;
+import symbolTable.GrammarType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +34,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         boolean alreadyInBody = false;
 
         StringBuilder methodInfo = new StringBuilder();
-        SymbolMethod method = null;
+        GrammarMethod method = null;
 
         for (int i = 0; i < children.size(); i++) {
 
@@ -73,9 +73,9 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         return true;
     }
 
-    public void visitReturn(SymbolMethod method, JmmNode node) {
+    public void visitReturn(GrammarMethod method, JmmNode node) {
         JmmNode child = node.getChildren().get(0);
-        Type type = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, child, reports, true);
+        GrammarType type = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, child, reports, true);
 
         if (type == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(child.get("line")), Integer.parseInt(child.get("col")), "unexpected return type"));
@@ -86,7 +86,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
 
     }
 
-    public void visitMethodBody(SymbolMethod method, JmmNode node) {
+    public void visitMethodBody(GrammarMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
@@ -94,7 +94,7 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         }
     }
 
-    public void visitStatement(SymbolMethod method, JmmNode node) {
+    public void visitStatement(GrammarMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
 
         for (JmmNode child : children) {
@@ -117,13 +117,13 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         }
     }
 
-    public void visitWhileStatement(SymbolMethod method, JmmNode node) {
+    public void visitWhileStatement(GrammarMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
         SemanticAnalysisUtils.evaluatesToBoolean(symbolTable, method, children.get(0), this.reports);
         if (children.size() == 2) visitStatement(method, node);
     }
 
-    public void visitIfStatement(SymbolMethod method, JmmNode node) {
+    public void visitIfStatement(GrammarMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
         for (JmmNode child : children) {
             if (child.getKind().equals("IfExpression"))
@@ -132,19 +132,19 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         }
     }
 
-    public void visitAssign(SymbolMethod method, JmmNode node) {
+    public void visitAssign(GrammarMethod method, JmmNode node) {
         List<JmmNode> children = node.getChildren();
         if (children.size() != 2) return;
         if (!children.get(0).getKind().equals("Expression") || !children.get(1).getKind().equals("Expression"))
             return;
 
-        Type leftOperandType = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, children.get(0), reports, false);
+        GrammarType leftOperandType = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, children.get(0), reports, false);
         if (leftOperandType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(0).get("line")), Integer.parseInt(children.get(0).get("col")), "unexpected type in left assigned operator"));
             return;
         }
 
-        Type rightOperandType = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, children.get(1), reports, true);
+        GrammarType rightOperandType = SemanticAnalysisUtils.evaluateExpression(symbolTable, method, children.get(1), reports, true);
 
         if (rightOperandType == null)
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "unexpected type in right assigned operator"));
@@ -154,8 +154,6 @@ public class SemanticAnalysisVisitor extends PreorderJmmVisitor<Boolean, Boolean
         else if (leftOperandType.isArray())
             if (!rightOperandType.isArray())
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(children.get(1).get("line")), Integer.parseInt(children.get(1).get("col")), "expected array type in right assigned operator"));
-
-
     }
 
 }

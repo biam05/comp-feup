@@ -1,16 +1,17 @@
-import symbolTable.*;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
+import symbolTable.GrammarMethod;
+import symbolTable.GrammarSymbol;
+import symbolTable.GrammarSymbolTable;
+import symbolTable.GrammarType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
     private final GrammarSymbolTable symbolTable;
-    private SymbolMethod currentMethod;
+    private GrammarMethod currentMethod;
 
     public OptimizationVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -126,10 +127,10 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
         JmmNode lhsVariable = node.getChildren().get(0).getChildren().get(0).getChildren().get(0);
         JmmNode rhsVariable = node.getChildren().get(1).getChildren().get(0).getChildren().get(0);
         if (lhsVariable.getKind().contains("Identifier") && rhsVariable.getKind().contains("Number")) {
-            String varName = lhsVariable.getKind().replaceAll("'","").replace("Identifier ","");
+            String varName = lhsVariable.getKind().replaceAll("'", "").replace("Identifier ", "");
             int value = Integer.parseInt(rhsVariable.getKind().replaceAll("'", "").replace("Number ", ""));
-            if (currentMethod.hasVariable(new Symbol(new Type("Int", false), varName))) {
-                currentMethod.updateLocalVariable(new Symbol(new Type("Int", false), varName), value);
+            if (currentMethod.hasVariable(new GrammarSymbol(new GrammarType("Int", false), varName))) {
+                currentMethod.updateLocalVariable(new GrammarSymbol(new GrammarType("Int", false), varName), value);
             }
         }
         return dummy;
@@ -154,23 +155,23 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean visitFinalTerms(JmmNode node, Boolean dummy) {
-        JmmNode finalterm = node.getChildren().get(0);
+        JmmNode finalTerm = node.getChildren().get(0);
 
-        if (finalterm.getKind().contains("Identifier")) {
-            String varName = finalterm.getKind().replaceAll("'","").replace("Identifier ","");
+        if (finalTerm.getKind().contains("Identifier")) {
+            String varName = finalTerm.getKind().replaceAll("'", "").replace("Identifier ", "");
             Integer value = currentMethod.getLocalVariable(varName);
             if (value != null) {
                 JmmNodeImpl newChild = new JmmNodeImpl("Number '" + value + "'");
-                for (JmmNode child : finalterm.getChildren())
+                for (JmmNode child : finalTerm.getChildren())
                     newChild.add(child);
-                newChild.put("col", finalterm.get("col"));
-                newChild.put("line", finalterm.get("line"));
-                node.removeChild(finalterm);
+                newChild.put("col", finalTerm.get("col"));
+                newChild.put("line", finalTerm.get("line"));
+                node.removeChild(finalTerm);
                 node.add(newChild);
             }
 
-        } else if (finalterm.getKind().equals("Expression"))
-            visit(finalterm);
+        } else if (finalTerm.getKind().equals("Expression"))
+            visit(finalTerm);
 
         return dummy;
     }

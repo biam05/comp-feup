@@ -1,29 +1,29 @@
 package ollir;
 
-import semanticAnalysis.SemanticAnalysisUtils;
-import symbolTable.GrammarSymbolTable;
-import symbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.Type;
+import semanticAnalysis.SemanticAnalysisUtils;
+import symbolTable.GrammarMethod;
+import symbolTable.GrammarSymbol;
+import symbolTable.GrammarSymbolTable;
+import symbolTable.GrammarType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class OLLIRUtils {
-    public static String fields(List<Symbol> fields) {
+    public static String fields(List<GrammarSymbol> fields) {
         if (fields.isEmpty()) return "";
         StringBuilder res = new StringBuilder();
 
-        for (Symbol field : fields) {
+        for (GrammarSymbol field : fields) {
             res.append(".field ").append(field.toOLLIR()).append(";\n");
         }
 
         return res.toString();
     }
 
-    public static String init(String className, String superName, List<Symbol> fields) {
+    public static String init(String className, String superName, List<GrammarSymbol> fields) {
         if (!superName.equals(""))
             return className + " extends " + superName + " {\n" + fields(fields) + "\n.construct " + className + "().V {\n" + invokeSpecial("this") + "}\n\n";
         else
@@ -42,9 +42,9 @@ public class OLLIRUtils {
         result.append("invoke").append(method);
         result.append("(").append(identifier).append(", \"").append(methodName).append("\"");
         for (String field : fields) {
-            String[] splitted = field.split("\n");
-            result.append(", ").append(splitted[0]);
-            temporary.addAll(Arrays.asList(splitted).subList(1, splitted.length));
+            String[] splatted = field.split("\n");
+            result.append(", ").append(splatted[0]);
+            temporary.addAll(Arrays.asList(splatted).subList(1, splatted.length));
         }
         result.append(")").append(returnType);
 
@@ -62,7 +62,7 @@ public class OLLIRUtils {
         return left + " :=" + type + " " + right + ";\n";
     }
 
-    public static String methodDeclaration(SymbolMethod method) {
+    public static String methodDeclaration(GrammarMethod method) {
         StringBuilder res = new StringBuilder();
         res.append(".method public ");
         if (method.getName().equals("main")) res.append("static ");
@@ -70,11 +70,11 @@ public class OLLIRUtils {
         return res.toString();
     }
 
-    public static String parameters(List<Symbol> parameters) {
+    public static String parameters(List<GrammarSymbol> parameters) {
         if (parameters.isEmpty()) return "";
 
         List<String> param = new ArrayList<>();
-        for (Symbol parameter : parameters) param.add(parameter.toOLLIR());
+        for (GrammarSymbol parameter : parameters) param.add(parameter.toOLLIR());
 
         return String.join(", ", param);
     }
@@ -100,7 +100,7 @@ public class OLLIRUtils {
         }
     }
 
-    public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method) {
+    public static String getIdentifier(JmmNode node, GrammarSymbolTable symbolTable, GrammarMethod method) {
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         if (symbolTable.returnFieldTypeIfExists(ret) != null) { //its a class field
             JmmNode parent = node.getParent().getParent().getParent();
@@ -120,15 +120,15 @@ public class OLLIRUtils {
         return ret;
     }
 
-    public static String getIdentifierType(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method) {
+    public static String getIdentifierType(JmmNode node, GrammarSymbolTable symbolTable, GrammarMethod method) {
         String ret = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
-        Type type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, ret);
+        GrammarType type = SemanticAnalysisUtils.checkIfIdentifierExists(symbolTable, method, ret);
         if (type == null) return "";
         return type.toOLLIR();
     }
 
 
-    public static String getField(JmmNode node, GrammarSymbolTable symbolTable, SymbolMethod method) {
+    public static String getField(JmmNode node, GrammarSymbolTable symbolTable, GrammarMethod method) {
         String var = node.getKind().replaceAll("'", "").replace("Identifier ", "").trim();
         String type = getIdentifierType(node, symbolTable, method);
 
@@ -182,7 +182,7 @@ public class OLLIRUtils {
                 expression.getChildren().get(1).getKind().equals("MethodCall");
     }
 
-    public static boolean hasField(JmmNode expression, GrammarSymbolTable symbolTable, SymbolMethod currentMethod) {
+    public static boolean hasField(JmmNode expression, GrammarSymbolTable symbolTable, GrammarMethod currentMethod) {
         if (expression.getKind().equals("FinalTerms")) {
             JmmNode child = expression.getChildren().get(0);
             if (child.getKind().contains("Identifier")) {

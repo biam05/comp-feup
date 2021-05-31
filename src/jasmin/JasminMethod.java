@@ -14,11 +14,11 @@ public class JasminMethod {
     private final List<Report> reports;
     private final String className;
     private final String superName;
+    private final Map<String, Descriptor> localVariables;
     private int n_locals;
     private int max_n_stack;
     private int current_n_stack;
     private int n_branches;
-    private final Map<String, Descriptor> localVariables;
 
     public JasminMethod(Method method, String className, String superName) {
         this.method = method;
@@ -76,13 +76,11 @@ public class JasminMethod {
         return localVariables.get(key);
     }
 
-    public Boolean addLocalVariable(String variable, VarScope type, Type tp) {
+    public void addLocalVariable(String variable, VarScope type, Type tp) {
         if (!localVariables.containsKey(variable)) {
             localVariables.put(variable, new Descriptor(type, n_locals, tp));
             n_locals++;
-            return true;
         }
-        return false;
     }
 
     public void getMethodDeclaration() {

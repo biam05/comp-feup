@@ -1,34 +1,33 @@
 package symbolTable;
 
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class SymbolMethod {
+public class GrammarMethod {
 
-    private final List<Symbol> parameters;
-    private final HashMap<Symbol, Integer> localVariables;
+    private final List<GrammarSymbol> parameters;
+    private final HashMap<GrammarSymbol, Integer> localVariables;
     private String name;
-    private Type returnType;
+    private GrammarType returnType;
 
-    public SymbolMethod() {
+    public GrammarMethod() {
         this.parameters = new ArrayList<>();
         this.localVariables = new HashMap<>();
     }
 
-    public void addParameter(Symbol parameter) {
+    public void addParameter(GrammarSymbol parameter) {
         this.parameters.add(parameter);
     }
 
-    public void updateLocalVariable(Symbol localVariable, Integer value) {
+    public void updateLocalVariable(GrammarSymbol localVariable, Integer value) {
         this.localVariables.put(localVariable, value);
     }
 
     public Integer getLocalVariable(String localVariable) {
-        return this.localVariables.get(new Symbol(new Type("Int", false), localVariable));
+        return this.localVariables.get(new GrammarSymbol(new GrammarType("Int", false), localVariable));
     }
 
     public String getName() {
@@ -39,15 +38,15 @@ public class SymbolMethod {
         this.name = name;
     }
 
-    public Type getReturnType() {
+    public GrammarType getReturnType() {
         return returnType;
     }
 
-    public void setReturnType(Type returnType) {
+    public void setReturnType(GrammarType returnType) {
         this.returnType = returnType;
     }
 
-    public boolean hasVariable(Symbol symbol) {
+    public boolean hasVariable(GrammarSymbol symbol) {
         return returnTypeIfExists(symbol.getName()) != null;
     }
 
@@ -55,19 +54,19 @@ public class SymbolMethod {
         return name.equals("main");
     }
 
-    public Type returnTypeIfExists(String name) {
-        for (Symbol symbol : localVariables.keySet())
-            if (symbol.getName().equals(name)) return symbol.getType();
-        for (Symbol symbol : parameters)
-            if (symbol.getName().equals(name)) return symbol.getType();
+    public GrammarType returnTypeIfExists(String name) {
+        for (GrammarSymbol symbol : localVariables.keySet())
+            if (symbol.getName().equals(name)) return symbol.getGrammarType();
+        for (GrammarSymbol symbol : parameters)
+            if (symbol.getName().equals(name)) return symbol.getGrammarType();
         return null;
     }
 
-    public List<Symbol> getParameters() {
+    public List<GrammarSymbol> getParameters() {
         return parameters;
     }
 
-    public List<Symbol> getLocalVariables() {
+    public List<GrammarSymbol> getLocalVariables() {
         return new ArrayList<>(localVariables.keySet());
     }
 
@@ -89,12 +88,12 @@ public class SymbolMethod {
         return true;
     }
 
-    private Type createType(String t) {
+    private GrammarType createType(String t) {
 
         boolean isArray = t.contains("[]");
         String type = t.replace("[]", "");
 
-        return new Type(type, isArray);
+        return new GrammarType(type, isArray);
     }
 
     @Override
@@ -104,7 +103,7 @@ public class SymbolMethod {
 
     public int getParameterOrder(String parameter) {
         int counter = 1;
-        for (Symbol s : parameters) {
+        for (GrammarSymbol s : parameters) {
             if (s.getName().equals(parameter)) return counter;
             counter++;
         }

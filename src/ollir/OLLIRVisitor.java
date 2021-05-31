@@ -1,11 +1,11 @@
 package ollir;
 
-import semanticAnalysis.SemanticAnalysisUtils;
-import symbolTable.GrammarSymbolTable;
-import symbolTable.SymbolMethod;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.report.Report;
+import semanticAnalysis.SemanticAnalysisUtils;
+import symbolTable.GrammarMethod;
+import symbolTable.GrammarSymbolTable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,12 +19,12 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
     private int loop_counter = 0;
     private int if_counter = 0;
     private int var_temp = 0;
-    private SymbolMethod currentMethod;
+    private GrammarMethod currentMethod;
 
     public OLLIRVisitor(GrammarSymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.reports = new ArrayList<>();
-        this.code = new OllirObject(OLLIRUtils.init(symbolTable.getClassName(), symbolTable.getSuper(), symbolTable.getFields()));
+        this.code = new OllirObject(OLLIRUtils.init(symbolTable.getClassName(), symbolTable.getSuper(), symbolTable.getGrammarFields()));
         addVisit("MethodDeclaration", this::visitMethod);
         addVisit("Statement", this::visitStatement);
         addVisit("Expression", this::visitExpression);
@@ -384,7 +384,7 @@ public class OLLIRVisitor extends AJmmVisitor<String, OllirObject> {
 
         switch (invokeType) {
             case "virtual":
-                SymbolMethod met = symbolTable.getMethodByInfo(methodInfo);
+                GrammarMethod met = symbolTable.getMethodByInfo(methodInfo);
                 String type = met.getReturnType().toOLLIR();
 
                 String aux = identifier.getCode();
