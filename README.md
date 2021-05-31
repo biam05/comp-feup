@@ -17,21 +17,21 @@ GLOBAL Grade of the project: 18
 
 **SUMMARY:**
 
-The intention of this assignment is to acquire and apply knowledge within the Compilers’ course unit. In order to do so, we have implemented a compiler of Java-- language to Java bytecodes. This compiler includes, syntatic and semantic analysis, as well as code generation.
+The goal of this assignment is to acquire and apply knowledge within the Compilers’ course unit. In order to do so, we have implemented a compiler of Java-- language to Java bytecodes. This compiler includes, syntactic and semantic analysis, as well as OLLIR and Jasmin code generation.
 
 
 **COMPILE, EXECUTE AND TEST:**
 
 The following command compiles our tool: ```gradle build```
 
-To execute: ```java Main <filename.jmm> [-o]```, the -o flag must be specified in order to execute with the constant propagation optimization.
+To execute: ```.\comp2021-1f Main <filename.jmm> [-o]```, the -o flag must be specified in order to execute with the constant propagation optimization.
 
 To test, run ```gradle test```.
 
 
 **DEALING WITH SYNTACTIC ERRORS:** 
 
-We only recover from errors in the while loop. If an error is found in the while loop, the compiler ignores every token until the number of right parentheses does not the match the number of left parentheses. 
+We only recover from errors in the while loop. If an error is found in the while loop, the compiler ignores every token until the number of right braces matches the number of left braces. 
 With this an error report with syntactic type is generated with the information of the line and column where the error is. The program only aborts after more than 10 errors occurred.
 
 
@@ -82,16 +82,22 @@ The following verifications are implemented:
 
 
 
-**CODE GENERATION:** (describe how the code generation of your tool works and identify the possible problems your tool has regarding code generation.)
+**CODE GENERATION:**
 
-The code is generated from .jmm files, creating OLLIR code that is used after to generate the Jasmin code.
+The OLLIR code is generated from .jmm files, creating OLLIR code that is used afterwards to generate the Jasmin code.
 
-The more efficient instructions are chosen in each situation, as describes in the Pros of our project. The
+The more efficient instructions are chosen in each situation, as described in the Pros of our project. The
 limit of the stack and locals is calculated based on the instructions used in each method. 
 
 We implemented our code generation iteratively:
 
-* Generate
+* Generating the class structure with constructor;
+* Generating the method stubs with parameters and appropriate return types;
+* Generating the method bodies (variable assignments, arithmetic operations and method invocations);
+* Generating the fields of the class;
+* Optimizing the instructions chosen for loading constants;
+* Optimizing the instructions chosen for loading and storing variables;
+* Generating incrementation of variables.
 
 **TASK DISTRIBUTION:**
 
@@ -109,11 +115,11 @@ We implemented our code generation iteratively:
 
 We have implemented some extra features, such as:
 
-* method overloading according to java method overloading,
+* Method overloading according to java method overloading,
 
-* verification of match of return type in the declaration and the actual method, verification of variable declaration more than once, verification of non-static variable 'identifier' cannot be referenced from a static context,
+* Verification of match of return type in the declaration and the actual method, verification of variable declaration more than once, verification of non-static variable 'identifier' cannot be referenced from a static context,
 
-* optimizations: eliminated the use of unnecessary “goto” instructions in the while loop, constant propagation, the use of lower cost instructions.
+* Optimizations: eliminated the use of unnecessary “goto” instructions in the while loop, constant propagation, the use of lower cost instructions.
 
 
 

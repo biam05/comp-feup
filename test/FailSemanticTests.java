@@ -86,13 +86,4 @@ public class FailSemanticTests{
         var analysisresult = TestUtils.analyse(result);
         System.out.println("-----------------------------\n");
     }
-
-    @Test
-    public void VarNotInit() {
-        System.out.println("--- Printing Var Not Init Test ---\n");
-        String jmmCode = SpecsIo.getResource("fixtures/public/fail/semantic/varNotInit.jmm");
-        var result = TestUtils.parse(jmmCode);
-        var analysisresult = TestUtils.analyse(result);
-        System.out.println("-----------------------------\n");
-    }
 }
