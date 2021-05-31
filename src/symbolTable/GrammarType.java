@@ -3,6 +3,8 @@ package symbolTable;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
+import java.util.stream.Collectors;
+
 public class GrammarType extends Type {
 
     public GrammarType(String name, boolean isArray) {

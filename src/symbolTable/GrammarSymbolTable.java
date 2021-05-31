@@ -6,6 +6,7 @@ import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GrammarSymbolTable implements SymbolTable {
 
@@ -68,6 +69,10 @@ public class GrammarSymbolTable implements SymbolTable {
         }
 
         return methodsNames;
+    }
+
+    public List<GrammarMethod> methods() {
+        return methods;
     }
 
     private List<String> parseMethodInfo(String info) {
@@ -142,4 +147,46 @@ public class GrammarSymbolTable implements SymbolTable {
     public Boolean hasMethod(String methodInfo) {
         return getMethodByInfo(methodInfo) != null;
     }
+
+    @Override
+    public String print() {
+        var builder = new StringBuilder();
+
+        builder.append("Class: " + getClassName() + "\n");
+        var superClass = getSuper() != null ? getSuper() : "java.lang.Object";
+        builder.append("Super: " + superClass + "\n");
+        builder.append("\nImports:");
+        var imports = getImports();
+
+        if (imports.isEmpty()) {
+            builder.append(" <no imports>\n");
+        } else {
+            builder.append("\n");
+            imports.forEach(fullImport -> builder.append(" - " + fullImport + "\n"));
+        }
+
+        var fields = getFields();
+        builder.append("\nFields:");
+        if (fields.isEmpty()) {
+            builder.append(" <no fields>\n");
+        } else {
+            builder.append("\n");
+            fields.forEach(field -> builder.append(" - " + field.print() + "\n"));
+        }
+
+        var methods = methods();
+        builder.append("\nMethods: " + methods.size() + "\n");
+
+        for (var method : methods) {
+            var returnType = method.getReturnType();
+            var params = method.getParameters();
+            builder.append(" - " + returnType.print() + " " + method + "(");
+            var paramsString = params.stream().map(param -> param != null ? param.print() : "<null param>")
+                    .collect(Collectors.joining(", "));
+            builder.append(paramsString + ")\n");
+        }
+
+        return builder.toString();
+    }
+
 }

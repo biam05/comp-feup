@@ -52,6 +52,27 @@ public class Main implements JmmParser {
             System.out.println("Error writing jasmin code");
             e.printStackTrace();
         }
+
+        //AST
+        FileWriter ast  = new FileWriter(p + "/" + ollirResult.getSymbolTable().getClassName() + ".json");
+        ast.write(parserResult.toJson());
+        ast.close();
+
+        // Symbol Table
+        FileWriter symbolTable  = new FileWriter(p + "/" + ollirResult.getSymbolTable().getClassName() + ".symbols.txt");
+        symbolTable.write(semanticsResult.getSymbolTable().print());
+        symbolTable.close();
+
+        // Ollir
+        FileWriter ollir  = new FileWriter(p + "/" + ollirResult.getSymbolTable().getClassName() + ".ollir");
+        ollir.write(ollirResult.getOllirCode());
+        ollir.close();
+
+        // Jasmin
+        FileWriter jasmin = new FileWriter(p + "/" + ollirResult.getSymbolTable().getClassName() + ".j");
+        jasmin.write(jasminResult.getJasminCode());
+        jasmin.close();
+
         jasminResult.compile(p.toFile());
     }
 
