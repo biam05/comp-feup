@@ -1,7 +1,5 @@
 package pt.up.fe.comp.jmm.analysis.table;
 
-import pt.up.fe.comp.jmm.JmmNode;
-
 public class Symbol {
     private final Type type;
     private final String name;
@@ -9,11 +7,6 @@ public class Symbol {
     public Symbol(Type type, String name) {
         this.type = type;
         this.name = name;
-    }
-
-    public Symbol(JmmNode type, JmmNode name) {
-        this.type = new Type(type);
-        this.name = name.getKind().replaceAll("'", "").replace("Identifier ", "");
     }
 
     public Type getType() {
@@ -27,10 +20,6 @@ public class Symbol {
     @Override
     public String toString() {
         return "Symbol [type=" + type + ", name=" + name + "]";
-    }
-
-    public String toOLLIR() {
-        return name + type.toOLLIR();
     }
 
     /* (non-Javadoc)
@@ -63,8 +52,18 @@ public class Symbol {
         } else if (!name.equals(other.name))
             return false;
         if (type == null) {
-            return other.type == null;
-        } else return type.equals(other.type);
+            if (other.type != null)
+                return false;
+        } else if (!type.equals(other.type))
+            return false;
+        return true;
     }
 
+    public String print() {
+        var builder = new StringBuilder();
+
+        builder.append(getType().print() + " " + getName());
+
+        return builder.toString();
+    }
 }
