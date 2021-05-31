@@ -1,6 +1,6 @@
+import symbolTable.*;
 import pt.up.fe.comp.jmm.JmmNode;
 import pt.up.fe.comp.jmm.analysis.table.Symbol;
-import pt.up.fe.comp.jmm.analysis.table.SymbolMethod;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNodeImpl;
@@ -59,7 +59,7 @@ public class OptimizationVisitor extends AJmmVisitor<Boolean, Boolean> {
                         if (aux.getKind().equals("RParenthesis")) break;
                         parameters.add(aux);
                     }
-                    methodInfo.append(SemanticAnalysisUtils.getTypeParameters(parameters));
+                    methodInfo.append(semanticAnalysis.SemanticAnalysisUtils.getTypeParameters(parameters));
                 }
             } else if (child.getKind().equals("Main")) {
                 methodInfo.append("main(");
